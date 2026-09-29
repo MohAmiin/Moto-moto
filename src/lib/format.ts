@@ -35,11 +35,18 @@ export function money(value: number) {
   return `${LTR}$${Number(value).toFixed(2)}${PDI}`;
 }
 
-/** Keeps digits only and drops a leading 252 or 0, so "063 4740002" becomes "634740002". */
+/** Telesom's mobile prefix in Hargeisa; people often give only the 7 digits after it. */
+export const DEFAULT_OPERATOR_PREFIX = '63';
+
+/**
+ * Keeps digits only, drops a leading 252 or 0, and adds 63 to a bare 7-digit number,
+ * so "063 4740002", "+252 63 4740002" and "474 0002" all become "634740002".
+ */
 export function normalizeLocalPhone(input: string) {
   let digits = input.replace(/\D/g, '');
   if (digits.startsWith('252')) digits = digits.slice(3);
   if (digits.startsWith('0')) digits = digits.slice(1);
+  if (digits.length === 7) digits = DEFAULT_OPERATOR_PREFIX + digits;
   return digits;
 }
 
