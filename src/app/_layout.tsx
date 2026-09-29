@@ -2,7 +2,7 @@ import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { View } from 'react-native';
+import { Platform, View } from 'react-native';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AuthProvider, useAuth } from '@/lib/auth';
@@ -37,8 +37,8 @@ function RootNavigator() {
 
   const role = profile?.role;
   return (
-    // Arabic lays every screen out right to left.
-    <View style={{ flex: 1, direction: isRTL ? 'rtl' : 'ltr' }}>
+    // Arabic lays every screen out right to left. On web the page's dir attribute does this instead.
+    <View style={Platform.OS === 'web' ? { flex: 1 } : { flex: 1, direction: isRTL ? 'rtl' : 'ltr' }}>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Protected guard={role === 'customer'}>
           <Stack.Screen name="(customer)" />
@@ -56,6 +56,7 @@ function RootNavigator() {
           <Stack.Screen name="sign-in" />
           <Stack.Screen name="verify" />
         </Stack.Protected>
+        <Stack.Screen name="+not-found" />
       </Stack>
     </View>
   );

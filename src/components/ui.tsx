@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import type { ReactNode } from 'react';
 import {
   ActivityIndicator,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -381,8 +382,8 @@ const styles = StyleSheet.create({
   input: { borderWidth: 1.5, borderRadius: Radius.small + 2, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16 },
   phone: { flexDirection: 'row', borderWidth: 1.5, borderRadius: Radius.small + 2, overflow: 'hidden' },
   prefix: { paddingHorizontal: 12, paddingVertical: 12, fontSize: 16, fontWeight: '700', borderRightWidth: 1, writingDirection: 'ltr' },
-  // Phone numbers read left to right in every language.
-  ltr: { direction: 'ltr' },
+  // Phone numbers read left to right in every language (native only; web ignores `direction`).
+  ltr: Platform.OS === 'web' ? {} : { direction: 'ltr' },
   phoneInput: { flex: 1, paddingHorizontal: 12, fontSize: 16, fontVariant: ['tabular-nums'], textAlign: 'left', writingDirection: 'ltr' },
   small: { fontSize: 13 },
   choices: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
