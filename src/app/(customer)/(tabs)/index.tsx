@@ -10,8 +10,9 @@ import { Button, Card, Empty, LinkButton, Row, Screen, Stack, Txt } from '@/comp
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth';
-import { useI18n } from '@/lib/i18n';
+import { useI18n, type TKey } from '@/lib/i18n';
 import { currentPosition, type Coords } from '@/lib/location';
+import { ACTIVE_CITY, inCity } from '@/lib/service-area';
 import { supabase } from '@/lib/supabase';
 import type { NearbyRider } from '@/lib/types';
 
@@ -31,7 +32,8 @@ export default function FindRider() {
   const area = profile?.district ?? null;
 
   const load = useCallback(async () => {
-    const c = coordsRef.current;
+    // Outside the city your position isn't useful for distances, so riders are sorted by neighbourhood.
+    const c = inCity(coordsRef.current) ? coordsRef.current : null;
     const { data } = await supabase.rpc('nearby_riders', { p_lat: c?.lat ?? null, p_lng: c?.lng ?? null, p_area: area });
     setRiders((data as NearbyRider[]) ?? []);
     setLoaded(true);
@@ -57,9 +59,11 @@ export default function FindRider() {
     }, [locate]),
   );
 
+  const inside = inCity(coords);
+  const cityName = t(`city.${ACTIVE_CITY.id}` as TKey);
   const mapData = useMemo<LiveMapData>(
-    () => ({ me: coords ? { ...coords, label: t('map.you') } : null, riders: riderPoints(riders, t), recenter }),
-    [coords, riders, recenter, t],
+    () => ({ me: coords && inside ? { ...coords, label: t('map.you') } : null, riders: riderPoints(riders, t), recenter }),
+    [coords, inside, riders, recenter, t],
   );
 
   return (
@@ -75,9 +79,15 @@ export default function FindRider() {
 
       <LiveMap data={mapData} height={320} />
       <Row style={{ justifyContent: 'space-between' }}>
-        <Txt variant="muted" style={{ flex: 1 }}>{coords ? t('map.live') : ''}</Txt>
+        <Txt variant="muted" style={{ flex: 1 }}>{coords && inside ? t('map.live') : cityName}</Txt>
         <LinkButton title={t('map.showAll')} onPress={() => setRecenter((n) => n + 1)} />
       </Row>
+
+      {coords && !inside ? (
+        <Card tone="soft">
+          <Txt>{t('area.outside', { city: cityName })}</Txt>
+        </Card>
+      ) : null}
 
       {coords ? null : (
         <Card tone="soft">

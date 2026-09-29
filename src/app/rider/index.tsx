@@ -8,8 +8,9 @@ import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth';
 import { AREA_OPTIONS, DEFAULT_AREA, formatPhone } from '@/lib/format';
-import { useI18n } from '@/lib/i18n';
+import { useI18n, type TKey } from '@/lib/i18n';
 import { currentPosition, type Coords } from '@/lib/location';
+import { ACTIVE_CITY, inCity } from '@/lib/service-area';
 import { errorKey, supabase } from '@/lib/supabase';
 
 // While online, refresh the rider's position and "last seen" so people see who is really available.
@@ -151,7 +152,13 @@ function Dashboard() {
 
       {error ? <Txt color="danger">{error}</Txt> : null}
 
-      {online && coords ? <LiveMap data={mapData} height={220} /> : null}
+      {online && coords && !inCity(coords) ? (
+        <Card tone="soft">
+          <Txt>{t('area.outsideRider', { city: t(`city.${ACTIVE_CITY.id}` as TKey) })}</Txt>
+        </Card>
+      ) : null}
+
+      {online && coords && inCity(coords) ? <LiveMap data={mapData} height={220} /> : null}
 
       <Choices label={t('rider.currentArea')} options={AREA_OPTIONS} value={area} onChange={changeArea} columns={2} />
 

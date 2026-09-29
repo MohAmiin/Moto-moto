@@ -28,6 +28,10 @@ The first migration also contains stores, products and orders for a later market
 
 The live map uses Leaflet with OpenStreetMap tiles (free, no API key). It runs in a WebView on phones and an iframe on the web. OpenStreetMap's public tiles are fine for testing and a small pilot; before a large launch switch to a hosted tile provider (for example MapTiler or Stadia Maps) in `src/components/live-map/map-html.ts`.
 
+## Service area
+
+SABIQ runs in Hargeisa only for now. The map is locked to the city, and riders whose position is outside it are not shown to customers. Cities are listed in `src/lib/service-area.ts` and in `in_service_area()` in the database; add Mogadishu to both when it's time to expand.
+
 ## Brand
 
 - Colors: navy `#14213D` and orange `#F26B1D`.
@@ -55,7 +59,7 @@ supabase/seed.sql        Sample stores and products
 ### 1. Create the Supabase project
 
 1. Create a project at [supabase.com](https://supabase.com).
-2. In **SQL Editor**, run each file in `supabase/migrations/` in order (`20260928…_init.sql`, `20260929…_nearby_riders.sql`, then `20260930…_rider_map.sql`).
+2. In **SQL Editor**, run each file in `supabase/migrations/` in order (`20260928…_init.sql`, `20260929…_nearby_riders.sql`, `20260930…_rider_map.sql`, then `20261001…_service_area.sql`).
    (Or with the Supabase CLI: `npx supabase link` then `npx supabase db push`.)
 3. In **Authentication → Sign In / Providers → Phone**, enable phone sign-in and connect an SMS provider (Twilio, MessageBird, Vonage or Textlocal). Check that it delivers to Hormuud, Somtel and Golis numbers before launch.
 4. While testing, add **test phone numbers** with fixed codes in the same Phone settings so no real SMS is sent, for example `252610000001` with code `123456`.

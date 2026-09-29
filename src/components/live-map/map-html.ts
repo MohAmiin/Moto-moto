@@ -10,8 +10,9 @@ export type LiveMapData = {
   recenter?: number;
 };
 
-// Hargeisa city centre, used until we know where anyone is.
-export const HARGEISA = { lat: 9.5624, lng: 44.077 };
+import { ACTIVE_CITY } from '@/lib/service-area';
+
+const B = ACTIVE_CITY.bounds;
 
 const SCOOTER = `<svg viewBox="0 0 120 120" width="22" height="22"><path d="M20 72 C30 84 80 84 80 64 C80 46 38 52 38 36 C38 24 52 20 70 20" fill="none" stroke="#fff" stroke-width="17" stroke-linecap="round"/><polygon points="66,5 98,20 66,35" fill="#fff"/><circle cx="30" cy="94" r="15" fill="#fff"/><circle cx="94" cy="94" r="15" fill="#fff"/></svg>`;
 
@@ -31,7 +32,11 @@ export const MAP_HTML = `<!doctype html>
 <div id="map"></div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-  var map = L.map('map', { zoomControl: false }).setView([${HARGEISA.lat}, ${HARGEISA.lng}], 13);
+  // The map is locked to the city SABIQ serves: it can't be panned or zoomed out beyond it.
+  var city = L.latLngBounds([[${B.south}, ${B.west}], [${B.north}, ${B.east}]]);
+  var map = L.map('map', { zoomControl: false, maxBounds: city.pad(0.02), maxBoundsViscosity: 1.0 });
+  map.fitBounds(city);
+  map.setMinZoom(map.getZoom());
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(map);
   var meIcon = L.divIcon({ className: '', html: '<div class="me"></div>', iconSize: [18, 18], iconAnchor: [9, 9] });
   var riderIcon = L.divIcon({ className: '', html: '<div class="rider">${SCOOTER.replace(/"/g, '\\"')}</div>', iconSize: [34, 34], iconAnchor: [17, 17] });

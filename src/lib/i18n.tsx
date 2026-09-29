@@ -155,6 +155,9 @@ const so = {
   'map.you': 'Adiga',
   'map.showAll': 'Muuji dhammaan',
   'map.live': 'Toos · wuxuu cusboonaanayaa 15 ilbiriqsi kasta',
+  'city.hargeisa': 'Hargeysa',
+  'area.outside': 'SABIQ wuxuu hadda ka shaqeeyaa {city} oo keliya. Waxaad joogtaa meel ka baxsan magaalada.',
+  'area.outsideRider': 'Waxaad joogtaa meel ka baxsan {city}. Macaamiishu kuma arki doonaan ilaa aad magaalada ku soo laabato.',
 };
 
 export type TKey = keyof typeof so;
@@ -289,6 +292,9 @@ const en: Dictionary = {
   'map.you': 'You',
   'map.showAll': 'Show everyone',
   'map.live': 'Live · updates every 15 seconds',
+  'city.hargeisa': 'Hargeisa',
+  'area.outside': "SABIQ works in {city} only for now. You're outside the city.",
+  'area.outsideRider': "You're outside {city}. Customers won't see you until you're back in the city.",
 };
 
 const ar: Dictionary = {
@@ -420,6 +426,9 @@ const ar: Dictionary = {
   'map.you': 'أنت',
   'map.showAll': 'عرض الجميع',
   'map.live': 'مباشر · يتحدث كل 15 ثانية',
+  'city.hargeisa': 'هرجيسا',
+  'area.outside': 'يعمل SABIQ في {city} فقط حالياً. أنت خارج المدينة.',
+  'area.outsideRider': 'أنت خارج {city}. لن يراك العملاء حتى تعود إلى المدينة.',
 };
 
 const DICTIONARIES: Record<Language, Dictionary> = { so, en, ar };
