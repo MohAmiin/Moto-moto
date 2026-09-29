@@ -1,4 +1,4 @@
-// SABIQ brand: navy for structure and primary buttons, orange for the $1 promise and main actions.
+// Jareeye brand: navy for structure and primary buttons, orange for the $1 promise and main actions.
 // The `gold` / `onGold` slots hold the orange accent.
 export const Colors = {
   light: {

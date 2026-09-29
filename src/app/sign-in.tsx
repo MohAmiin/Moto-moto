@@ -40,7 +40,7 @@ export default function SignIn() {
       <View style={[styles.hero, { backgroundColor: '#14213D' }]}>
         <View style={styles.brandRow}>
           <Image source={require('@/assets/images/logo-mark.png')} style={styles.logo} contentFit="contain" accessibilityIgnoresInvertColors />
-          <Txt style={[styles.wordmark, { color: '#FFFFFF' }]}>SABIQ</Txt>
+          <Txt style={[styles.wordmark, { color: '#FFFFFF' }]}>JAREEYE</Txt>
         </View>
         <Txt variant="title" style={{ color: '#FFFFFF' }}>{t('signin.headline')}</Txt>
         <Txt style={{ color: '#FFFFFF', opacity: 0.85 }}>{t('signin.sub')}</Txt>

@@ -13,7 +13,7 @@ export function LiveMap({ data, height = 300 }: { data: LiveMapData; height?: nu
 
   useEffect(() => {
     const onMessage = (e: MessageEvent) => {
-      if (e.source === ref.current?.contentWindow && e.data === 'sabiq-map-ready') setReady(true);
+      if (e.source === ref.current?.contentWindow && e.data === 'jareeye-map-ready') setReady(true);
     };
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);

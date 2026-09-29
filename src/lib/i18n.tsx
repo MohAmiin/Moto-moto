@@ -56,7 +56,7 @@ const so = {
   'verify.changeNumber': 'Beddel lambarka',
 
   // Onboarding
-  'onb.welcome': 'Ku soo dhawoow SABIQ',
+  'onb.welcome': 'Ku soo dhawoow Jareeye',
   'onb.how': 'Sidee u isticmaalaysaa app-ka?',
   'onb.customerTitle': 'Waxaan ahay macmiil',
   'onb.customerBody': 'Hel darawal kuu dhow, una dir xirmo meel kasta oo magaalada ah.',
@@ -88,7 +88,7 @@ const so = {
   'rf.photoAdd': 'Sawir ku soo geli',
   'rf.photoChange': 'Riix si aad u beddesho',
   'rf.photoHint': 'Kaarka aqoonsiga ama baasaboorka',
-  'rf.agree': 'Waxaan oggolahay shuruudaha SABIQ, waxaanan leeyahay mooto iyo liisan wadis.',
+  'rf.agree': 'Waxaan oggolahay shuruudaha Jareeye, waxaanan leeyahay mooto iyo liisan wadis.',
   'rf.missingFields': 'Fadlan buuxi magaca, lambarka aqoonsiga iyo taarikada',
   'rf.missingPhoto': 'Fadlan soo geli sawirka kaarka aqoonsiga',
   'rf.mustAgree': 'Fadlan oggolow shuruudaha',
@@ -107,7 +107,7 @@ const so = {
   'rider.completeTitle': 'Dhammaystir codsigaaga',
   'rider.completeSub': 'Waxaan u baahanahay macluumaadka mootadaada ka hor intaadan bilaabin.',
   'rider.rejectedTitle': 'Codsigaaga lama aqbalin',
-  'rider.rejectedSub': 'Hubi macluumaadka oo mar kale soo gudbi, ama la xiriir xafiiska SABIQ.',
+  'rider.rejectedSub': 'Hubi macluumaadka oo mar kale soo gudbi, ama la xiriir xafiiska Jareeye.',
   'rider.pendingTitle': 'Codsigaaga waa la helay',
   'rider.pendingBody': 'Kooxdayadu waxay hubin doontaa aqoonsigaaga iyo mootadaada. Boggan wuu is beddeli doonaa marka lagu ansixiyo.',
   'rider.online': 'Online',
@@ -115,7 +115,7 @@ const so = {
   'rider.offlineTitle': 'Waxaad tahay offline',
 
   // Admin
-  'admin.title': 'Maamulka SABIQ',
+  'admin.title': 'Maamulka Jareeye',
   'admin.sub': 'Ansixi darawallada, la soco dalabyada.',
   'admin.pending': 'Sugaya',
   'admin.approved': 'La ansixiyay',
@@ -156,7 +156,7 @@ const so = {
   'map.showAll': 'Muuji dhammaan',
   'map.live': 'Toos · wuxuu cusboonaanayaa 15 ilbiriqsi kasta',
   'city.hargeisa': 'Hargeysa',
-  'area.outside': 'SABIQ wuxuu hadda ka shaqeeyaa {city} oo keliya. Waxaad joogtaa meel ka baxsan magaalada.',
+  'area.outside': 'Jareeye wuxuu hadda ka shaqeeyaa {city} oo keliya. Waxaad joogtaa meel ka baxsan magaalada.',
   'area.outsideRider': 'Waxaad joogtaa meel ka baxsan {city}. Macaamiishu kuma arki doonaan ilaa aad magaalada ku soo laabato.',
 };
 
@@ -199,7 +199,7 @@ const en: Dictionary = {
   'verify.resend': 'Send me a new code',
   'verify.changeNumber': 'Change number',
 
-  'onb.welcome': 'Welcome to SABIQ',
+  'onb.welcome': 'Welcome to Jareeye',
   'onb.how': 'How will you use the app?',
   'onb.customerTitle': "I'm a customer",
   'onb.customerBody': 'Find a rider near you and send a package anywhere in the city.',
@@ -230,7 +230,7 @@ const en: Dictionary = {
   'rf.photoAdd': 'Add a photo',
   'rf.photoChange': 'Tap to change',
   'rf.photoHint': 'ID card or passport',
-  'rf.agree': 'I agree to the SABIQ terms, and I have a motorbike and a driving licence.',
+  'rf.agree': 'I agree to the Jareeye terms, and I have a motorbike and a driving licence.',
   'rf.missingFields': 'Please fill in your name, ID number and plate',
   'rf.missingPhoto': 'Please add a photo of your ID card',
   'rf.mustAgree': 'Please accept the terms',
@@ -246,14 +246,14 @@ const en: Dictionary = {
   'rider.completeTitle': 'Complete your application',
   'rider.completeSub': 'We need your bike details before you start.',
   'rider.rejectedTitle': 'Your application was not approved',
-  'rider.rejectedSub': 'Check your details and submit again, or contact the SABIQ office.',
+  'rider.rejectedSub': 'Check your details and submit again, or contact the Jareeye office.',
   'rider.pendingTitle': "We've received your application",
   'rider.pendingBody': "Our team will check your ID and bike. This page updates as soon as you're approved.",
   'rider.online': 'Online',
   'rider.offline': 'Offline',
   'rider.offlineTitle': "You're offline",
 
-  'admin.title': 'SABIQ admin',
+  'admin.title': 'Jareeye admin',
   'admin.sub': 'Approve riders and follow orders.',
   'admin.pending': 'Pending',
   'admin.approved': 'Approved',
@@ -293,7 +293,7 @@ const en: Dictionary = {
   'map.showAll': 'Show everyone',
   'map.live': 'Live · updates every 15 seconds',
   'city.hargeisa': 'Hargeisa',
-  'area.outside': "SABIQ works in {city} only for now. You're outside the city.",
+  'area.outside': "Jareeye works in {city} only for now. You're outside the city.",
   'area.outsideRider': "You're outside {city}. Customers won't see you until you're back in the city.",
 };
 
@@ -333,7 +333,7 @@ const ar: Dictionary = {
   'verify.resend': 'أرسل لي رمزاً جديداً',
   'verify.changeNumber': 'تغيير الرقم',
 
-  'onb.welcome': 'مرحباً بك في SABIQ',
+  'onb.welcome': 'مرحباً بك في Jareeye',
   'onb.how': 'كيف ستستخدم التطبيق؟',
   'onb.customerTitle': 'أنا عميل',
   'onb.customerBody': 'اعثر على سائق قريب منك وأرسل طرداً إلى أي مكان في المدينة.',
@@ -364,7 +364,7 @@ const ar: Dictionary = {
   'rf.photoAdd': 'أضف صورة',
   'rf.photoChange': 'اضغط للتغيير',
   'rf.photoHint': 'بطاقة الهوية أو جواز السفر',
-  'rf.agree': 'أوافق على شروط SABIQ، ولدي دراجة نارية ورخصة قيادة.',
+  'rf.agree': 'أوافق على شروط Jareeye، ولدي دراجة نارية ورخصة قيادة.',
   'rf.missingFields': 'يرجى إدخال الاسم ورقم الهوية ولوحة الدراجة',
   'rf.missingPhoto': 'يرجى إضافة صورة بطاقة الهوية',
   'rf.mustAgree': 'يرجى الموافقة على الشروط',
@@ -380,14 +380,14 @@ const ar: Dictionary = {
   'rider.completeTitle': 'أكمل طلب الانضمام',
   'rider.completeSub': 'نحتاج بيانات دراجتك قبل أن تبدأ.',
   'rider.rejectedTitle': 'لم تتم الموافقة على طلبك',
-  'rider.rejectedSub': 'راجع بياناتك وأعد الإرسال، أو تواصل مع مكتب SABIQ.',
+  'rider.rejectedSub': 'راجع بياناتك وأعد الإرسال، أو تواصل مع مكتب Jareeye.',
   'rider.pendingTitle': 'استلمنا طلبك',
   'rider.pendingBody': 'سيتحقق فريقنا من هويتك ودراجتك. ستتحدث هذه الصفحة فور الموافقة عليك.',
   'rider.online': 'متصل',
   'rider.offline': 'غير متصل',
   'rider.offlineTitle': 'أنت غير متصل',
 
-  'admin.title': 'إدارة SABIQ',
+  'admin.title': 'إدارة Jareeye',
   'admin.sub': 'وافق على السائقين وتابع الطلبات.',
   'admin.pending': 'قيد المراجعة',
   'admin.approved': 'مقبول',
@@ -427,12 +427,12 @@ const ar: Dictionary = {
   'map.showAll': 'عرض الجميع',
   'map.live': 'مباشر · يتحدث كل 15 ثانية',
   'city.hargeisa': 'هرجيسا',
-  'area.outside': 'يعمل SABIQ في {city} فقط حالياً. أنت خارج المدينة.',
+  'area.outside': 'يعمل Jareeye في {city} فقط حالياً. أنت خارج المدينة.',
   'area.outsideRider': 'أنت خارج {city}. لن يراك العملاء حتى تعود إلى المدينة.',
 };
 
 const DICTIONARIES: Record<Language, Dictionary> = { so, en, ar };
-const STORAGE_KEY = 'sabiq.language';
+const STORAGE_KEY = 'jareeye.language';
 
 export type Translate = (key: TKey, vars?: Record<string, string | number>) => string;
 

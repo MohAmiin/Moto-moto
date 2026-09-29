@@ -1,4 +1,4 @@
-// Cities SABIQ operates in. The map is locked to the active city and riders outside it are hidden.
+// Cities Jareeye operates in. The map is locked to the active city and riders outside it are hidden.
 // To add a city (for example Mogadishu), add an entry here and the same box to
 // in_service_area() in the database, then set ACTIVE_CITY or let people choose.
 

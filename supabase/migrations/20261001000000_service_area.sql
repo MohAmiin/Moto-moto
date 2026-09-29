@@ -1,4 +1,4 @@
--- Service area: SABIQ runs in Hargeisa for now. Riders whose position is outside the city are not
+-- Service area: Jareeye runs in Hargeisa for now. Riders whose position is outside the city are not
 -- shown. Add another city (for example Mogadishu) as another "or" box, and in src/lib/service-area.ts.
 
 create or replace function public.in_service_area(p_lat double precision, p_lng double precision)

@@ -1,15 +1,15 @@
 {
   "expo": {
-    "name": "SABIQ",
-    "slug": "sabiq",
+    "name": "Jareeye",
+    "slug": "jareeye",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "sabiq",
+    "scheme": "jareeye",
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/images/icon.png",
-      "bundleIdentifier": "so.sabiq.app"
+      "bundleIdentifier": "so.jareeye.app"
     },
     "android": {
       "adaptiveIcon": {
@@ -19,7 +19,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "so.sabiq.app"
+      "package": "so.jareeye.app"
     },
     "web": {
       "output": "single",
@@ -38,13 +38,13 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "SABIQ wuxuu u baahan yahay sawirradaada si aad u soo geliso sawirka kaarka aqoonsiga."
+          "photosPermission": "Jareeye wuxuu u baahan yahay sawirradaada si aad u soo geliso sawirka kaarka aqoonsiga."
         }
       ],
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "SABIQ uses your location to show the nearest riders, and to show riders to people nearby while you are online."
+          "locationWhenInUsePermission": "Jareeye uses your location to show the nearest riders, and to show riders to people nearby while you are online."
         }
       ]
     ],

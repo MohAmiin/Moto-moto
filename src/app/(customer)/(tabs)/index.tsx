@@ -71,7 +71,7 @@ export default function FindRider() {
       <View style={[styles.hero, { backgroundColor: '#14213D' }]}>
         <Row gap={Spacing.two}>
           <Image source={require('@/assets/images/logo-mark.png')} style={styles.logo} contentFit="contain" />
-          <Txt style={styles.wordmark}>SABIQ</Txt>
+          <Txt style={styles.wordmark}>JAREEYE</Txt>
         </Row>
         <Txt variant="title" style={{ color: '#FFFFFF' }}>{t('home.title')}</Txt>
         <Txt style={{ color: '#FFFFFF', opacity: 0.85 }}>{t('home.sub')}</Txt>

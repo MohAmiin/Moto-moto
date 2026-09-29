@@ -1,6 +1,6 @@
-# SABIQ
+# Jareeye
 
-Quick moto delivery for Hargeisa. Anyone who needs something delivered (a shop owner, a family, a business) opens the app, sees the motorbike riders online nearest to them, and calls one. They meet, hand over the package and the receiver's phone number, and the rider delivers it. Payment goes to the rider directly.
+Quick moto delivery for Hargeisa. *Jareeye* is Somali for a fast horse. Anyone who needs something delivered (a shop owner, a family, a business) opens the app, sees the motorbike riders online nearest to them, and calls one. They meet, hand over the package and the receiver's phone number, and the rider delivers it. Payment goes to the rider directly.
 
 The app speaks English (default), Somali and Arabic (right to left), and is built with Expo (React Native) on top of Supabase. Headquarters and launch city: Hargeisa, Somaliland. Phone numbers use +252; Hargeisa numbers usually start with 3, 4, 6 or 9, but any number that receives the SMS code works. A bare 7-digit number gets Telesom's 63 added (474 0002 becomes +252 63 474 0002); delivery areas (xaafad and their degmo) are listed in `src/lib/format.ts`.
 
@@ -30,12 +30,12 @@ The live map uses Leaflet with OpenStreetMap tiles (free, no API key). It runs i
 
 ## Service area
 
-SABIQ runs in Hargeisa only for now. The map is locked to the city, and riders whose position is outside it are not shown to customers. Cities are listed in `src/lib/service-area.ts` and in `in_service_area()` in the database; add Mogadishu to both when it's time to expand.
+Jareeye runs in Hargeisa only for now. The map is locked to the city, and riders whose position is outside it are not shown to customers. Cities are listed in `src/lib/service-area.ts` and in `in_service_area()` in the database; add Mogadishu to both when it's time to expand.
 
 ## Brand
 
 - Colors: navy `#14213D` and orange `#F26B1D`.
-- `assets/brand/` holds the vector files: `sabiq-logo.svg` (full logo), `sabiq-logo-on-dark.svg`, `sabiq-icon.svg` (app icon) and `sabiq-mark.svg` (the S on wheels).
+- `assets/brand/` holds the vector files: `jareeye-logo.svg` (full logo), `jareeye-logo-on-dark.svg`, `jareeye-icon.svg` (app icon) and `jareeye-mark.svg` (the J on wheels).
 - The logo text uses the Montserrat font; convert the text to outlines before sending files to a printer.
 - `assets/images/` holds the PNGs the app uses (icon, Android adaptive icon, splash, favicon), generated from those SVGs.
 
