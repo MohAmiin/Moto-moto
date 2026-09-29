@@ -79,13 +79,16 @@ npm install
 npx expo start            # scan the QR code with Expo Go, or press w for web
 ```
 
-### 4. Build an Android app
+### 4. Build an Android app (APK)
+
+`eas.json` holds the build profiles. The Supabase URL and publishable key are in it on purpose: they ship inside the app anyway, and the database rules protect the data. Never put the secret / service_role key there.
 
 ```bash
+npx eas-cli@latest login                                   # same Expo account as Expo Go
 npx eas-cli@latest build --platform android --profile preview
 ```
 
-This builds an APK in the cloud that you can install on phones directly, before publishing to the Play Store.
+The first time, answer **Yes** to creating the EAS project and to generating a new Android keystore. The build runs in Expo's cloud (10–20 minutes) and ends with a link and QR code to download the APK, which you can send to riders directly. The `production` profile builds an app bundle for the Play Store.
 
 ## Checks
 
