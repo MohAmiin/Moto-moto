@@ -1,4 +1,4 @@
--- Dhaqso: initial schema
+-- SABIQ: initial schema
 -- Customers order from stores or send packages; approved motorbike riders deliver for a flat fee.
 
 -- ---------------------------------------------------------------------------

@@ -70,7 +70,7 @@ const so = {
   'verify.changeNumber': 'Beddel lambarka',
 
   // Onboarding
-  'onb.welcome': 'Ku soo dhawoow Dhaqso',
+  'onb.welcome': 'Ku soo dhawoow SABIQ',
   'onb.how': 'Sidee u isticmaalaysaa app-ka?',
   'onb.customerTitle': 'Waxaan ahay macmiil',
   'onb.customerBody': 'Dalbo cunto, raashin iyo daawo, ama dir xirmo. Geyntu waa $1.',
@@ -102,7 +102,7 @@ const so = {
   'rf.photoAdd': 'Sawir ku soo geli',
   'rf.photoChange': 'Riix si aad u beddesho',
   'rf.photoHint': 'Kaarka aqoonsiga ama baasaboorka',
-  'rf.agree': 'Waxaan oggolahay shuruudaha Dhaqso, waxaanan leeyahay mooto iyo liisan wadis.',
+  'rf.agree': 'Waxaan oggolahay shuruudaha SABIQ, waxaanan leeyahay mooto iyo liisan wadis.',
   'rf.missingFields': 'Fadlan buuxi magaca, lambarka aqoonsiga iyo taarikada',
   'rf.missingPhoto': 'Fadlan soo geli sawirka kaarka aqoonsiga',
   'rf.mustAgree': 'Fadlan oggolow shuruudaha',
@@ -206,7 +206,7 @@ const so = {
   'rider.completeTitle': 'Dhammaystir codsigaaga',
   'rider.completeSub': 'Waxaan u baahanahay macluumaadka mootadaada ka hor intaadan bilaabin.',
   'rider.rejectedTitle': 'Codsigaaga lama aqbalin',
-  'rider.rejectedSub': 'Hubi macluumaadka oo mar kale soo gudbi, ama la xiriir xafiiska Dhaqso.',
+  'rider.rejectedSub': 'Hubi macluumaadka oo mar kale soo gudbi, ama la xiriir xafiiska SABIQ.',
   'rider.pendingTitle': 'Codsigaaga waa la helay',
   'rider.pendingBody': 'Kooxdayadu waxay hubin doontaa aqoonsigaaga iyo mootadaada. Boggan wuu is beddeli doonaa marka lagu ansixiyo.',
   'rider.online': 'Online',
@@ -241,7 +241,7 @@ const so = {
   'job.done': 'Shaqadan waa dhammaatay.',
 
   // Admin
-  'admin.title': 'Maamulka Dhaqso',
+  'admin.title': 'Maamulka SABIQ',
   'admin.sub': 'Ansixi darawallada, la soco dalabyada.',
   'admin.pending': 'Sugaya',
   'admin.approved': 'La ansixiyay',
@@ -310,7 +310,7 @@ const en: Dictionary = {
   'verify.resend': 'Send me a new code',
   'verify.changeNumber': 'Change number',
 
-  'onb.welcome': 'Welcome to Dhaqso',
+  'onb.welcome': 'Welcome to SABIQ',
   'onb.how': 'How will you use the app?',
   'onb.customerTitle': "I'm a customer",
   'onb.customerBody': 'Order food, groceries and medicine, or send a package. Delivery is $1.',
@@ -341,7 +341,7 @@ const en: Dictionary = {
   'rf.photoAdd': 'Add a photo',
   'rf.photoChange': 'Tap to change',
   'rf.photoHint': 'ID card or passport',
-  'rf.agree': 'I agree to the Dhaqso terms, and I have a motorbike and a driving licence.',
+  'rf.agree': 'I agree to the SABIQ terms, and I have a motorbike and a driving licence.',
   'rf.missingFields': 'Please fill in your name, ID number and plate',
   'rf.missingPhoto': 'Please add a photo of your ID card',
   'rf.mustAgree': 'Please accept the terms',
@@ -438,7 +438,7 @@ const en: Dictionary = {
   'rider.completeTitle': 'Complete your application',
   'rider.completeSub': 'We need your bike details before you start.',
   'rider.rejectedTitle': 'Your application was not approved',
-  'rider.rejectedSub': 'Check your details and submit again, or contact the Dhaqso office.',
+  'rider.rejectedSub': 'Check your details and submit again, or contact the SABIQ office.',
   'rider.pendingTitle': "We've received your application",
   'rider.pendingBody': "Our team will check your ID and bike. This page updates as soon as you're approved.",
   'rider.online': 'Online',
@@ -471,7 +471,7 @@ const en: Dictionary = {
   'job.delivered': 'Delivered',
   'job.done': 'This job is complete.',
 
-  'admin.title': 'Dhaqso admin',
+  'admin.title': 'SABIQ admin',
   'admin.sub': 'Approve riders and follow orders.',
   'admin.pending': 'Pending',
   'admin.approved': 'Approved',
@@ -537,7 +537,7 @@ const ar: Dictionary = {
   'verify.resend': 'أرسل لي رمزاً جديداً',
   'verify.changeNumber': 'تغيير الرقم',
 
-  'onb.welcome': 'مرحباً بك في Dhaqso',
+  'onb.welcome': 'مرحباً بك في SABIQ',
   'onb.how': 'كيف ستستخدم التطبيق؟',
   'onb.customerTitle': 'أنا عميل',
   'onb.customerBody': `اطلب الطعام والبقالة والدواء، أو أرسل طرداً. التوصيل بـ ${LTR}$1${PDI}.`,
@@ -568,7 +568,7 @@ const ar: Dictionary = {
   'rf.photoAdd': 'أضف صورة',
   'rf.photoChange': 'اضغط للتغيير',
   'rf.photoHint': 'بطاقة الهوية أو جواز السفر',
-  'rf.agree': 'أوافق على شروط Dhaqso، ولدي دراجة نارية ورخصة قيادة.',
+  'rf.agree': 'أوافق على شروط SABIQ، ولدي دراجة نارية ورخصة قيادة.',
   'rf.missingFields': 'يرجى إدخال الاسم ورقم الهوية ولوحة الدراجة',
   'rf.missingPhoto': 'يرجى إضافة صورة بطاقة الهوية',
   'rf.mustAgree': 'يرجى الموافقة على الشروط',
@@ -665,7 +665,7 @@ const ar: Dictionary = {
   'rider.completeTitle': 'أكمل طلب الانضمام',
   'rider.completeSub': 'نحتاج بيانات دراجتك قبل أن تبدأ.',
   'rider.rejectedTitle': 'لم تتم الموافقة على طلبك',
-  'rider.rejectedSub': 'راجع بياناتك وأعد الإرسال، أو تواصل مع مكتب Dhaqso.',
+  'rider.rejectedSub': 'راجع بياناتك وأعد الإرسال، أو تواصل مع مكتب SABIQ.',
   'rider.pendingTitle': 'استلمنا طلبك',
   'rider.pendingBody': 'سيتحقق فريقنا من هويتك ودراجتك. ستتحدث هذه الصفحة فور الموافقة عليك.',
   'rider.online': 'متصل',
@@ -698,7 +698,7 @@ const ar: Dictionary = {
   'job.delivered': 'تم التسليم',
   'job.done': 'اكتملت هذه المهمة.',
 
-  'admin.title': 'إدارة Dhaqso',
+  'admin.title': 'إدارة SABIQ',
   'admin.sub': 'وافق على السائقين وتابع الطلبات.',
   'admin.pending': 'قيد المراجعة',
   'admin.approved': 'مقبول',
@@ -715,7 +715,7 @@ const ar: Dictionary = {
 };
 
 const DICTIONARIES: Record<Language, Dictionary> = { so, en, ar };
-const STORAGE_KEY = 'dhaqso.language';
+const STORAGE_KEY = 'sabiq.language';
 
 export type Translate = (key: TKey, vars?: Record<string, string | number>) => string;
 

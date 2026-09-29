@@ -1,4 +1,4 @@
-# Dhaqso
+# SABIQ
 
 A $1 motorbike delivery app for Somalia. Customers order food, groceries and medicine, or send a package anywhere in the city. Motorbike riders register, get approved, and deliver. Delivery is a flat $1.
 

@@ -39,9 +39,9 @@ export default function SignIn() {
       <View style={[styles.hero, { backgroundColor: theme.brand }]}>
         <View style={styles.brandRow}>
           <View style={[styles.logo, { backgroundColor: theme.gold }]}>
-            <Txt style={[styles.logoText, { color: theme.onGold }]}>D</Txt>
+            <Txt style={[styles.logoText, { color: theme.onGold }]}>S</Txt>
           </View>
-          <Txt style={[styles.wordmark, { color: theme.onBrand }]}>Dhaqso</Txt>
+          <Txt style={[styles.wordmark, { color: theme.onBrand }]}>SABIQ</Txt>
         </View>
         <Txt variant="title" style={{ color: theme.onBrand }}>{t('signin.headline')}</Txt>
         <Txt style={{ color: theme.onBrand, opacity: 0.9 }}>{t('signin.sub')}</Txt>

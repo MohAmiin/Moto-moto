@@ -5,7 +5,7 @@ with s as (
     ('Maqaayadda Barwaaqo', 'Bariis, baasto iyo hilib', 'food', 'Haleeya', '25–35'),
     ('Bunna House', 'Shaah, qaxwo iyo quraac', 'cafe', 'Dooxa Weyn', '15–25'),
     ('Pizza Badda', 'Pizza, burger iyo baradho', 'food', 'New Hargeysa', '30–40'),
-    ('Raashinka Dhaqso', 'Caano, rooti, bariis iyo sonkor', 'shop', 'Suuqa', '20–30'),
+    ('Raashinka Suuqa', 'Caano, rooti, bariis iyo sonkor', 'shop', 'Suuqa', '20–30'),
     ('Farmashiyaha Caafimaad', 'Daawooyin aan warqad u baahnayn', 'pharma', 'Goljano', '20–30')
   returning id, name
 )
@@ -24,10 +24,10 @@ from s join (values
   ('Pizza Badda', 'Pizza khudaar', 'Yaanyo, basbaas cagaar iyo zaytuun', 6.00, 2),
   ('Pizza Badda', 'Burger hilib', 'Burger hilib lo''aad iyo farmaajo', 4.50, 3),
   ('Pizza Badda', 'Baradho shiilan', 'Baradho qalalan oo milix leh', 2.00, 4),
-  ('Raashinka Dhaqso', 'Caano (1L)', 'Caano geel oo cusub', 1.50, 1),
-  ('Raashinka Dhaqso', 'Rooti', 'Rooti maanta la dubay', 0.50, 2),
-  ('Raashinka Dhaqso', 'Ukun (12 xabbo)', 'Ukun digaag', 3.00, 3),
-  ('Raashinka Dhaqso', 'Bariis (5kg)', 'Bariis basmati', 6.00, 4),
+  ('Raashinka Suuqa', 'Caano (1L)', 'Caano geel oo cusub', 1.50, 1),
+  ('Raashinka Suuqa', 'Rooti', 'Rooti maanta la dubay', 0.50, 2),
+  ('Raashinka Suuqa', 'Ukun (12 xabbo)', 'Ukun digaag', 3.00, 3),
+  ('Raashinka Suuqa', 'Bariis (5kg)', 'Bariis basmati', 6.00, 4),
   ('Farmashiyaha Caafimaad', 'Paracetamol (20)', 'Xanuun iyo qandho', 1.00, 1),
   ('Farmashiyaha Caafimaad', 'ORS (5 bac)', 'Biyo-baxa ka hortag', 0.50, 2),
   ('Farmashiyaha Caafimaad', 'Maaskaro (10)', 'Maaskaro caafimaad', 1.00, 3)
