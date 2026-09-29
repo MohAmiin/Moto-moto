@@ -2,7 +2,7 @@
 
 A $1 motorbike delivery app for Somalia. Customers order food, groceries and medicine, or send a package anywhere in the city. Motorbike riders register, get approved, and deliver. Delivery is a flat $1.
 
-The app speaks English (default), Somali and Arabic (right to left), and is built with Expo (React Native) on top of Supabase. Headquarters and launch city: Hargeisa, Somaliland. Phone numbers use +252 and must start with 3, 4, 6 or 9; delivery areas (xaafad and their degmo) are listed in `src/lib/format.ts`.
+The app speaks English (default), Somali and Arabic (right to left), and is built with Expo (React Native) on top of Supabase. Headquarters and launch city: Hargeisa, Somaliland. Phone numbers use +252; Hargeisa numbers usually start with 3, 4, 6 or 9, but any number that receives the SMS code works; delivery areas (xaafad and their degmo) are listed in `src/lib/format.ts`.
 
 ## What's in the app
 

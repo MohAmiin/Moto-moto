@@ -43,9 +43,10 @@ export function normalizeLocalPhone(input: string) {
   return digits;
 }
 
-// Launch market is Hargeisa, Somaliland: local numbers start with 3, 4, 6 or 9 (for example 63 474 0002).
+// Any number that can receive the SMS code is allowed. Hargeisa numbers usually start with 3, 4, 6 or 9
+// (for example 63 474 0002), but we only check the length; the SMS itself proves the number works.
 export function isValidLocalPhone(digits: string) {
-  return /^[3469]\d{6,8}$/.test(digits);
+  return /^\d{6,10}$/.test(digits);
 }
 
 export function toE164(digits: string) {
