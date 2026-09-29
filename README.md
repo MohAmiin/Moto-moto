@@ -61,6 +61,7 @@ supabase/seed.sql        Sample stores and products
 1. Create a project at [supabase.com](https://supabase.com).
 2. In **SQL Editor**, run each file in `supabase/migrations/` in order (`20260928…_init.sql`, `20260929…_nearby_riders.sql`, `20260930…_rider_map.sql`, then `20261001…_service_area.sql`).
    (Or with the Supabase CLI: `npx supabase link` then `npx supabase db push`.)
+   If only the first migration was applied, `supabase/catch-up-find-a-rider.sql` applies the other three in one go; it is safe to run more than once.
 3. In **Authentication → Sign In / Providers → Phone**, enable phone sign-in and connect an SMS provider (Twilio, MessageBird, Vonage or Textlocal). Check that it delivers to Hormuud, Somtel and Golis numbers before launch.
 4. While testing, add **test phone numbers** with fixed codes in the same Phone settings so no real SMS is sent, for example `252610000001` with code `123456`.
 
