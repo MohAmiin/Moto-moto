@@ -60,7 +60,7 @@ Sign out and back in to see the admin screen.
 ### 3. Run the app
 
 ```bash
-cp .env.example .env      # fill in the project URL and anon (publishable) key from Settings → API
+cp .env.example .env      # paste the two lines from Supabase → Connect → Expo React Native → .env.local
 npm install
 npx expo start            # scan the QR code with Expo Go, or press w for web
 ```

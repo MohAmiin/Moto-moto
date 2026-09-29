@@ -5,11 +5,12 @@ import { createClient } from '@supabase/supabase-js';
 import { AppState, Platform } from 'react-native';
 
 const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
-const key = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+// Supabase's dashboard names it EXPO_PUBLIC_SUPABASE_KEY (publishable key); the older anon key name also works.
+const key = process.env.EXPO_PUBLIC_SUPABASE_KEY ?? process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
 if (!url || !key) {
   throw new Error(
-    'Missing EXPO_PUBLIC_SUPABASE_URL or EXPO_PUBLIC_SUPABASE_ANON_KEY. Copy .env.example to .env and fill it in.',
+    'Missing EXPO_PUBLIC_SUPABASE_URL or EXPO_PUBLIC_SUPABASE_KEY. Copy .env.example to .env and fill it in.',
   );
 }
 
