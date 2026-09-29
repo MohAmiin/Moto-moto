@@ -17,6 +17,7 @@ import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
 import { MaxContentWidth, Radius, Spacing, type ThemeColor } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { LANGUAGES, useI18n } from '@/lib/i18n';
 
 // ---------------------------------------------------------------------------
 // Layout
@@ -52,15 +53,16 @@ export function Screen({
 
 export function Header({ title, subtitle, back = true }: { title: string; subtitle?: string; back?: boolean }) {
   const theme = useTheme();
+  const { t, isRTL } = useI18n();
   return (
     <View style={[styles.header, { borderColor: theme.border }]}>
       {back && router.canGoBack() ? (
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Dib u noqo"
+          accessibilityLabel={t('common.back')}
           onPress={() => router.back()}
           style={[styles.back, { backgroundColor: theme.backgroundElement }]}>
-          <Txt style={styles.backIcon}>‹</Txt>
+          <Txt style={styles.backIcon}>{isRTL ? '›' : '‹'}</Txt>
         </Pressable>
       ) : null}
       <View style={{ flex: 1 }}>
@@ -186,10 +188,11 @@ export function Field({ label, error, help, ...input }: TextInputProps & { label
 
 export function PhoneField({ value, onChangeText, error }: { value: string; onChangeText: (v: string) => void; error?: string }) {
   const theme = useTheme();
+  const { t } = useI18n();
   return (
     <View style={{ gap: Spacing.one + 2 }}>
-      <Txt variant="label">Lambarka taleefanka</Txt>
-      <View style={[styles.phone, { backgroundColor: theme.backgroundElement, borderColor: error ? theme.danger : theme.border }]}>
+      <Txt variant="label">{t('common.phone')}</Txt>
+      <View style={[styles.phone, styles.ltr, { backgroundColor: theme.backgroundElement, borderColor: error ? theme.danger : theme.border }]}>
         <Txt style={[styles.prefix, { borderColor: theme.border }]}>+252</Txt>
         <TextInput
           value={value}
@@ -201,7 +204,7 @@ export function PhoneField({ value, onChangeText, error }: { value: string; onCh
           placeholderTextColor={theme.textSecondary}
           maxLength={13}
           style={[styles.phoneInput, { color: theme.text }]}
-          accessibilityLabel="Lambarka taleefanka"
+          accessibilityLabel={t('common.phone')}
         />
       </View>
       {error ? <Txt color="danger" style={styles.small}>{error}</Txt> : null}
@@ -271,20 +274,21 @@ export function Pill({ label, tone = 'neutral' }: { label: string; tone?: 'neutr
 
 export function Stepper({ quantity, onAdd, onRemove }: { quantity: number; onAdd: () => void; onRemove: () => void }) {
   const theme = useTheme();
+  const { t } = useI18n();
   if (quantity === 0) {
     return (
       <Pressable accessibilityRole="button" onPress={onAdd} style={[styles.add, { borderColor: theme.brand }]}>
-        <Text style={[styles.addText, { color: theme.brand }]}>Ku dar</Text>
+        <Text style={[styles.addText, { color: theme.brand }]}>{t('common.add')}</Text>
       </Pressable>
     );
   }
   return (
     <View style={[styles.stepper, { backgroundColor: theme.brand }]}>
-      <Pressable accessibilityRole="button" accessibilityLabel="Ka yaree" onPress={onRemove} style={styles.stepBtn}>
+      <Pressable accessibilityRole="button" accessibilityLabel={t('common.removeOne')} onPress={onRemove} style={styles.stepBtn}>
         <Text style={[styles.stepText, { color: theme.onBrand }]}>−</Text>
       </Pressable>
       <Text style={[styles.stepText, { color: theme.onBrand, minWidth: 18, textAlign: 'center' }]}>{quantity}</Text>
-      <Pressable accessibilityRole="button" accessibilityLabel="Ku dar mid" onPress={onAdd} style={styles.stepBtn}>
+      <Pressable accessibilityRole="button" accessibilityLabel={t('common.addOne')} onPress={onAdd} style={styles.stepBtn}>
         <Text style={[styles.stepText, { color: theme.onBrand }]}>+</Text>
       </Pressable>
     </View>
@@ -304,6 +308,29 @@ export function Monogram({ name, size = 56 }: { name: string; size?: number }) {
   return (
     <View style={{ width: size, height: size, borderRadius: size * 0.28, backgroundColor: `hsl(${hash}, 55%, 42%)`, alignItems: 'center', justifyContent: 'center' }}>
       <Text style={{ color: '#fff', fontWeight: '800', fontSize: size * 0.34 }}>{initials}</Text>
+    </View>
+  );
+}
+
+/** Segmented control for Somali, English and Arabic. The choice is saved on the device. */
+export function LanguageSwitcher({ onDark = false }: { onDark?: boolean }) {
+  const theme = useTheme();
+  const { language, setLanguage, t } = useI18n();
+  return (
+    <View style={[styles.langs, { backgroundColor: onDark ? 'rgba(0,0,0,0.2)' : theme.backgroundElement }]} accessibilityRole="radiogroup" accessibilityLabel={t('common.language')}>
+      {LANGUAGES.map((l) => {
+        const selected = l.id === language;
+        return (
+          <Pressable
+            key={l.id}
+            accessibilityRole="radio"
+            accessibilityState={{ selected }}
+            onPress={() => setLanguage(l.id)}
+            style={[styles.lang, selected && { backgroundColor: theme.background }]}>
+            <Text style={[styles.langText, { color: selected ? theme.text : onDark ? theme.onBrand : theme.textSecondary }]}>{l.label}</Text>
+          </Pressable>
+        );
+      })}
     </View>
   );
 }
@@ -353,8 +380,10 @@ const styles = StyleSheet.create({
   link: { fontSize: 14, fontWeight: '700', paddingVertical: Spacing.one },
   input: { borderWidth: 1.5, borderRadius: Radius.small + 2, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16 },
   phone: { flexDirection: 'row', borderWidth: 1.5, borderRadius: Radius.small + 2, overflow: 'hidden' },
-  prefix: { paddingHorizontal: 12, paddingVertical: 12, fontSize: 16, fontWeight: '700', borderRightWidth: 1 },
-  phoneInput: { flex: 1, paddingHorizontal: 12, fontSize: 16, fontVariant: ['tabular-nums'] },
+  prefix: { paddingHorizontal: 12, paddingVertical: 12, fontSize: 16, fontWeight: '700', borderRightWidth: 1, writingDirection: 'ltr' },
+  // Phone numbers read left to right in every language.
+  ltr: { direction: 'ltr' },
+  phoneInput: { flex: 1, paddingHorizontal: 12, fontSize: 16, fontVariant: ['tabular-nums'], textAlign: 'left', writingDirection: 'ltr' },
   small: { fontSize: 13 },
   choices: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
   choice: { flexGrow: 1, borderWidth: 1.5, borderRadius: Radius.small + 2, paddingVertical: 10, paddingHorizontal: 8, alignItems: 'center' },
@@ -367,4 +396,7 @@ const styles = StyleSheet.create({
   stepBtn: { width: 36, height: 34, alignItems: 'center', justifyContent: 'center' },
   stepText: { fontSize: 17, fontWeight: '800' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  langs: { flexDirection: 'row', alignSelf: 'flex-start', borderRadius: Radius.pill, padding: 3, gap: 2 },
+  lang: { borderRadius: Radius.pill, paddingHorizontal: 12, paddingVertical: 6 },
+  langText: { fontSize: 13, fontWeight: '700' },
 });

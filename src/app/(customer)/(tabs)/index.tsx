@@ -7,12 +7,14 @@ import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth';
 import { useCart } from '@/lib/cart';
-import { CATEGORIES, STATUS_LABEL, money } from '@/lib/somali';
+import { CATEGORIES, money, statusLongKey } from '@/lib/format';
+import { useI18n } from '@/lib/i18n';
 import { supabase } from '@/lib/supabase';
 import type { Order, Store, StoreCategory } from '@/lib/types';
 
 export default function Home() {
   const theme = useTheme();
+  const { t } = useI18n();
   const { profile } = useAuth();
   const cart = useCart();
   const [stores, setStores] = useState<Store[]>([]);
@@ -61,19 +63,19 @@ export default function Home() {
       edges={['top']}
       footer={
         cart.count > 0 ? (
-          <Button title={`Eeg dambiisha · ${cart.count} · ${money(cart.subtotal)}`} onPress={() => router.push('/cart')} />
+          <Button title={t('home.viewBasket', { count: cart.count, total: money(cart.subtotal) })} onPress={() => router.push('/cart')} />
         ) : null
       }>
       <View style={[styles.top, { backgroundColor: theme.brand }]}>
-        <Txt style={{ color: theme.onBrand, opacity: 0.85, fontSize: 13, fontWeight: '600' }}>Geynta · {profile?.district}</Txt>
-        <Txt variant="heading" style={{ color: theme.onBrand }}>Soo dhawoow, {firstName}</Txt>
+        <Txt style={{ color: theme.onBrand, opacity: 0.85, fontSize: 13, fontWeight: '600' }}>{t('home.deliverTo', { district: profile?.district ?? '' })}</Txt>
+        <Txt variant="heading" style={{ color: theme.onBrand }}>{t('home.hello', { name: firstName })}</Txt>
         <TextInput
           value={query}
           onChangeText={setQuery}
-          placeholder="Raadi maqaayad, cunto ama dukaan"
+          placeholder={t('home.search')}
           placeholderTextColor={theme.textSecondary}
           style={[styles.search, { backgroundColor: theme.background, color: theme.text }]}
-          accessibilityLabel="Raadi"
+          accessibilityLabel={t('home.search')}
         />
       </View>
 
@@ -81,10 +83,10 @@ export default function Home() {
         <Pressable accessibilityRole="button" onPress={() => router.push(`/order/${activeOrder.id}`)}>
           <View style={[styles.active, { backgroundColor: theme.backgroundSelected }]}>
             <Row style={{ justifyContent: 'space-between' }}>
-              <Txt style={{ fontWeight: '800' }}>Dalab #{activeOrder.id}</Txt>
-              <Pill label="Raac" tone="brand" />
+              <Txt style={{ fontWeight: '800' }}>{t('common.orderNumber', { id: activeOrder.id })}</Txt>
+              <Pill label={t('home.track')} tone="brand" />
             </Row>
-            <Txt variant="muted">{STATUS_LABEL[activeOrder.status]}</Txt>
+            <Txt variant="muted">{t(statusLongKey(activeOrder.status))}</Txt>
           </View>
         </Pressable>
       ) : null}
@@ -92,8 +94,8 @@ export default function Home() {
       <Pressable accessibilityRole="button" onPress={() => router.push('/send')}>
         <View style={[styles.promo, { backgroundColor: theme.gold }]}>
           <View style={{ flex: 1, gap: 2 }}>
-            <Txt variant="heading" style={{ color: theme.onGold }}>Dir xirmo meel kasta</Txt>
-            <Txt style={{ color: theme.onGold, opacity: 0.85, fontSize: 13 }}>Mooto ayaa ka qaadaysa, meel kasta u geynaysa</Txt>
+            <Txt variant="heading" style={{ color: theme.onGold }}>{t('home.sendTitle')}</Txt>
+            <Txt style={{ color: theme.onGold, opacity: 0.85, fontSize: 13 }}>{t('home.sendSub')}</Txt>
           </View>
           <Txt variant="big" style={{ color: theme.onGold }}>$1</Txt>
         </View>
@@ -101,22 +103,22 @@ export default function Home() {
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: Spacing.two }}>
         {CATEGORIES.map((c) => {
-          const selected = c.id === category;
+          const selected = c === category;
           return (
             <Pressable
-              key={c.id}
+              key={c}
               accessibilityRole="button"
               accessibilityState={{ selected }}
-              onPress={() => setCategory(c.id)}
+              onPress={() => setCategory(c)}
               style={[styles.chip, { borderColor: selected ? theme.text : theme.border, backgroundColor: selected ? theme.text : theme.background }]}>
-              <Txt style={{ fontWeight: '700', fontSize: 14, color: selected ? theme.background : theme.textSecondary }}>{c.label}</Txt>
+              <Txt style={{ fontWeight: '700', fontSize: 14, color: selected ? theme.background : theme.textSecondary }}>{t(`cat.${c}`)}</Txt>
             </Pressable>
           );
         })}
       </ScrollView>
 
-      <Txt variant="heading">Meelaha furan</Txt>
-      {loaded && visible.length === 0 ? <Empty title="Waxba lama helin" body="Isku day eray ama qayb kale." /> : null}
+      <Txt variant="heading">{t('home.openNow')}</Txt>
+      {loaded && visible.length === 0 ? <Empty title={t('home.nothingFound')} body={t('home.tryOther')} /> : null}
       {visible.map((s) => (
         <Pressable key={s.id} accessibilityRole="button" onPress={() => router.push(`/store/${s.id}`)}>
           <View style={[styles.store, { borderColor: theme.border }]}>
@@ -125,8 +127,8 @@ export default function Home() {
               <Txt style={{ fontWeight: '700', fontSize: 16 }}>{s.name}</Txt>
               <Txt variant="muted">{s.description}</Txt>
               <Row style={{ marginTop: 4 }}>
-                <Pill label="Geyn $1" tone="gold" />
-                <Pill label={`${s.eta_label} daqiiqo`} />
+                <Pill label={t('common.deliveryBadge')} tone="gold" />
+                <Pill label={t('common.minutes', { n: s.eta_label })} />
               </Row>
             </View>
           </View>

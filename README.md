@@ -2,7 +2,7 @@
 
 A $1 motorbike delivery app for Somalia. Customers order food, groceries and medicine, or send a package anywhere in the city. Motorbike riders register, get approved, and deliver. Delivery is a flat $1.
 
-The app is in Somali and built with Expo (React Native) on top of Supabase.
+The app speaks English (default), Somali and Arabic (right to left), and is built with Expo (React Native) on top of Supabase. It launches in Hargeisa.
 
 ## What's in the app
 
@@ -31,7 +31,7 @@ src/app/                 Screens (Expo Router, one file per screen)
   rider/                    Application status, jobs dashboard, active job
   admin/                    Rider approvals and orders
 src/components/          Shared UI
-src/lib/                 Supabase client, auth, cart, Somali labels, types
+src/lib/                 Supabase client, auth, cart, translations (i18n.tsx), areas and formatting, types
 supabase/migrations/     Database schema, security rules and functions
 supabase/seed.sql        Sample stores and products
 ```

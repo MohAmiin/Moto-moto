@@ -2,10 +2,12 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 
 import { Button, Field, Header, LinkButton, Screen, Stack, Txt } from '@/components/ui';
-import { formatPhone, toE164 } from '@/lib/somali';
-import { friendlyError, supabase } from '@/lib/supabase';
+import { formatPhone, toE164 } from '@/lib/format';
+import { useI18n } from '@/lib/i18n';
+import { errorKey, supabase } from '@/lib/supabase';
 
 export default function Verify() {
+  const { t } = useI18n();
   const { phone = '' } = useLocalSearchParams<{ phone: string }>();
   const [code, setCode] = useState('');
   const [error, setError] = useState<string>();
@@ -14,7 +16,7 @@ export default function Verify() {
 
   async function verify() {
     if (!/^\d{6}$/.test(code)) {
-      setError('Koodhku waa 6 lambar');
+      setError(t('verify.sixDigits'));
       return;
     }
     setError(undefined);
@@ -22,21 +24,21 @@ export default function Verify() {
     const { error: verifyError } = await supabase.auth.verifyOtp({ phone: toE164(phone), token: code, type: 'sms' });
     setChecking(false);
     // On success the auth listener updates the session and the router moves on by itself.
-    if (verifyError) setError(friendlyError(verifyError));
+    if (verifyError) setError(t(errorKey(verifyError)));
   }
 
   async function resend() {
     const { error: otpError } = await supabase.auth.signInWithOtp({ phone: toE164(phone) });
-    if (otpError) setError(friendlyError(otpError));
+    if (otpError) setError(t(errorKey(otpError)));
     else setResent(true);
   }
 
   return (
     <Screen>
-      <Header title="Geli koodhka" subtitle={`Waxaan u dirnay ${formatPhone(phone)}`} />
+      <Header title={t('verify.title')} subtitle={t('verify.sentTo', { phone: formatPhone(phone) })} />
       <Stack>
         <Field
-          label="Koodhka SMS-ka"
+          label={t('verify.label')}
           value={code}
           onChangeText={(v) => setCode(v.replace(/\D/g, ''))}
           keyboardType="number-pad"
@@ -48,9 +50,9 @@ export default function Verify() {
           style={{ fontSize: 24, letterSpacing: 8, textAlign: 'center', fontWeight: '800' }}
           autoFocus
         />
-        <Button title="Xaqiiji" onPress={verify} loading={checking} />
-        {resent ? <Txt variant="muted">Koodh cusub ayaa laguu diray.</Txt> : <LinkButton title="Koodh cusub ii soo dir" onPress={resend} />}
-        <LinkButton title="Beddel lambarka" onPress={() => router.back()} />
+        <Button title={t('verify.confirm')} onPress={verify} loading={checking} />
+        {resent ? <Txt variant="muted">{t('verify.resent')}</Txt> : <LinkButton title={t('verify.resend')} onPress={resend} />}
+        <LinkButton title={t('verify.changeNumber')} onPress={() => router.back()} />
       </Stack>
     </Screen>
   );

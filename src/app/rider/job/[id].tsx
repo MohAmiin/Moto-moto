@@ -3,11 +3,13 @@ import { useState } from 'react';
 import { Linking } from 'react-native';
 
 import { Button, Card, Empty, Header, Loading, Pill, Row, Screen, Txt } from '@/components/ui';
-import { money, packageLabel, paymentLabel } from '@/lib/somali';
-import { friendlyError, supabase } from '@/lib/supabase';
+import { money, packageKey, paymentKey } from '@/lib/format';
+import { useI18n } from '@/lib/i18n';
+import { errorKey, supabase } from '@/lib/supabase';
 import { useOrder } from '@/lib/use-order';
 
 export default function RiderJob() {
+  const { t } = useI18n();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { detail, missing, reload } = useOrder(Number(id));
   const [error, setError] = useState<string>();
@@ -16,8 +18,8 @@ export default function RiderJob() {
   if (missing) {
     return (
       <Screen>
-        <Header title="Shaqo" />
-        <Empty title="Shaqadan lama helin" />
+        <Header title={t('job.title', { id: id ?? '' })} />
+        <Empty title={t('job.notFound')} />
       </Screen>
     );
   }
@@ -26,6 +28,7 @@ export default function RiderJob() {
   const { order, items, storeName, customer } = detail;
   const total = Number(order.items_total) + Number(order.delivery_fee);
   const pickupTitle = order.kind === 'store' ? (storeName ?? order.pickup_note) : order.pickup_note;
+  const cash = order.payment_method === 'cash';
 
   async function advance() {
     setSaving(true);
@@ -33,7 +36,7 @@ export default function RiderJob() {
     const { data, error: e } = await supabase.rpc('advance_order', { p_order_id: order.id });
     setSaving(false);
     if (e) {
-      setError(friendlyError(e));
+      setError(t(errorKey(e)));
       return;
     }
     if (data === 'delivered') router.back();
@@ -42,20 +45,26 @@ export default function RiderJob() {
 
   return (
     <Screen>
-      <Header title={`Shaqo #${order.id}`} subtitle={order.kind === 'store' ? 'Dalab dukaan' : packageLabel(order.package_type)} />
+      <Header
+        title={t('job.title', { id: order.id })}
+        subtitle={order.kind === 'store' ? t('rider.storeOrder') : t(packageKey(order.package_type))}
+      />
 
       <Card>
-        <Pill label="Ka qaad" tone="success" />
+        <Pill label={t('job.pickupFrom')} tone="success" />
         <Txt variant="heading">{pickupTitle}</Txt>
-        <Txt variant="muted">Degmada {order.pickup_district}</Txt>
+        <Txt variant="muted">{t('common.districtOf', { d: order.pickup_district })}</Txt>
       </Card>
 
       <Card>
-        <Pill label="Geey" tone="danger" />
-        <Txt variant="heading">{customer?.full_name ?? 'Macmiil'}</Txt>
-        <Txt variant="muted">Degmada {order.dropoff_district}{order.dropoff_note ? ` · ${order.dropoff_note}` : ''}</Txt>
+        <Pill label={t('job.deliverTo')} tone="danger" />
+        <Txt variant="heading">{customer?.full_name ?? t('common.customer')}</Txt>
+        <Txt variant="muted">
+          {t('common.districtOf', { d: order.dropoff_district })}
+          {order.dropoff_note ? ` · ${order.dropoff_note}` : ''}
+        </Txt>
         {customer?.phone ? (
-          <Button kind="ghost" title="Wac macmiilka" onPress={() => Linking.openURL(`tel:+${customer.phone!.replace(/^\+/, '')}`)} />
+          <Button kind="ghost" title={t('job.callCustomer')} onPress={() => Linking.openURL(`tel:+${customer.phone!.replace(/^\+/, '')}`)} />
         ) : null}
       </Card>
 
@@ -72,16 +81,16 @@ export default function RiderJob() {
 
       <Card tone="soft">
         <Row style={{ justifyContent: 'space-between' }}>
-          <Txt variant="heading">{order.payment_method === 'cash' ? 'Ka qaado lacag caddaan ah' : 'Horay loo bixiyay'}</Txt>
+          <Txt variant="heading">{t(cash ? 'job.collectCash' : 'job.prepaid')}</Txt>
           <Txt variant="heading">{money(total)}</Txt>
         </Row>
-        <Txt variant="muted">{paymentLabel(order.payment_method)} · Adiga: {money(order.delivery_fee)}</Txt>
+        <Txt variant="muted">{t('job.yourShare', { method: t(paymentKey(order.payment_method)), fee: money(order.delivery_fee) })}</Txt>
       </Card>
 
       {error ? <Txt color="danger">{error}</Txt> : null}
-      {order.status === 'accepted' ? <Button kind="gold" title="Waan qaatay" onPress={advance} loading={saving} /> : null}
-      {order.status === 'picked_up' ? <Button kind="gold" title="Waan geeyay" onPress={advance} loading={saving} /> : null}
-      {order.status === 'delivered' ? <Txt color="success" style={{ fontWeight: '700' }}>Shaqadan waa dhammaatay.</Txt> : null}
+      {order.status === 'accepted' ? <Button kind="gold" title={t('job.pickedUp')} onPress={advance} loading={saving} /> : null}
+      {order.status === 'picked_up' ? <Button kind="gold" title={t('job.delivered')} onPress={advance} loading={saving} /> : null}
+      {order.status === 'delivered' ? <Txt color="success" style={{ fontWeight: '700' }}>{t('job.done')}</Txt> : null}
     </Screen>
   );
 }

@@ -3,25 +3,22 @@ import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Button, Card, Choices, Empty, Header, LinkButton, Pill, Row, Screen, Stack, Txt } from '@/components/ui';
+import { Button, Card, Choices, Empty, Header, LanguageSwitcher, LinkButton, Pill, Row, Screen, Stack, Txt } from '@/components/ui';
 import { Radius, Spacing } from '@/constants/theme';
 import { useAuth } from '@/lib/auth';
-import { STATUS_SHORT, formatPhone, money, paymentLabel } from '@/lib/somali';
-import { friendlyError, supabase } from '@/lib/supabase';
+import { formatPhone, money, paymentKey, statusKey } from '@/lib/format';
+import { useI18n, type TKey } from '@/lib/i18n';
+import { errorKey, supabase } from '@/lib/supabase';
 import type { ApplicationStatus, Order, RiderApplication } from '@/lib/types';
 
 type Application = RiderApplication & { profile: { full_name: string; phone: string | null } | null; photoUrl?: string };
 type AdminOrder = Order & { stores: { name: string } | null };
 
-const TABS = [
-  { id: 'pending', label: 'Sugaya' },
-  { id: 'approved', label: 'La ansixiyay' },
-  { id: 'rejected', label: 'La diiday' },
-  { id: 'orders', label: 'Dalabyada' },
-] as const;
-type Tab = (typeof TABS)[number]['id'];
+const TABS = ['pending', 'approved', 'rejected', 'orders'] as const;
+type Tab = (typeof TABS)[number];
 
 export default function Admin() {
+  const { t, locale } = useI18n();
   const { signOut } = useAuth();
   const [tab, setTab] = useState<Tab>('pending');
   const [applications, setApplications] = useState<Application[]>([]);
@@ -72,34 +69,38 @@ export default function Admin() {
     setError(undefined);
     const { error: e } = await supabase.rpc('review_rider', { p_user_id: userId, p_approve: approve });
     setBusy(null);
-    if (e) setError(friendlyError(e));
+    if (e) setError(t(errorKey(e)));
     else load();
   }
 
   const count = (s: ApplicationStatus) => applications.filter((a) => a.status === s).length;
   const openOrders = orders.filter((o) => o.status === 'placed' || o.status === 'accepted' || o.status === 'picked_up').length;
-  const tabs = TABS.map((t) => ({ ...t, label: t.id === 'orders' ? `${t.label} (${openOrders})` : `${t.label} (${count(t.id)})` }));
+  const tabs = TABS.map((id) => ({ id, label: `${t(`admin.${id}` as TKey)} (${id === 'orders' ? openOrders : count(id)})` }));
 
   return (
     <Screen>
-      <Header title="Maamulka Dhaqso" subtitle="Ansixi darawallada, la soco dalabyada." back={false} />
+      <LanguageSwitcher />
+      <Header title={t('admin.title')} subtitle={t('admin.sub')} back={false} />
       <Choices options={tabs} value={tab} onChange={setTab} columns={4} />
       {error ? <Txt color="danger">{error}</Txt> : null}
 
       {tab === 'orders' ? (
         orders.length === 0 ? (
-          <Empty title="Weli dalab ma jiro" />
+          <Empty title={t('admin.noOrders')} />
         ) : (
           orders.map((o) => (
             <Card key={o.id}>
               <Row style={{ justifyContent: 'space-between' }}>
                 <Txt style={{ fontWeight: '700', flex: 1 }}>
-                  #{o.id} · {o.kind === 'store' ? (o.stores?.name ?? 'Dukaan') : `Xirmo ${o.pickup_district} → ${o.dropoff_district}`}
+                  #{o.id} ·{' '}
+                  {o.kind === 'store'
+                    ? (o.stores?.name ?? t('common.store'))
+                    : `${t('admin.package')} · ${t('common.route', { from: o.pickup_district, to: o.dropoff_district })}`}
                 </Txt>
-                <Pill label={STATUS_SHORT[o.status]} tone={o.status === 'delivered' ? 'success' : o.status === 'placed' ? 'warning' : o.status === 'cancelled' ? 'neutral' : 'brand'} />
+                <Pill label={t(statusKey(o.status))} tone={o.status === 'delivered' ? 'success' : o.status === 'placed' ? 'warning' : o.status === 'cancelled' ? 'neutral' : 'brand'} />
               </Row>
               <Txt variant="muted">
-                {new Date(o.created_at).toLocaleString()} · {money(Number(o.items_total) + Number(o.delivery_fee))} · {paymentLabel(o.payment_method)}
+                {new Date(o.created_at).toLocaleString(locale)} · {money(Number(o.items_total) + Number(o.delivery_fee))} · {t(paymentKey(o.payment_method))}
               </Txt>
             </Card>
           ))
@@ -112,7 +113,7 @@ export default function Admin() {
         />
       )}
 
-      <LinkButton title="Ka bax" onPress={signOut} />
+      <LinkButton title={t('common.signOut')} onPress={signOut} />
     </Screen>
   );
 }
@@ -126,22 +127,23 @@ function ApplicationList({
   busy: string | null;
   onReview?: (userId: string, approve: boolean) => void;
 }) {
-  if (items.length === 0) return <Empty title="Codsi ma jiro" />;
+  const { t, locale } = useI18n();
+  if (items.length === 0) return <Empty title={t('admin.noApplications')} />;
   return items.map((a) => (
     <Card key={a.user_id}>
       <Row gap={Spacing.three} style={{ alignItems: 'flex-start' }}>
-        {a.photoUrl ? <Image source={{ uri: a.photoUrl }} style={styles.photo} contentFit="cover" accessibilityLabel="Sawirka aqoonsiga" /> : null}
+        {a.photoUrl ? <Image source={{ uri: a.photoUrl }} style={styles.photo} contentFit="cover" accessibilityLabel={t('admin.idPhoto')} /> : null}
         <Stack gap={2} style={{ flex: 1 }}>
           <Txt variant="heading">{a.profile?.full_name ?? '—'}</Txt>
           <Txt variant="muted">{formatPhone(a.profile?.phone)}</Txt>
-          <Txt variant="muted">Aqoonsi: {a.id_number} · Taarikada: {a.plate}</Txt>
-          <Txt variant="muted">Degmada: {a.district} · {new Date(a.created_at).toLocaleDateString()}</Txt>
+          <Txt variant="muted">{t('admin.idLine', { id: a.id_number, plate: a.plate })}</Txt>
+          <Txt variant="muted">{t('admin.districtLine', { d: a.district, date: new Date(a.created_at).toLocaleDateString(locale) })}</Txt>
         </Stack>
       </Row>
       {onReview ? (
         <View style={styles.actions}>
-          <Button title="Ansixi" onPress={() => onReview(a.user_id, true)} loading={busy === a.user_id} style={{ flex: 1 }} />
-          <Button title="Diid" kind="danger" onPress={() => onReview(a.user_id, false)} disabled={busy === a.user_id} style={{ flex: 1 }} />
+          <Button title={t('admin.approve')} onPress={() => onReview(a.user_id, true)} loading={busy === a.user_id} style={{ flex: 1 }} />
+          <Button title={t('admin.reject')} kind="danger" onPress={() => onReview(a.user_id, false)} disabled={busy === a.user_id} style={{ flex: 1 }} />
         </View>
       ) : null}
     </Card>

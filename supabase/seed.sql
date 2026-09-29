@@ -2,11 +2,11 @@
 
 with s as (
   insert into public.stores (name, description, category, district, eta_label) values
-    ('Maqaayadda Barwaaqo', 'Bariis, baasto iyo hilib', 'food', 'Hodan', '25–35'),
-    ('Bunna House', 'Shaah, qaxwo iyo quraac', 'cafe', 'Hodan', '15–25'),
-    ('Pizza Badda', 'Pizza, burger iyo baradho', 'food', 'Wadajir', '30–40'),
-    ('Raashinka Dhaqso', 'Caano, rooti, bariis iyo sonkor', 'shop', 'Hawl-Wadaag', '20–30'),
-    ('Farmashiyaha Caafimaad', 'Daawooyin aan warqad u baahnayn', 'pharma', 'Waaberi', '20–30')
+    ('Maqaayadda Barwaaqo', 'Bariis, baasto iyo hilib', 'food', 'Macalin Haaruun', '25–35'),
+    ('Bunna House', 'Shaah, qaxwo iyo quraac', 'cafe', 'Dooxa Weyn', '15–25'),
+    ('Pizza Badda', 'Pizza, burger iyo baradho', 'food', 'New Hargeysa', '30–40'),
+    ('Raashinka Dhaqso', 'Caano, rooti, bariis iyo sonkor', 'shop', 'Suuqa', '20–30'),
+    ('Farmashiyaha Caafimaad', 'Daawooyin aan warqad u baahnayn', 'pharma', 'Goljano', '20–30')
   returning id, name
 )
 insert into public.products (store_id, name, description, price, sort_order)

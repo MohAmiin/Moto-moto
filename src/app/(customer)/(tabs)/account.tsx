@@ -1,13 +1,13 @@
 import { useState } from 'react';
 
-import { Button, Choices, Header, Monogram, Row, Screen, Stack, Txt } from '@/components/ui';
+import { Button, Choices, Header, LanguageSwitcher, Monogram, Row, Screen, Stack, Txt } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
-import { DISTRICTS, formatPhone } from '@/lib/somali';
-import { friendlyError, supabase } from '@/lib/supabase';
-
-const districtOptions = DISTRICTS.map((d) => ({ id: d, label: d }));
+import { AREA_OPTIONS, DEFAULT_AREA, formatPhone } from '@/lib/format';
+import { useI18n } from '@/lib/i18n';
+import { errorKey, supabase } from '@/lib/supabase';
 
 export default function Account() {
+  const { t } = useI18n();
   const { profile, refresh, signOut } = useAuth();
   const [message, setMessage] = useState<string>();
 
@@ -15,16 +15,16 @@ export default function Account() {
 
   async function changeDistrict(district: string) {
     const { error } = await supabase.from('profiles').update({ district }).eq('id', profile!.id);
-    if (error) setMessage(friendlyError(error));
+    if (error) setMessage(t(errorKey(error)));
     else {
-      setMessage('Cinwaanka waa la beddelay');
+      setMessage(t('acct.addressChanged'));
       await refresh();
     }
   }
 
   return (
     <Screen edges={['top']}>
-      <Header title="Akoonkayga" back={false} />
+      <Header title={t('acct.title')} back={false} />
       <Row gap={16}>
         <Monogram name={profile.full_name} size={60} />
         <Stack gap={2}>
@@ -32,9 +32,13 @@ export default function Account() {
           <Txt variant="muted">{formatPhone(profile.phone)}</Txt>
         </Stack>
       </Row>
-      <Choices label="Degmada geynta" options={districtOptions} value={profile.district ?? 'Hodan'} onChange={changeDistrict} columns={3} />
+      <Stack gap={8}>
+        <Txt variant="label">{t('common.language')}</Txt>
+        <LanguageSwitcher />
+      </Stack>
+      <Choices label={t('acct.deliveryDistrict')} options={AREA_OPTIONS} value={profile.district ?? DEFAULT_AREA} onChange={changeDistrict} columns={2} />
       {message ? <Txt variant="muted">{message}</Txt> : null}
-      <Button title="Ka bax" kind="ghost" onPress={signOut} />
+      <Button title={t('common.signOut')} kind="ghost" onPress={signOut} />
     </Screen>
   );
 }

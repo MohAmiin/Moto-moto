@@ -3,34 +3,32 @@ import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, Switch, View } from 'react-native';
 
 import { RiderApplicationForm } from '@/components/rider-application-form';
-import { Button, Card, Empty, Header, LinkButton, Pill, Row, Screen, Stack, Txt } from '@/components/ui';
+import { Button, Card, Empty, Header, LanguageSwitcher, LinkButton, Pill, Row, Screen, Stack, Txt } from '@/components/ui';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth';
-import { formatPhone, money, packageLabel, paymentLabel } from '@/lib/somali';
-import { friendlyError, supabase } from '@/lib/supabase';
+import { formatPhone, money, packageKey, paymentKey } from '@/lib/format';
+import { useI18n } from '@/lib/i18n';
+import { errorKey, supabase } from '@/lib/supabase';
 import type { Order } from '@/lib/types';
 
 export default function RiderHome() {
+  const { t } = useI18n();
   const { profile, application, signOut } = useAuth();
   if (!profile) return null;
 
-  if (!application) {
+  if (!application || application.status === 'rejected') {
+    const rejected = application?.status === 'rejected';
     return (
       <Screen>
-        <Header title="Dhammaystir codsigaaga" subtitle="Waxaan u baahanahay macluumaadka mootadaada ka hor intaadan bilaabin." back={false} />
+        <LanguageSwitcher />
+        <Header
+          title={t(rejected ? 'rider.rejectedTitle' : 'rider.completeTitle')}
+          subtitle={t(rejected ? 'rider.rejectedSub' : 'rider.completeSub')}
+          back={false}
+        />
         <RiderApplicationForm createProfile={false} />
-        <LinkButton title="Ka bax" onPress={signOut} />
-      </Screen>
-    );
-  }
-
-  if (application.status === 'rejected') {
-    return (
-      <Screen>
-        <Header title="Codsigaaga lama aqbalin" subtitle="Hubi macluumaadka oo mar kale soo gudbi, ama la xiriir xafiiska Dhaqso." back={false} />
-        <RiderApplicationForm createProfile={false} />
-        <LinkButton title="Ka bax" onPress={signOut} />
+        <LinkButton title={t('common.signOut')} onPress={signOut} />
       </Screen>
     );
   }
@@ -38,19 +36,18 @@ export default function RiderHome() {
   if (application.status === 'pending') {
     return (
       <Screen>
-        <Stack style={{ alignItems: 'center', paddingTop: Spacing.five }}>
-          <Txt variant="title" style={{ textAlign: 'center' }}>Codsigaaga waa la helay</Txt>
-          <Txt variant="muted" style={{ textAlign: 'center' }}>
-            Kooxdayadu waxay hubin doontaa aqoonsigaaga iyo mootadaada. Boggan wuu is beddeli doonaa marka lagu ansixiyo.
-          </Txt>
+        <LanguageSwitcher />
+        <Stack style={{ alignItems: 'center', paddingTop: Spacing.four }}>
+          <Txt variant="title" style={{ textAlign: 'center' }}>{t('rider.pendingTitle')}</Txt>
+          <Txt variant="muted" style={{ textAlign: 'center' }}>{t('rider.pendingBody')}</Txt>
         </Stack>
         <Card>
-          <Detail label="Magaca" value={profile.full_name} />
-          <Detail label="Taleefan" value={formatPhone(profile.phone)} />
-          <Detail label="Taarikada" value={application.plate} />
-          <Detail label="Degmada" value={application.district} />
+          <Detail label={t('common.name')} value={profile.full_name} />
+          <Detail label={t('common.phoneShort')} value={formatPhone(profile.phone)} />
+          <Detail label={t('common.plate')} value={application.plate} />
+          <Detail label={t('common.district')} value={application.district} />
         </Card>
-        <LinkButton title="Ka bax" onPress={signOut} />
+        <LinkButton title={t('common.signOut')} onPress={signOut} />
       </Screen>
     );
   }
@@ -71,6 +68,7 @@ type Job = Order & { stores: { name: string } | null };
 
 function Dashboard() {
   const theme = useTheme();
+  const { t } = useI18n();
   const { profile, application, refresh, signOut } = useAuth();
   const [online, setOnline] = useState(profile?.is_online ?? false);
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -116,7 +114,7 @@ function Dashboard() {
     const { error: e } = await supabase.from('profiles').update({ is_online: next }).eq('id', riderId);
     if (e) {
       setOnline(!next);
-      setError(friendlyError(e));
+      setError(t(errorKey(e)));
     } else {
       refresh();
     }
@@ -128,7 +126,7 @@ function Dashboard() {
     const { error: e } = await supabase.rpc('accept_order', { p_order_id: job.id });
     setAccepting(null);
     if (e) {
-      setError(friendlyError(e));
+      setError(t(errorKey(e)));
       load();
       return;
     }
@@ -146,14 +144,14 @@ function Dashboard() {
             </Txt>
           </View>
           <Row>
-            <Txt style={{ color: theme.background, fontWeight: '700' }}>{online ? 'Online' : 'Offline'}</Txt>
-            <Switch value={online} onValueChange={toggleOnline} accessibilityLabel="Online" />
+            <Txt style={{ color: theme.background, fontWeight: '700' }}>{t(online ? 'rider.online' : 'rider.offline')}</Txt>
+            <Switch value={online} onValueChange={toggleOnline} accessibilityLabel={t('rider.online')} />
           </Row>
         </Row>
         <Row gap={Spacing.two}>
-          <Stat label="Safarrada maanta" value={String(today.trips)} />
-          <Stat label="Dakhliga maanta" value={money(today.earned)} />
-          <Stat label="Dalabyo cusub" value={String(online ? jobs.length : 0)} />
+          <Stat label={t('rider.tripsToday')} value={String(today.trips)} />
+          <Stat label={t('rider.earnedToday')} value={money(today.earned)} />
+          <Stat label={t('rider.newJobs')} value={String(online ? jobs.length : 0)} />
         </Row>
       </View>
 
@@ -162,30 +160,31 @@ function Dashboard() {
       {active ? (
         <Card style={{ borderColor: theme.gold, borderWidth: 2 }}>
           <Row style={{ justifyContent: 'space-between' }}>
-            <Pill label={active.status === 'accepted' ? 'Soo qaado' : 'U geey macmiilka'} tone="warning" />
+            <Pill label={t(active.status === 'accepted' ? 'rider.pickUp' : 'rider.deliver')} tone="warning" />
             <Txt variant="big">$1</Txt>
           </Row>
           <JobSummary job={active} />
-          <Button kind="gold" title="Fur shaqada" onPress={() => router.push(`/rider/job/${active.id}`)} />
+          <Button kind="gold" title={t('rider.openJob')} onPress={() => router.push(`/rider/job/${active.id}`)} />
         </Card>
       ) : !online ? (
-        <Empty title="Waxaad tahay offline" body="Shid si aad u hesho dalabyo." />
+        <Empty title={t('rider.offlineTitle')} body={t('rider.offlineBody')} />
       ) : jobs.length === 0 ? (
-        <Empty title="Sug dalabyo" body="Dalab cusub marka la sameeyo halkan ayuu ka muuqan doonaa." />
+        <Empty title={t('rider.waitTitle')} body={t('rider.waitBody')} />
       ) : (
         jobs.map((job) => (
           <Card key={job.id} style={{ borderColor: theme.gold, borderWidth: 2 }}>
             <Row style={{ justifyContent: 'space-between' }}>
-              <Pill label="Dalab cusub" tone="gold" />
+              <Pill label={t('rider.newJob')} tone="gold" />
               <Txt variant="big">$1</Txt>
             </Row>
             <JobSummary job={job} />
-            <Button title="Aqbal" onPress={() => accept(job)} loading={accepting === job.id} />
+            <Button title={t('rider.accept')} onPress={() => accept(job)} loading={accepting === job.id} />
           </Card>
         ))
       )}
 
-      <LinkButton title="Ka bax" onPress={signOut} />
+      <LanguageSwitcher />
+      <LinkButton title={t('common.signOut')} onPress={signOut} />
     </Screen>
   );
 }
@@ -201,15 +200,17 @@ function Stat({ label, value }: { label: string; value: string }) {
 }
 
 function JobSummary({ job }: { job: Job }) {
+  const { t } = useI18n();
   const pickup = job.kind === 'store' ? (job.stores?.name ?? job.pickup_note) : job.pickup_note;
-  const total = Number(job.items_total) + Number(job.delivery_fee);
+  const total = money(Number(job.items_total) + Number(job.delivery_fee));
+  const payment =
+    job.payment_method === 'cash' ? t('rider.collectCash', { total }) : t('rider.prepaid', { method: t(paymentKey(job.payment_method)) });
   return (
     <Stack gap={Spacing.two}>
-      <Leg tag="A" title={pickup} subtitle={`Degmada ${job.pickup_district}`} />
-      <Leg tag="B" title={`Degmada ${job.dropoff_district}`} subtitle={job.dropoff_note || 'Macmiil'} />
+      <Leg tag="A" title={pickup} subtitle={t('common.districtOf', { d: job.pickup_district })} />
+      <Leg tag="B" title={t('common.districtOf', { d: job.dropoff_district })} subtitle={job.dropoff_note || t('common.customer')} />
       <Txt variant="muted">
-        #{job.id} · {job.kind === 'store' ? 'Dalab dukaan' : packageLabel(job.package_type)} ·{' '}
-        {job.payment_method === 'cash' ? `Ka qaado ${money(total)} lacag caddaan ah` : `Horay loo bixiyay (${paymentLabel(job.payment_method)})`}
+        #{job.id} · {job.kind === 'store' ? t('rider.storeOrder') : t(packageKey(job.package_type))} · {payment}
       </Txt>
     </Stack>
   );

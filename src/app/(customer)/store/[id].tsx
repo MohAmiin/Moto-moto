@@ -6,12 +6,14 @@ import { Button, Empty, Header, Loading, Monogram, Row, Screen, Stepper, Txt } f
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useCart } from '@/lib/cart';
-import { money } from '@/lib/somali';
+import { money } from '@/lib/format';
+import { useI18n } from '@/lib/i18n';
 import { supabase } from '@/lib/supabase';
 import type { Product, Store } from '@/lib/types';
 
 export default function StoreScreen() {
   const theme = useTheme();
+  const { t } = useI18n();
   const { id } = useLocalSearchParams<{ id: string }>();
   const cart = useCart();
   const [store, setStore] = useState<Store | null>(null);
@@ -36,16 +38,16 @@ export default function StoreScreen() {
     <Screen
       footer={
         inThisStore && cart.count > 0 ? (
-          <Button title={`Eeg dambiisha · ${cart.count} · ${money(cart.subtotal)}`} onPress={() => router.push('/cart')} />
+          <Button title={t('home.viewBasket', { count: cart.count, total: money(cart.subtotal) })} onPress={() => router.push('/cart')} />
         ) : null
       }>
-      <Header title={store.name} subtitle={`${store.eta_label} daqiiqo · Geyn $1`} />
+      <Header title={store.name} subtitle={t('store.eta', { eta: store.eta_label })} />
       <Row gap={Spacing.three}>
         <Monogram name={store.name} size={64} />
         <Txt variant="muted" style={{ flex: 1 }}>{store.description}</Txt>
       </Row>
       {notice ? <Txt color="warning">{notice}</Txt> : null}
-      {products.length === 0 ? <Empty title="Weli alaab lama gelin" /> : null}
+      {products.length === 0 ? <Empty title={t('store.noItems')} /> : null}
       {products.map((p) => (
         <View key={p.id} style={[styles.item, { borderColor: theme.border }]}>
           <View style={{ flex: 1, gap: 2 }}>
@@ -56,7 +58,7 @@ export default function StoreScreen() {
           <Stepper
             quantity={inThisStore ? cart.quantityOf(p.id) : 0}
             onAdd={() => {
-              if (cart.add(store, p)) setNotice('Dambiishii hore waa la faaruqiyay. Hal meel ayaa laga dalban karaa markiiba.');
+              if (cart.add(store, p)) setNotice(t('store.basketCleared'));
             }}
             onRemove={() => cart.remove(p.id)}
           />

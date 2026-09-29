@@ -7,10 +7,9 @@ import { Button, Choices, Field, Stack, Txt } from '@/components/ui';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth';
-import { DISTRICTS } from '@/lib/somali';
-import { friendlyError, supabase } from '@/lib/supabase';
-
-const districtOptions = DISTRICTS.map((d) => ({ id: d, label: d }));
+import { AREA_OPTIONS, DEFAULT_AREA } from '@/lib/format';
+import { useI18n } from '@/lib/i18n';
+import { errorKey, supabase } from '@/lib/supabase';
 
 /**
  * Collects what we need to vet a rider. Creates the rider profile first when `createProfile` is set
@@ -18,11 +17,12 @@ const districtOptions = DISTRICTS.map((d) => ({ id: d, label: d }));
  */
 export function RiderApplicationForm({ createProfile }: { createProfile: boolean }) {
   const theme = useTheme();
+  const { t } = useI18n();
   const { session, profile, application, refresh } = useAuth();
   const [name, setName] = useState(profile?.full_name ?? '');
   const [idNumber, setIdNumber] = useState(application?.id_number ?? '');
   const [plate, setPlate] = useState(application?.plate ?? '');
-  const [district, setDistrict] = useState<string>(application?.district ?? profile?.district ?? 'Hodan');
+  const [district, setDistrict] = useState<string>(application?.district ?? profile?.district ?? DEFAULT_AREA);
   const [photo, setPhoto] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const [agree, setAgree] = useState(false);
   const [error, setError] = useState<string>();
@@ -37,15 +37,15 @@ export function RiderApplicationForm({ createProfile }: { createProfile: boolean
     const userId = session?.user.id;
     if (!userId) return;
     if ((createProfile && name.trim().length < 2) || idNumber.trim().length < 3 || plate.trim().length < 2) {
-      setError('Fadlan buuxi magaca, lambarka aqoonsiga iyo taarikada');
+      setError(t('rf.missingFields'));
       return;
     }
     if (!photo && !application?.id_photo_path) {
-      setError('Fadlan soo geli sawirka kaarka aqoonsiga');
+      setError(t('rf.missingPhoto'));
       return;
     }
     if (!agree) {
-      setError('Fadlan oggolow shuruudaha');
+      setError(t('rf.mustAgree'));
       return;
     }
     setError(undefined);
@@ -77,7 +77,7 @@ export function RiderApplicationForm({ createProfile }: { createProfile: boolean
 
       await refresh();
     } catch (e) {
-      setError(friendlyError(e));
+      setError(t(errorKey(e)));
     } finally {
       setSaving(false);
     }
@@ -86,14 +86,14 @@ export function RiderApplicationForm({ createProfile }: { createProfile: boolean
   return (
     <Stack>
       {createProfile ? (
-        <Field label="Magaca oo buuxa" value={name} onChangeText={setName} autoComplete="name" placeholder="tus. Cabdi Xasan Faarax" />
+        <Field label={t('rf.fullName')} value={name} onChangeText={setName} autoComplete="name" placeholder={t('rf.fullNamePh')} />
       ) : null}
-      <Field label="Lambarka aqoonsiga" value={idNumber} onChangeText={setIdNumber} placeholder="tus. 1234567" />
-      <Field label="Taarikada mootada" value={plate} onChangeText={setPlate} autoCapitalize="characters" placeholder="tus. MT 214" />
-      <Choices label="Degmada aad ka shaqeyso" options={districtOptions} value={district} onChange={setDistrict} columns={3} />
+      <Field label={t('rf.idNumber')} value={idNumber} onChangeText={setIdNumber} placeholder={t('rf.idPh')} />
+      <Field label={t('rf.plate')} value={plate} onChangeText={setPlate} autoCapitalize="characters" placeholder={t('rf.platePh')} />
+      <Choices label={t('rf.workDistrict')} options={AREA_OPTIONS} value={district} onChange={setDistrict} columns={2} />
 
       <View style={{ gap: Spacing.two }}>
-        <Txt variant="label">Sawirka kaarka aqoonsiga</Txt>
+        <Txt variant="label">{t('rf.idPhoto')}</Txt>
         <Pressable
           accessibilityRole="button"
           onPress={pickPhoto}
@@ -107,20 +107,20 @@ export function RiderApplicationForm({ createProfile }: { createProfile: boolean
           )}
           <View style={{ flex: 1 }}>
             <Txt style={{ fontWeight: '700' }}>
-              {photo ? 'Sawirka waa la doortay' : application?.id_photo_path ? 'Sawir hore ayaa jira' : 'Sawir ku soo geli'}
+              {photo ? t('rf.photoChosen') : application?.id_photo_path ? t('rf.photoExists') : t('rf.photoAdd')}
             </Txt>
-            <Txt variant="muted">{photo ? 'Riix si aad u beddesho' : 'Kaarka aqoonsiga ama baasaboorka'}</Txt>
+            <Txt variant="muted">{photo ? t('rf.photoChange') : t('rf.photoHint')}</Txt>
           </View>
         </Pressable>
       </View>
 
       <View style={styles.agree}>
-        <Switch value={agree} onValueChange={setAgree} accessibilityLabel="Waxaan oggolahay shuruudaha" />
-        <Txt style={{ flex: 1 }}>Waxaan oggolahay shuruudaha Dhaqso, waxaanan leeyahay mooto iyo liisan wadis.</Txt>
+        <Switch value={agree} onValueChange={setAgree} accessibilityLabel={t('rf.agree')} />
+        <Txt style={{ flex: 1 }}>{t('rf.agree')}</Txt>
       </View>
 
       {error ? <Txt color="danger">{error}</Txt> : null}
-      <Button title="Gudbi codsiga" onPress={submit} loading={saving} />
+      <Button title={t('rf.submit')} onPress={submit} loading={saving} />
     </Stack>
   );
 }

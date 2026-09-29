@@ -6,17 +6,18 @@ import { Button, Card, Choices, Empty, Field, Header, Row, Screen, Stepper, Txt 
 import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/lib/auth';
 import { useCart } from '@/lib/cart';
-import { DISTRICTS, PAYMENT_METHODS, money } from '@/lib/somali';
-import { friendlyError, supabase } from '@/lib/supabase';
+import { AREA_OPTIONS, DEFAULT_AREA, PAYMENT_METHODS, money, paymentKey } from '@/lib/format';
+import { useI18n } from '@/lib/i18n';
+import { errorKey, supabase } from '@/lib/supabase';
 import type { PaymentMethod } from '@/lib/types';
 
 const DELIVERY_FEE = 1;
-const districtOptions = DISTRICTS.map((d) => ({ id: d, label: d }));
 
 export default function Cart() {
+  const { t } = useI18n();
   const { profile } = useAuth();
   const cart = useCart();
-  const [district, setDistrict] = useState<string>(profile?.district ?? 'Hodan');
+  const [district, setDistrict] = useState<string>(profile?.district ?? DEFAULT_AREA);
   const [note, setNote] = useState('');
   const [payment, setPayment] = useState<PaymentMethod>('evc');
   const [error, setError] = useState<string>();
@@ -25,11 +26,13 @@ export default function Cart() {
   if (!cart.store || cart.count === 0) {
     return (
       <Screen>
-        <Header title="Dambiisha" />
-        <Empty title="Dambiishaadu waa madhan tahay" body="Dooro maqaayad ama dukaan." />
+        <Header title={t('cart.title')} />
+        <Empty title={t('cart.empty')} body={t('cart.emptyBody')} />
       </Screen>
     );
   }
+
+  const payOptions = PAYMENT_METHODS.map((id) => ({ id, label: t(paymentKey(id)), hint: t(id === 'cash' ? 'pay.cashHint' : 'pay.mobileHint') }));
 
   async function place() {
     setPlacing(true);
@@ -43,7 +46,7 @@ export default function Cart() {
     });
     setPlacing(false);
     if (e) {
-      setError(friendlyError(e));
+      setError(t(errorKey(e)));
       return;
     }
     cart.clear();
@@ -52,7 +55,7 @@ export default function Cart() {
 
   return (
     <Screen>
-      <Header title="Dambiisha" subtitle={cart.store.name} />
+      <Header title={t('cart.title')} subtitle={cart.store.name} />
       <Card>
         {cart.lines.map((l) => (
           <Row key={l.product.id} gap={Spacing.three}>
@@ -63,22 +66,22 @@ export default function Cart() {
         ))}
       </Card>
 
-      <Choices label="Halkee laguu keenaa?" options={districtOptions} value={district} onChange={setDistrict} columns={3} />
-      <Field label="Tilmaan" value={note} onChangeText={setNote} multiline placeholder="tus. agagaarka masjidka, albaab buluug ah" />
-      <Choices label="Habka lacag bixinta" options={PAYMENT_METHODS} value={payment} onChange={setPayment} />
+      <Choices label={t('cart.where')} options={AREA_OPTIONS} value={district} onChange={setDistrict} columns={2} />
+      <Field label={t('cart.directions')} value={note} onChangeText={setNote} multiline placeholder={t('cart.directionsPh')} />
+      <Choices label={t('cart.payWith')} options={payOptions} value={payment} onChange={setPayment} />
 
       <View style={{ gap: Spacing.one }}>
-        <Row style={styles.between}><Txt>Wadarta alaabta</Txt><Txt variant="price">{money(cart.subtotal)}</Txt></Row>
-        <Row style={styles.between}><Txt>Lacagta geynta</Txt><Txt variant="price">{money(DELIVERY_FEE)}</Txt></Row>
-        <Row style={styles.between}><Txt variant="heading">Wadarta guud</Txt><Txt variant="heading">{money(cart.subtotal + DELIVERY_FEE)}</Txt></Row>
+        <Row style={styles.between}><Txt>{t('cart.itemsTotal')}</Txt><Txt variant="price">{money(cart.subtotal)}</Txt></Row>
+        <Row style={styles.between}><Txt>{t('common.deliveryFee')}</Txt><Txt variant="price">{money(DELIVERY_FEE)}</Txt></Row>
+        <Row style={styles.between}><Txt variant="heading">{t('cart.grandTotal')}</Txt><Txt variant="heading">{money(cart.subtotal + DELIVERY_FEE)}</Txt></Row>
       </View>
       {error ? <Txt color="danger">{error}</Txt> : null}
-      <Button kind="gold" title={`Dir dalabka · ${money(cart.subtotal + DELIVERY_FEE)}`} onPress={place} loading={placing} />
+      <Button kind="gold" title={t('cart.place', { total: money(cart.subtotal + DELIVERY_FEE) })} onPress={place} loading={placing} />
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  amount: { minWidth: 56, textAlign: 'right' },
+  amount: { minWidth: 56, textAlign: 'right', writingDirection: 'ltr' },
   between: { justifyContent: 'space-between' },
 });

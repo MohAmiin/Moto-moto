@@ -4,6 +4,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
 import { AppState, Platform } from 'react-native';
 
+import type { TKey } from '@/lib/i18n';
+
 const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
 // Supabase's dashboard names it EXPO_PUBLIC_SUPABASE_KEY (publishable key); the older anon key name also works.
 const key = process.env.EXPO_PUBLIC_SUPABASE_KEY ?? process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
@@ -35,21 +37,24 @@ if (Platform.OS !== 'web') {
   });
 }
 
-/** Turns a Postgres/Supabase error into a message we can show in Somali. */
-export function friendlyError(error: unknown): string {
+/** Maps a Postgres/Supabase error to a message key; show it with `t(errorKey(e))`. */
+export function errorKey(error: unknown): TKey {
   const message = error instanceof Error ? error.message : String((error as { message?: string })?.message ?? error);
-  const known: Record<string, string> = {
-    'order was taken by another rider': 'Darawal kale ayaa qaatay dalabkan.',
-    'finish your current job first': 'Marka hore dhammee shaqada aad hayso.',
-    'rider is not approved': 'Weli lagu ma ansixin.',
-    'order can no longer be cancelled': 'Dalabkan lama joojin karo hadda.',
-    'store is closed or missing': 'Meeshan hadda way xiran tahay.',
-    'product unavailable': 'Shay ka mid ah dalabka hadda lama heli karo.',
-    'order is empty': 'Dambiishaadu waa madhan tahay.',
-    'Token has expired or is invalid': 'Koodhku waa khalad ama wuu dhacay.',
-  };
-  for (const [needle, somali] of Object.entries(known)) {
-    if (message.includes(needle)) return somali;
+  const known: [string, TKey][] = [
+    ['order was taken by another rider', 'err.takenByOther'],
+    ['finish your current job first', 'err.finishCurrent'],
+    ['rider is not approved', 'err.notApproved'],
+    ['order can no longer be cancelled', 'err.cannotCancel'],
+    ['store is closed or missing', 'err.storeClosed'],
+    ['product unavailable', 'err.productUnavailable'],
+    ['order is empty', 'err.emptyOrder'],
+    ['Token has expired or is invalid', 'err.badCode'],
+    ['sms', 'err.smsFailed'],
+    ['SMS', 'err.smsFailed'],
+    ['Twilio', 'err.smsFailed'],
+  ];
+  for (const [needle, key] of known) {
+    if (message.includes(needle)) return key;
   }
-  return 'Wax khalad ah ayaa dhacay. Fadlan mar kale isku day.';
+  return 'err.generic';
 }

@@ -2,22 +2,22 @@ import { useState } from 'react';
 
 import { Button, Choices, Field, Header, Screen, Txt } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
-import { DISTRICTS } from '@/lib/somali';
-import { friendlyError, supabase } from '@/lib/supabase';
-
-const districtOptions = DISTRICTS.map((d) => ({ id: d, label: d }));
+import { AREA_OPTIONS, DEFAULT_AREA } from '@/lib/format';
+import { useI18n } from '@/lib/i18n';
+import { errorKey, supabase } from '@/lib/supabase';
 
 export default function CustomerOnboarding() {
+  const { t } = useI18n();
   const { session, refresh } = useAuth();
   const [name, setName] = useState('');
-  const [district, setDistrict] = useState<string>('Hodan');
+  const [district, setDistrict] = useState<string>(DEFAULT_AREA);
   const [error, setError] = useState<string>();
   const [saving, setSaving] = useState(false);
 
   async function save() {
     if (!session) return;
     if (name.trim().length < 2) {
-      setError('Fadlan geli magacaaga');
+      setError(t('onb.nameRequired'));
       return;
     }
     setSaving(true);
@@ -26,7 +26,7 @@ export default function CustomerOnboarding() {
       .insert({ id: session.user.id, role: 'customer', full_name: name.trim(), phone: session.user.phone ?? null, district });
     if (e) {
       setSaving(false);
-      setError(friendlyError(e));
+      setError(t(errorKey(e)));
       return;
     }
     await refresh();
@@ -34,11 +34,11 @@ export default function CustomerOnboarding() {
 
   return (
     <Screen>
-      <Header title="Macluumaadkaaga" subtitle="Nala sheeg magacaaga iyo halka aan wax kuugu keenno." />
-      <Field label="Magacaaga" value={name} onChangeText={setName} autoComplete="name" placeholder="tus. Hodan Axmed" error={error} />
-      <Choices label="Degmada aad joogto" options={districtOptions} value={district} onChange={setDistrict} columns={3} />
-      <Txt variant="muted">Waad beddeli kartaa cinwaanka mar kasta oo aad dalbanayso.</Txt>
-      <Button title="Bilow" onPress={save} loading={saving} />
+      <Header title={t('onb.detailsTitle')} subtitle={t('onb.detailsSub')} />
+      <Field label={t('onb.yourName')} value={name} onChangeText={setName} autoComplete="name" placeholder={t('onb.namePh')} error={error} />
+      <Choices label={t('onb.yourDistrict')} options={AREA_OPTIONS} value={district} onChange={setDistrict} columns={2} />
+      <Txt variant="muted">{t('onb.changeLater')}</Txt>
+      <Button title={t('onb.start')} onPress={save} loading={saving} />
     </Screen>
   );
 }
