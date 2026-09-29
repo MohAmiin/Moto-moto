@@ -2,7 +2,7 @@
 
 with s as (
   insert into public.stores (name, description, category, district, eta_label) values
-    ('Maqaayadda Barwaaqo', 'Bariis, baasto iyo hilib', 'food', 'Macalin Haaruun', '25–35'),
+    ('Maqaayadda Barwaaqo', 'Bariis, baasto iyo hilib', 'food', 'Haleeya', '25–35'),
     ('Bunna House', 'Shaah, qaxwo iyo quraac', 'cafe', 'Dooxa Weyn', '15–25'),
     ('Pizza Badda', 'Pizza, burger iyo baradho', 'food', 'New Hargeysa', '30–40'),
     ('Raashinka Dhaqso', 'Caano, rooti, bariis iyo sonkor', 'shop', 'Suuqa', '20–30'),

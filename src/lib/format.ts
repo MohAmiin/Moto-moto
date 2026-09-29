@@ -1,9 +1,12 @@
 import { LTR, PDI, type TKey } from '@/lib/i18n';
 import type { OrderStatus, PaymentMethod, StoreCategory } from '@/lib/types';
 
-// Hargeisa neighbourhoods we deliver to, with the district each belongs to. Add more as the service grows.
+// Hargeisa delivery areas: each xaafad (neighbourhood) with the degmo (district) it belongs to.
+// Customers and riders pick the xaafad; the degmo is shown underneath. Add more as the service grows.
 export const AREAS = [
-  { id: 'Macalin Haaruun', district: 'Macalin Haaruun' },
+  { id: 'Haleeya', district: 'Macalin Haaruun' },
+  { id: 'Shiraaqle', district: 'Macalin Haaruun' },
+  { id: 'Hodan Hills', district: 'Macalin Haaruun' },
   { id: 'Dooxa Weyn', district: '26 June' },
   { id: 'Suuqa', district: '26 June' },
   { id: 'Goljano', district: '26 June' },
@@ -14,7 +17,7 @@ export const AREAS = [
 export const DEFAULT_AREA = AREAS[0].id;
 
 /** Choice options for area pickers: the neighbourhood with its district underneath. */
-export const AREA_OPTIONS = AREAS.map((a) => ({ id: a.id as string, label: a.id, hint: a.id === a.district ? undefined : a.district }));
+export const AREA_OPTIONS = AREAS.map((a) => ({ id: a.id as string, label: a.id, hint: a.district as string }));
 
 export const PAYMENT_METHODS: PaymentMethod[] = ['evc', 'zaad', 'sahal', 'cash'];
 export const CATEGORIES: (StoreCategory | 'all')[] = ['all', 'food', 'cafe', 'shop', 'pharma'];
