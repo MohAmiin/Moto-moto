@@ -1,5 +1,4 @@
 import { LTR, PDI, type TKey } from '@/lib/i18n';
-import type { OrderStatus, PaymentMethod, StoreCategory } from '@/lib/types';
 
 // Hargeisa delivery areas: each xaafad (neighbourhood) with the degmo (district) it belongs to.
 // Customers and riders pick the xaafad; the degmo is shown underneath. Add more as the service grows.
@@ -19,20 +18,10 @@ export const DEFAULT_AREA = AREAS[0].id;
 /** Choice options for area pickers: the neighbourhood with its district underneath. */
 export const AREA_OPTIONS = AREAS.map((a) => ({ id: a.id as string, label: a.id, hint: a.district as string }));
 
-export const PAYMENT_METHODS: PaymentMethod[] = ['evc', 'zaad', 'sahal', 'cash'];
-export const CATEGORIES: (StoreCategory | 'all')[] = ['all', 'food', 'cafe', 'shop', 'pharma'];
-export const PACKAGE_TYPES = ['xirmo', 'warqad', 'cunto', 'kale'] as const;
-export type PackageType = (typeof PACKAGE_TYPES)[number];
-
-export const paymentKey = (id: PaymentMethod) => `pay.${id}` as TKey;
-export const statusKey = (s: OrderStatus) => `status.${s}` as TKey;
-export const statusLongKey = (s: OrderStatus) => `statusLong.${s}` as TKey;
-export const packageKey = (id: string | null) =>
-  (PACKAGE_TYPES.includes(id as PackageType) ? `pkg.${id}` : 'pkg.xirmo') as TKey;
-
-/** Isolated as left-to-right text so it reads correctly inside Arabic sentences too. */
-export function money(value: number) {
-  return `${LTR}$${Number(value).toFixed(2)}${PDI}`;
+/** "350 m away" under 1 km, otherwise "2.4 km away". */
+export function distanceLabel(km: number | null, t: (key: TKey, vars?: Record<string, string | number>) => string) {
+  if (km == null) return null;
+  return km < 1 ? t('home.mAway', { m: Math.max(50, Math.round((km * 1000) / 50) * 50) }) : t('home.kmAway', { km: km.toFixed(1) });
 }
 
 /** Telesom's mobile prefix in Hargeisa; people often give only the 7 digits after it. */

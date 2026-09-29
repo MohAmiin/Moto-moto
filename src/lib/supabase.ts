@@ -41,13 +41,7 @@ if (Platform.OS !== 'web') {
 export function errorKey(error: unknown): TKey {
   const message = error instanceof Error ? error.message : String((error as { message?: string })?.message ?? error);
   const known: [string, TKey][] = [
-    ['order was taken by another rider', 'err.takenByOther'],
-    ['finish your current job first', 'err.finishCurrent'],
     ['rider is not approved', 'err.notApproved'],
-    ['order can no longer be cancelled', 'err.cannotCancel'],
-    ['store is closed or missing', 'err.storeClosed'],
-    ['product unavailable', 'err.productUnavailable'],
-    ['order is empty', 'err.emptyOrder'],
     ['Token has expired or is invalid', 'err.badCode'],
     ['sms', 'err.smsFailed'],
     ['SMS', 'err.smsFailed'],

@@ -3,36 +3,36 @@ import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Button, Card, Choices, Empty, Header, LanguageSwitcher, LinkButton, Pill, Row, Screen, Stack, Txt } from '@/components/ui';
+import { RiderCard } from '@/components/rider-card';
+import { Button, Card, Choices, Empty, Header, LanguageSwitcher, LinkButton, Row, Screen, Stack, Txt } from '@/components/ui';
 import { Radius, Spacing } from '@/constants/theme';
 import { useAuth } from '@/lib/auth';
-import { formatPhone, money, paymentKey, statusKey } from '@/lib/format';
+import { formatPhone } from '@/lib/format';
 import { useI18n, type TKey } from '@/lib/i18n';
 import { errorKey, supabase } from '@/lib/supabase';
-import type { ApplicationStatus, Order, RiderApplication } from '@/lib/types';
+import type { ApplicationStatus, NearbyRider, RiderApplication } from '@/lib/types';
 
 type Application = RiderApplication & { profile: { full_name: string; phone: string | null } | null; photoUrl?: string };
-type AdminOrder = Order & { stores: { name: string } | null };
 
-const TABS = ['pending', 'approved', 'rejected', 'orders'] as const;
+const TABS = ['pending', 'approved', 'rejected', 'online'] as const;
 type Tab = (typeof TABS)[number];
 
 export default function Admin() {
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const { signOut } = useAuth();
   const [tab, setTab] = useState<Tab>('pending');
   const [applications, setApplications] = useState<Application[]>([]);
-  const [orders, setOrders] = useState<AdminOrder[]>([]);
+  const [online, setOnline] = useState<NearbyRider[]>([]);
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const [apps, ords] = await Promise.all([
+    const [apps, riders] = await Promise.all([
       supabase
         .from('rider_applications')
         .select('*, profile:profiles!rider_applications_user_id_fkey(full_name, phone)')
         .order('created_at', { ascending: false }),
-      supabase.from('orders').select('*, stores(name)').order('created_at', { ascending: false }).limit(100),
+      supabase.rpc('nearby_riders', { p_lat: null, p_lng: null, p_area: null }),
     ]);
     const rows = (apps.data as Application[]) ?? [];
     // ID photos live in a private bucket; signed links expire after an hour.
@@ -44,7 +44,7 @@ export default function Admin() {
       }),
     );
     setApplications(withPhotos);
-    setOrders((ords.data as AdminOrder[]) ?? []);
+    setOnline((riders.data as NearbyRider[]) ?? []);
   }, []);
 
   useFocusEffect(
@@ -57,10 +57,11 @@ export default function Admin() {
     const channel = supabase
       .channel('admin')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'rider_applications' }, () => load())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => load())
       .subscribe();
+    const timer = setInterval(load, 30_000);
     return () => {
       supabase.removeChannel(channel);
+      clearInterval(timer);
     };
   }, [load]);
 
@@ -74,8 +75,7 @@ export default function Admin() {
   }
 
   const count = (s: ApplicationStatus) => applications.filter((a) => a.status === s).length;
-  const openOrders = orders.filter((o) => o.status === 'placed' || o.status === 'accepted' || o.status === 'picked_up').length;
-  const tabs = TABS.map((id) => ({ id, label: `${t(`admin.${id}` as TKey)} (${id === 'orders' ? openOrders : count(id)})` }));
+  const tabs = TABS.map((id) => ({ id, label: `${t(`admin.${id}` as TKey)} (${id === 'online' ? online.length : count(id)})` }));
 
   return (
     <Screen>
@@ -84,33 +84,10 @@ export default function Admin() {
       <Choices options={tabs} value={tab} onChange={setTab} columns={4} />
       {error ? <Txt color="danger">{error}</Txt> : null}
 
-      {tab === 'orders' ? (
-        orders.length === 0 ? (
-          <Empty title={t('admin.noOrders')} />
-        ) : (
-          orders.map((o) => (
-            <Card key={o.id}>
-              <Row style={{ justifyContent: 'space-between' }}>
-                <Txt style={{ fontWeight: '700', flex: 1 }}>
-                  #{o.id} ·{' '}
-                  {o.kind === 'store'
-                    ? (o.stores?.name ?? t('common.store'))
-                    : `${t('admin.package')} · ${t('common.route', { from: o.pickup_district, to: o.dropoff_district })}`}
-                </Txt>
-                <Pill label={t(statusKey(o.status))} tone={o.status === 'delivered' ? 'success' : o.status === 'placed' ? 'warning' : o.status === 'cancelled' ? 'neutral' : 'brand'} />
-              </Row>
-              <Txt variant="muted">
-                {new Date(o.created_at).toLocaleString(locale)} · {money(Number(o.items_total) + Number(o.delivery_fee))} · {t(paymentKey(o.payment_method))}
-              </Txt>
-            </Card>
-          ))
-        )
+      {tab === 'online' ? (
+        online.length === 0 ? <Empty title={t('admin.noOnline')} /> : online.map((r) => <RiderCard key={r.id} rider={r} />)
       ) : (
-        <ApplicationList
-          items={applications.filter((a) => a.status === tab)}
-          busy={busy}
-          onReview={tab === 'pending' ? review : undefined}
-        />
+        <ApplicationList items={applications.filter((a) => a.status === tab)} busy={busy} onReview={tab === 'pending' ? review : undefined} />
       )}
 
       <LinkButton title={t('common.signOut')} onPress={signOut} />

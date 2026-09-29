@@ -40,6 +40,12 @@
         {
           "photosPermission": "SABIQ wuxuu u baahan yahay sawirradaada si aad u soo geliso sawirka kaarka aqoonsiga."
         }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "SABIQ uses your location to show the nearest riders, and to show riders to people nearby while you are online."
+        }
       ]
     ],
     "experiments": {

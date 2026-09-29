@@ -2,10 +2,6 @@
 
 export type UserRole = 'customer' | 'rider' | 'admin';
 export type ApplicationStatus = 'pending' | 'approved' | 'rejected';
-export type OrderKind = 'store' | 'package';
-export type OrderStatus = 'placed' | 'accepted' | 'picked_up' | 'delivered' | 'cancelled';
-export type PaymentMethod = 'evc' | 'zaad' | 'sahal' | 'cash';
-export type StoreCategory = 'food' | 'cafe' | 'shop' | 'pharma';
 
 export type Profile = {
   id: string;
@@ -14,6 +10,9 @@ export type Profile = {
   phone: string | null;
   district: string | null;
   is_online: boolean;
+  lat: number | null;
+  lng: number | null;
+  last_seen_at: string | null;
   created_at: string;
 };
 
@@ -28,52 +27,13 @@ export type RiderApplication = {
   created_at: string;
 };
 
-export type Store = {
+/** A row from the nearby_riders() database function. */
+export type NearbyRider = {
   id: string;
-  name: string;
-  description: string;
-  category: StoreCategory;
-  district: string;
-  eta_label: string;
-  is_open: boolean;
-};
-
-export type Product = {
-  id: string;
-  store_id: string;
-  name: string;
-  description: string;
-  price: number;
-  is_available: boolean;
-  sort_order: number;
-};
-
-export type Order = {
-  id: number;
-  kind: OrderKind;
-  customer_id: string;
-  rider_id: string | null;
-  store_id: string | null;
-  pickup_district: string;
-  pickup_note: string;
-  dropoff_district: string;
-  dropoff_note: string;
-  package_type: string | null;
-  items_total: number;
-  delivery_fee: number;
-  payment_method: PaymentMethod;
-  status: OrderStatus;
-  created_at: string;
-  accepted_at: string | null;
-  picked_up_at: string | null;
-  delivered_at: string | null;
-};
-
-export type OrderItem = {
-  id: number;
-  order_id: number;
-  product_id: string | null;
-  name: string;
-  unit_price: number;
-  quantity: number;
+  full_name: string;
+  phone: string | null;
+  plate: string;
+  area: string | null;
+  distance_km: number | null;
+  last_seen_at: string;
 };

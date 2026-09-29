@@ -18,7 +18,6 @@ export default function CustomerTabs() {
         tabBarLabelStyle: { fontSize: 14, fontWeight: '700' },
       }}>
       <Tabs.Screen name="index" options={{ title: t('tab.home') }} />
-      <Tabs.Screen name="orders" options={{ title: t('tab.orders') }} />
       <Tabs.Screen name="account" options={{ title: t('tab.account') }} />
     </Tabs>
   );

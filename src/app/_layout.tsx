@@ -6,7 +6,6 @@ import { View } from 'react-native';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AuthProvider, useAuth } from '@/lib/auth';
-import { CartProvider } from '@/lib/cart';
 import { LanguageProvider, useI18n } from '@/lib/i18n';
 
 SplashScreen.preventAutoHideAsync();
@@ -17,10 +16,8 @@ export default function RootLayout() {
     <ThemeProvider value={scheme === 'dark' ? DarkTheme : DefaultTheme}>
       <LanguageProvider>
         <AuthProvider>
-          <CartProvider>
-            <StatusBar style="auto" />
-            <RootNavigator />
-          </CartProvider>
+          <StatusBar style="auto" />
+          <RootNavigator />
         </AuthProvider>
       </LanguageProvider>
     </ThemeProvider>

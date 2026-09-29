@@ -1,6 +1,6 @@
 # SABIQ
 
-A $1 motorbike delivery app for Somalia. Customers order food, groceries and medicine, or send a package anywhere in the city. Motorbike riders register, get approved, and deliver. Delivery is a flat $1.
+Quick moto delivery for Hargeisa. Anyone who needs something delivered (a shop owner, a family, a business) opens the app, sees the motorbike riders online nearest to them, and calls one. They meet, hand over the package and the receiver's phone number, and the rider delivers it. Payment goes to the rider directly.
 
 The app speaks English (default), Somali and Arabic (right to left), and is built with Expo (React Native) on top of Supabase. Headquarters and launch city: Hargeisa, Somaliland. Phone numbers use +252; Hargeisa numbers usually start with 3, 4, 6 or 9, but any number that receives the SMS code works. A bare 7-digit number gets Telesom's 63 added (474 0002 becomes +252 63 474 0002); delivery areas (xaafad and their degmo) are listed in `src/lib/format.ts`.
 
@@ -10,16 +10,19 @@ One app with three roles, chosen at sign-up:
 
 | Role | What they can do |
 |---|---|
-| **Macmiil** (customer) | Sign in with phone + SMS code, browse stores, order with EVC Plus, Zaad, Sahal or cash, send a package, track the order live, call the rider |
-| **Darawal** (rider) | Register with name, ID number, bike plate, district and a photo of their ID, wait for approval, go online, accept jobs, mark picked up and delivered, see today's trips and earnings |
-| **Maamul** (admin) | Approve or reject riders (with their ID photo), watch all orders |
+| **Customer** (anyone sending something) | Sign in with phone + SMS code, see approved riders online nearby (nearest first, with distance), call or WhatsApp them |
+| **Rider** | Register with name, ID number, bike plate, area and a photo of their ID, wait for approval, then go online so people nearby can find and call them. While online the app shares their position every minute |
+| **Admin** | Approve or reject riders (with their ID photo), see who is online now |
 
-Rules enforced by the database, not just the app:
+Rules enforced by the database:
 
-- Prices are read from the database when an order is placed, so a customer cannot change them.
-- Only approved riders see open jobs. The first rider to accept gets the job, and a rider can hold one job at a time.
+- Only approved riders who are online and were seen in the last 10 minutes appear in the list.
+- Riders' phone numbers and positions are only returned through `nearby_riders()`, to signed-in users.
+- Going offline clears the rider's saved position.
 - Riders cannot approve themselves and users cannot make themselves admin.
 - ID photos are stored in a private bucket that only the rider and admins can read.
+
+The first migration also contains stores, products and orders for a later marketplace version; the current app does not use them.
 
 ## Brand
 
@@ -34,11 +37,11 @@ Rules enforced by the database, not just the app:
 src/app/                 Screens (Expo Router, one file per screen)
   sign-in.tsx, verify.tsx   Phone and SMS code
   onboarding/               Choose role, customer details, rider registration
-  (customer)/               Home, store, cart, send package, order tracking, orders, account
-  rider/                    Application status, jobs dashboard, active job
-  admin/                    Rider approvals and orders
+  (customer)/               Find a rider nearby, account
+  rider/                    Application status, go online and share location
+  admin/                    Rider approvals and riders online
 src/components/          Shared UI
-src/lib/                 Supabase client, auth, cart, translations (i18n.tsx), areas and formatting, types
+src/lib/                 Supabase client, auth, location and calling, translations (i18n.tsx), areas and formatting, types
 supabase/migrations/     Database schema, security rules and functions
 supabase/seed.sql        Sample stores and products
 ```
@@ -48,7 +51,7 @@ supabase/seed.sql        Sample stores and products
 ### 1. Create the Supabase project
 
 1. Create a project at [supabase.com](https://supabase.com).
-2. In **SQL Editor**, run `supabase/migrations/20260928000000_init.sql`, then `supabase/seed.sql` for sample stores.
+2. In **SQL Editor**, run each file in `supabase/migrations/` in order (`20260928…_init.sql`, then `20260929…_nearby_riders.sql`).
    (Or with the Supabase CLI: `npx supabase link` then `npx supabase db push`.)
 3. In **Authentication → Sign In / Providers → Phone**, enable phone sign-in and connect an SMS provider (Twilio, MessageBird, Vonage or Textlocal). Check that it delivers to Hormuud, Somtel and Golis numbers before launch.
 4. While testing, add **test phone numbers** with fixed codes in the same Phone settings so no real SMS is sent, for example `252610000001` with code `123456`.
@@ -89,9 +92,8 @@ npm run lint
 
 ## Next steps
 
-- Store owners: a store screen to accept orders and mark them ready, and to edit menus and prices.
-- Push notifications for new jobs (riders) and order updates (customers).
-- Rider location on a map while delivering.
-- Mobile money integration (EVC Plus / Zaad merchant APIs) instead of pay-on-delivery.
-- Admin tools for adding stores and products from the app.
-- Real app icon and splash screen (the current ones are Expo placeholders).
+- Show nearby riders on a map.
+- Let a rider mark themselves busy while on a delivery.
+- Ratings, so people can pick trusted riders.
+- A local Somaliland SMS provider for real login codes (Supabase SMS hook), or phone + PIN for a zero-cost pilot.
+- Later: shops and menus, in-app ordering and mobile money (EVC Plus / Zaad).
