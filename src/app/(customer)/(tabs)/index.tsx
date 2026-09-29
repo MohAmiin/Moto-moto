@@ -1,10 +1,12 @@
 import { Image } from 'expo-image';
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { LiveMap, type LiveMapData } from '@/components/live-map';
+import { riderPoints } from '@/components/live-map/points';
 import { RiderCard } from '@/components/rider-card';
-import { Button, Card, Empty, Row, Screen, Stack, Txt } from '@/components/ui';
+import { Button, Card, Empty, LinkButton, Row, Screen, Stack, Txt } from '@/components/ui';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth';
@@ -13,7 +15,8 @@ import { currentPosition, type Coords } from '@/lib/location';
 import { supabase } from '@/lib/supabase';
 import type { NearbyRider } from '@/lib/types';
 
-const REFRESH_MS = 30_000;
+// Refresh your position and the riders around you while the screen is open.
+const REFRESH_MS = 15_000;
 
 export default function FindRider() {
   const theme = useTheme();
@@ -23,6 +26,7 @@ export default function FindRider() {
   const [loaded, setLoaded] = useState(false);
   const [coords, setCoords] = useState<Coords | null>(null);
   const [locating, setLocating] = useState(false);
+  const [recenter, setRecenter] = useState(0);
   const coordsRef = useRef<Coords | null>(null);
   const area = profile?.district ?? null;
 
@@ -36,19 +40,26 @@ export default function FindRider() {
   const locate = useCallback(async () => {
     setLocating(true);
     const c = await currentPosition();
-    coordsRef.current = c;
-    setCoords(c);
+    if (c || !coordsRef.current) {
+      coordsRef.current = c;
+      setCoords(c);
+    }
     setLocating(false);
     await load();
   }, [load]);
 
-  // Locate once when the screen opens, then refresh the list while it stays open.
+  // Locate when the screen opens, then keep your dot and the riders live while it stays open.
   useFocusEffect(
     useCallback(() => {
       locate();
-      const timer = setInterval(load, REFRESH_MS);
+      const timer = setInterval(locate, REFRESH_MS);
       return () => clearInterval(timer);
-    }, [locate, load]),
+    }, [locate]),
+  );
+
+  const mapData = useMemo<LiveMapData>(
+    () => ({ me: coords ? { ...coords, label: t('map.you') } : null, riders: riderPoints(riders, t), recenter }),
+    [coords, riders, recenter, t],
   );
 
   return (
@@ -62,9 +73,13 @@ export default function FindRider() {
         <Txt style={{ color: '#FFFFFF', opacity: 0.85 }}>{t('home.sub')}</Txt>
       </View>
 
-      {coords ? (
-        <Txt variant="muted">{t('home.locationOn')}</Txt>
-      ) : (
+      <LiveMap data={mapData} height={320} />
+      <Row style={{ justifyContent: 'space-between' }}>
+        <Txt variant="muted" style={{ flex: 1 }}>{coords ? t('map.live') : ''}</Txt>
+        <LinkButton title={t('map.showAll')} onPress={() => setRecenter((n) => n + 1)} />
+      </Row>
+
+      {coords ? null : (
         <Card tone="soft">
           <Txt>{t('home.locationOff')}</Txt>
           <Button title={t('home.useLocation')} kind="ghost" onPress={locate} loading={locating} />

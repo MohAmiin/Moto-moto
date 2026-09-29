@@ -1,8 +1,10 @@
 import { Image } from 'expo-image';
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { LiveMap, type LiveMapData } from '@/components/live-map';
+import { riderPoints } from '@/components/live-map/points';
 import { RiderCard } from '@/components/rider-card';
 import { Button, Card, Choices, Empty, Header, LanguageSwitcher, LinkButton, Row, Screen, Stack, Txt } from '@/components/ui';
 import { Radius, Spacing } from '@/constants/theme';
@@ -74,6 +76,8 @@ export default function Admin() {
     else load();
   }
 
+  const mapData = useMemo<LiveMapData>(() => ({ me: null, riders: riderPoints(online, t) }), [online, t]);
+
   const count = (s: ApplicationStatus) => applications.filter((a) => a.status === s).length;
   const tabs = TABS.map((id) => ({ id, label: `${t(`admin.${id}` as TKey)} (${id === 'online' ? online.length : count(id)})` }));
 
@@ -85,7 +89,10 @@ export default function Admin() {
       {error ? <Txt color="danger">{error}</Txt> : null}
 
       {tab === 'online' ? (
-        online.length === 0 ? <Empty title={t('admin.noOnline')} /> : online.map((r) => <RiderCard key={r.id} rider={r} />)
+        <>
+          <LiveMap data={mapData} height={320} />
+          {online.length === 0 ? <Empty title={t('admin.noOnline')} /> : online.map((r) => <RiderCard key={r.id} rider={r} />)}
+        </>
       ) : (
         <ApplicationList items={applications.filter((a) => a.status === tab)} busy={busy} onReview={tab === 'pending' ? review : undefined} />
       )}

@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, Switch, View } from 'react-native';
 
+import { LiveMap, type LiveMapData } from '@/components/live-map';
 import { RiderApplicationForm } from '@/components/rider-application-form';
 import { Card, Choices, Header, LanguageSwitcher, LinkButton, Row, Screen, Stack, Txt } from '@/components/ui';
 import { Radius, Spacing } from '@/constants/theme';
@@ -8,11 +9,11 @@ import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth';
 import { AREA_OPTIONS, DEFAULT_AREA, formatPhone } from '@/lib/format';
 import { useI18n } from '@/lib/i18n';
-import { currentPosition } from '@/lib/location';
+import { currentPosition, type Coords } from '@/lib/location';
 import { errorKey, supabase } from '@/lib/supabase';
 
 // While online, refresh the rider's position and "last seen" so people see who is really available.
-const PING_MS = 60_000;
+const PING_MS = 30_000;
 
 export default function RiderHome() {
   const { t } = useI18n();
@@ -73,6 +74,7 @@ function Dashboard() {
   const [online, setOnline] = useState(profile?.is_online ?? false);
   const [area, setArea] = useState<string>(profile?.district ?? DEFAULT_AREA);
   const [hasLocation, setHasLocation] = useState<boolean | null>(null);
+  const [coords, setCoords] = useState<Coords | null>(null);
   const [error, setError] = useState<string>();
   const riderId = profile!.id;
 
@@ -80,6 +82,7 @@ function Dashboard() {
   const ping = useCallback(async () => {
     const pos = await currentPosition();
     setHasLocation(!!pos);
+    setCoords(pos);
     const { error: e } = await supabase
       .from('profiles')
       .update({ is_online: true, lat: pos?.lat ?? null, lng: pos?.lng ?? null, last_seen_at: new Date().toISOString() })
@@ -105,9 +108,12 @@ function Dashboard() {
       const { error: e } = await supabase.from('profiles').update({ is_online: false, lat: null, lng: null }).eq('id', riderId);
       if (e) setError(t(errorKey(e)));
       setHasLocation(null);
+      setCoords(null);
     }
     refresh();
   }
+
+  const mapData = useMemo<LiveMapData>(() => ({ me: coords ? { ...coords, label: t('map.you') } : null, riders: [] }), [coords, t]);
 
   async function changeArea(next: string) {
     setArea(next);
@@ -144,6 +150,8 @@ function Dashboard() {
       </View>
 
       {error ? <Txt color="danger">{error}</Txt> : null}
+
+      {online && coords ? <LiveMap data={mapData} height={220} /> : null}
 
       <Choices label={t('rider.currentArea')} options={AREA_OPTIONS} value={area} onChange={changeArea} columns={2} />
 

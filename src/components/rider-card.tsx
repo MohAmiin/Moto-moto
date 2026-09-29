@@ -5,10 +5,10 @@ import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { distanceLabel } from '@/lib/format';
 import { useI18n } from '@/lib/i18n';
-import { callPhone, openWhatsApp } from '@/lib/location';
+import { callPhone } from '@/lib/location';
 import type { NearbyRider } from '@/lib/types';
 
-/** One online rider with distance, plate and buttons to call or WhatsApp them. */
+/** One online rider with distance, plate and a button that calls their registered phone number. */
 export function RiderCard({ rider }: { rider: NearbyRider }) {
   const theme = useTheme();
   const { t } = useI18n();
@@ -29,10 +29,7 @@ export function RiderCard({ rider }: { rider: NearbyRider }) {
         </View>
       </Row>
       {rider.phone ? (
-        <Row gap={Spacing.two}>
-          <Button title={t('home.call')} kind="gold" onPress={() => callPhone(rider.phone!)} style={{ flex: 1 }} />
-          <Button title={t('home.whatsapp')} kind="ghost" onPress={() => openWhatsApp(rider.phone!)} style={{ flex: 1 }} />
-        </Row>
+        <Button title={t('home.call')} kind="gold" onPress={() => callPhone(rider.phone!)} />
       ) : null}
     </Card>
   );

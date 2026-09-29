@@ -18,10 +18,7 @@ export async function currentPosition(): Promise<Coords | null> {
 /** Phones are stored as digits with the country code, e.g. 252634740002. */
 const digitsOf = (phone: string) => phone.replace(/\D/g, '');
 
+/** Opens the phone's dialler on the rider's number; the caller taps once more to start the call. */
 export function callPhone(phone: string) {
   return Linking.openURL(`tel:+${digitsOf(phone)}`);
-}
-
-export function openWhatsApp(phone: string) {
-  return Linking.openURL(`https://wa.me/${digitsOf(phone)}`);
 }

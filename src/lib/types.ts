@@ -34,6 +34,8 @@ export type NearbyRider = {
   phone: string | null;
   plate: string;
   area: string | null;
+  lat: number | null;
+  lng: number | null;
   distance_km: number | null;
   last_seen_at: string;
 };

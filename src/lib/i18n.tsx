@@ -139,7 +139,6 @@ const so = {
   'home.mAway': '{m} m u jira',
   'home.inArea': 'Wuxuu joogaa {area}',
   'home.call': 'Wac',
-  'home.whatsapp': 'WhatsApp',
   'home.howTitle': 'Sida ay u shaqeyso',
   'home.how1': 'Wac darawalka kuugu dhow.',
   'home.how2': 'U dhiib xirmada, una sii lambarka qofka qaadanaya.',
@@ -153,6 +152,9 @@ const so = {
   'rider.tips': 'Marka lagu soo waco: la kulan, qaado xirmada iyo lambarka qofka qaadanaya, kadibna geey.',
   'admin.online': 'Online hadda',
   'admin.noOnline': 'Darawal online ah ma jiro',
+  'map.you': 'Adiga',
+  'map.showAll': 'Muuji dhammaan',
+  'map.live': 'Toos · wuxuu cusboonaanayaa 15 ilbiriqsi kasta',
 };
 
 export type TKey = keyof typeof so;
@@ -271,7 +273,6 @@ const en: Dictionary = {
   'home.mAway': '{m} m away',
   'home.inArea': 'In {area}',
   'home.call': 'Call',
-  'home.whatsapp': 'WhatsApp',
   'home.howTitle': 'How it works',
   'home.how1': 'Call the nearest rider.',
   'home.how2': 'Hand over the package and give the receiver\'s phone number.',
@@ -285,6 +286,9 @@ const en: Dictionary = {
   'rider.tips': 'When someone calls: meet them, take the package and the receiver\'s number, then deliver.',
   'admin.online': 'Online now',
   'admin.noOnline': 'No riders online',
+  'map.you': 'You',
+  'map.showAll': 'Show everyone',
+  'map.live': 'Live · updates every 15 seconds',
 };
 
 const ar: Dictionary = {
@@ -400,7 +404,6 @@ const ar: Dictionary = {
   'home.mAway': 'على بعد {m} م',
   'home.inArea': 'في {area}',
   'home.call': 'اتصال',
-  'home.whatsapp': 'واتساب',
   'home.howTitle': 'كيف يعمل',
   'home.how1': 'اتصل بأقرب سائق.',
   'home.how2': 'سلّمه الطرد وأعطه رقم هاتف المستلم.',
@@ -414,6 +417,9 @@ const ar: Dictionary = {
   'rider.tips': 'عندما يتصل بك أحد: قابله، واستلم الطرد ورقم المستلم، ثم وصّله.',
   'admin.online': 'متصلون الآن',
   'admin.noOnline': 'لا يوجد سائقون متصلون',
+  'map.you': 'أنت',
+  'map.showAll': 'عرض الجميع',
+  'map.live': 'مباشر · يتحدث كل 15 ثانية',
 };
 
 const DICTIONARIES: Record<Language, Dictionary> = { so, en, ar };

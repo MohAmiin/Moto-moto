@@ -10,9 +10,9 @@ One app with three roles, chosen at sign-up:
 
 | Role | What they can do |
 |---|---|
-| **Customer** (anyone sending something) | Sign in with phone + SMS code, see approved riders online nearby (nearest first, with distance), call or WhatsApp them |
-| **Rider** | Register with name, ID number, bike plate, area and a photo of their ID, wait for approval, then go online so people nearby can find and call them. While online the app shares their position every minute |
-| **Admin** | Approve or reject riders (with their ID photo), see who is online now |
+| **Customer** (anyone sending something) | Sign in with phone + SMS code, see a live map of themselves and the approved riders online nearby (nearest first, with distance), and call a rider's registered number |
+| **Rider** | Register with name, ID number, bike plate, area and a photo of their ID, wait for approval, then go online so people nearby can see them on the map and call them. While online the app shares their position every 30 seconds |
+| **Admin** | Approve or reject riders (with their ID photo), see every online rider on a live map |
 
 Rules enforced by the database:
 
@@ -23,6 +23,10 @@ Rules enforced by the database:
 - ID photos are stored in a private bucket that only the rider and admins can read.
 
 The first migration also contains stores, products and orders for a later marketplace version; the current app does not use them.
+
+## Maps
+
+The live map uses Leaflet with OpenStreetMap tiles (free, no API key). It runs in a WebView on phones and an iframe on the web. OpenStreetMap's public tiles are fine for testing and a small pilot; before a large launch switch to a hosted tile provider (for example MapTiler or Stadia Maps) in `src/components/live-map/map-html.ts`.
 
 ## Brand
 
@@ -51,7 +55,7 @@ supabase/seed.sql        Sample stores and products
 ### 1. Create the Supabase project
 
 1. Create a project at [supabase.com](https://supabase.com).
-2. In **SQL Editor**, run each file in `supabase/migrations/` in order (`20260928…_init.sql`, then `20260929…_nearby_riders.sql`).
+2. In **SQL Editor**, run each file in `supabase/migrations/` in order (`20260928…_init.sql`, `20260929…_nearby_riders.sql`, then `20260930…_rider_map.sql`).
    (Or with the Supabase CLI: `npx supabase link` then `npx supabase db push`.)
 3. In **Authentication → Sign In / Providers → Phone**, enable phone sign-in and connect an SMS provider (Twilio, MessageBird, Vonage or Textlocal). Check that it delivers to Hormuud, Somtel and Golis numbers before launch.
 4. While testing, add **test phone numbers** with fixed codes in the same Phone settings so no real SMS is sent, for example `252610000001` with code `123456`.
@@ -92,7 +96,6 @@ npm run lint
 
 ## Next steps
 
-- Show nearby riders on a map.
 - Let a rider mark themselves busy while on a delivery.
 - Ratings, so people can pick trusted riders.
 - A local Somaliland SMS provider for real login codes (Supabase SMS hook), or phone + PIN for a zero-cost pilot.
