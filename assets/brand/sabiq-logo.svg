@@ -5,10 +5,14 @@
     <path d="M18 134 Q96 122 192 131" fill="none" stroke="#F26B1D" stroke-width="5" stroke-linecap="round"/>
     <rect x="20" y="42" width="42" height="36" rx="6" fill="#14213D"/>
     <rect x="20" y="42" width="42" height="9" rx="4" fill="#F26B1D"/>
-    <g transform="translate(26 49) scale(0.26)">
-  <path d="M26 92 C40 104 86 102 86 80 C86 58 34 62 34 40 C34 24 54 22 74 22" fill="none" stroke="#F26B1D" stroke-width="19" stroke-linecap="round"/>
-  <path d="M26 92 C40 104 86 102 86 80 C86 58 34 62 34 40 C34 24 54 22 74 22" fill="none" stroke="#14213D" stroke-width="3" stroke-dasharray="6 7" stroke-linecap="round"/>
-  <polygon points="70,6 100,22 70,38" fill="#F26B1D" stroke="#F26B1D" stroke-width="3" stroke-linejoin="round"/></g>
+    <g transform="translate(25 48) scale(0.27)">
+    <line x1="30" y1="94" x2="48" y2="80" stroke="#F26B1D" stroke-width="7" stroke-linecap="round"/>
+    <line x1="84" y1="56" x2="94" y2="94" stroke="#F26B1D" stroke-width="7" stroke-linecap="round"/>
+    <line x1="78" y1="54" x2="92" y2="50" stroke="#F26B1D" stroke-width="6" stroke-linecap="round"/>
+    <path d="M20 72 C30 84 80 84 80 64 C80 46 38 52 38 36 C38 24 52 20 70 20" fill="none" stroke="#F26B1D" stroke-width="17" stroke-linecap="round"/>
+    <polygon points="66,5 98,20 66,35" fill="#F26B1D" stroke="#F26B1D" stroke-width="3" stroke-linejoin="round"/>
+    <circle cx="30" cy="94" r="15" fill="#FFFFFF"/><circle cx="30" cy="94" r="7" fill="#14213D"/><circle cx="30" cy="94" r="3" fill="#F26B1D"/>
+    <circle cx="94" cy="94" r="15" fill="#FFFFFF"/><circle cx="94" cy="94" r="7" fill="#14213D"/><circle cx="94" cy="94" r="3" fill="#F26B1D"/></g>
     <rect x="30" y="78" width="30" height="4" rx="2" fill="#14213D"/>
     <line x1="52" y1="110" x2="98" y2="100" stroke="#14213D" stroke-width="6" stroke-linecap="round"/>
     <path d="M38 94 Q42 82 60 82 L92 84 L88 94 Z" fill="#F26B1D"/>
