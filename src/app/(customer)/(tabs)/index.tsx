@@ -68,9 +68,11 @@ export default function FindRider() {
 
   return (
     <Screen edges={['top']}>
-      <View style={[styles.hero, { backgroundColor: '#14213D' }]}>
+      <View style={[styles.hero, { backgroundColor: '#0046B5' }]}>
         <Row gap={Spacing.two}>
-          <Image source={require('@/assets/images/logo-mark.png')} style={styles.logo} contentFit="contain" />
+          <View style={styles.logoTile}>
+            <Image source={require('@/assets/images/logo-mark.png')} style={styles.logo} contentFit="contain" />
+          </View>
           <Txt style={styles.wordmark}>JAREEYE</Txt>
         </Row>
         <Txt variant="title" style={{ color: '#FFFFFF' }}>{t('home.title')}</Txt>
@@ -120,7 +122,8 @@ export default function FindRider() {
 
 const styles = StyleSheet.create({
   hero: { borderRadius: Radius.large, padding: Spacing.four, gap: Spacing.two },
-  logo: { width: 36, height: 36 },
+  logoTile: { backgroundColor: '#FFFFFF', borderRadius: Radius.small, padding: 4 },
+  logo: { width: 40, height: 40 },
   wordmark: { color: '#FFFFFF', fontSize: 20, fontWeight: '900' },
   step: { width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
 });

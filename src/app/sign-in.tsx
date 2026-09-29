@@ -37,11 +37,16 @@ export default function SignIn() {
   return (
     <Screen>
       <LanguageSwitcher />
-      <View style={[styles.hero, { backgroundColor: '#14213D' }]}>
-        <View style={styles.brandRow}>
-          <Image source={require('@/assets/images/logo-mark.png')} style={styles.logo} contentFit="contain" accessibilityIgnoresInvertColors />
-          <Txt style={[styles.wordmark, { color: '#FFFFFF' }]}>JAREEYE</Txt>
-        </View>
+      <View style={styles.logoPanel}>
+        <Image
+          source={require('@/assets/images/logo-full.png')}
+          style={styles.logo}
+          contentFit="contain"
+          accessibilityLabel="Jareeye Delivery"
+          accessibilityIgnoresInvertColors
+        />
+      </View>
+      <View style={[styles.hero, { backgroundColor: '#0046B5' }]}>
         <Txt variant="title" style={{ color: '#FFFFFF' }}>{t('signin.headline')}</Txt>
         <Txt style={{ color: '#FFFFFF', opacity: 0.85 }}>{t('signin.sub')}</Txt>
         <View style={[styles.badge, { backgroundColor: theme.gold }]}>
@@ -61,9 +66,8 @@ export default function SignIn() {
 
 const styles = StyleSheet.create({
   hero: { borderRadius: Radius.large + 2, padding: Spacing.four, gap: Spacing.three },
-  brandRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
-  logo: { width: 44, height: 44 },
-  wordmark: { fontSize: 22, fontWeight: '900' },
+  logoPanel: { backgroundColor: '#FFFFFF', borderRadius: Radius.large + 2, padding: Spacing.three, alignItems: 'center' },
+  logo: { width: '100%', height: 190 },
   badge: { alignSelf: 'flex-start', borderRadius: Radius.pill, paddingHorizontal: 12, paddingVertical: 5 },
   badgeText: { fontWeight: '900', fontSize: 13 },
 });

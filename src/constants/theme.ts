@@ -1,4 +1,4 @@
-// Jareeye brand: navy for structure and primary buttons, orange for the $1 promise and main actions.
+// Jareeye brand, from the logo: royal blue for structure and primary buttons, orange for main actions.
 // The `gold` / `onGold` slots hold the orange accent.
 export const Colors = {
   light: {
@@ -6,11 +6,11 @@ export const Colors = {
     textSecondary: '#5E6472',
     background: '#FFFFFF',
     backgroundElement: '#F5F3F0',
-    backgroundSelected: '#FDECE0',
+    backgroundSelected: '#E5EDFA',
     border: '#E6E1DA',
-    brand: '#14213D',
+    brand: '#0046B5',
     onBrand: '#FFFFFF',
-    gold: '#F26B1D',
+    gold: '#FF6B0A',
     onGold: '#14213D',
     success: '#1F8A5B',
     successSoft: '#DFF3E8',
@@ -26,9 +26,9 @@ export const Colors = {
     backgroundElement: '#1A2236',
     backgroundSelected: '#3A2414',
     border: '#283246',
-    brand: '#F58A4B',
+    brand: '#FF8A3D',
     onBrand: '#14213D',
-    gold: '#F26B1D',
+    gold: '#FF6B0A',
     onGold: '#14213D',
     success: '#4CC38A',
     successSoft: '#163224',

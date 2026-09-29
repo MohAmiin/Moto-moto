@@ -34,10 +34,10 @@ Jareeye runs in Hargeisa only for now. The map is locked to the city, and riders
 
 ## Brand
 
-- Colors: navy `#14213D` and orange `#F26B1D`.
-- `assets/brand/` holds the vector files: `jareeye-logo.svg` (full logo), `jareeye-logo-on-dark.svg`, `jareeye-icon.svg` (app icon) and `jareeye-mark.svg` (the J on wheels).
-- The logo text uses the Montserrat font; convert the text to outlines before sending files to a printer.
-- `assets/images/` holds the PNGs the app uses (icon, Android adaptive icon, splash, favicon), generated from those SVGs.
+- The logo is a scooter whose front is a running horse (*jareeye*), in royal blue `#0046B5` and orange `#FF6B0A`.
+- `assets/brand/jareeye-logo.png` is the full logo with the name, and `jareeye-mark.png` the horse scooter alone, both with transparent backgrounds.
+- `assets/images/` holds the PNGs the app uses (icon, Android adaptive icon, splash, in-app logos, favicon), cut from the logo. The map's rider pin is in `src/components/live-map/pin-image.ts`.
+- The logo is a raster image. Before printing (stickers, vests, delivery boxes) have it redrawn as a vector file.
 
 ## Project layout
 

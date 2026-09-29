@@ -1,6 +1,10 @@
 // A self-contained Leaflet page with OpenStreetMap tiles. It is shown in a WebView on phones and an
 // iframe on the web, and receives data through postMessage: see LiveMapData.
 
+import { ACTIVE_CITY } from '@/lib/service-area';
+
+import { PIN_IMAGE } from './pin-image';
+
 export type MapPoint = { id: string; lat: number; lng: number; title: string; subtitle?: string };
 
 export type LiveMapData = {
@@ -10,11 +14,7 @@ export type LiveMapData = {
   recenter?: number;
 };
 
-import { ACTIVE_CITY } from '@/lib/service-area';
-
 const B = ACTIVE_CITY.bounds;
-
-const SCOOTER = `<svg viewBox="0 0 120 120" width="22" height="22"><path d="M30 20 H66 V56 C66 84 26 86 20 66" fill="none" stroke="#fff" stroke-width="17" stroke-linecap="round" stroke-linejoin="round"/><polygon points="66,5 98,20 66,35" fill="#fff"/><circle cx="30" cy="94" r="15" fill="#fff"/><circle cx="94" cy="94" r="15" fill="#fff"/></svg>`;
 
 export const MAP_HTML = `<!doctype html>
 <html><head>
@@ -24,8 +24,9 @@ export const MAP_HTML = `<!doctype html>
 <style>
   html, body, #map { height: 100%; margin: 0; background: #E8E4DE; font-family: -apple-system, system-ui, sans-serif; }
   .me { width: 18px; height: 18px; border-radius: 50%; background: #2F6FED; border: 3px solid #fff; box-shadow: 0 0 0 6px rgba(47,111,237,.25); }
-  .rider { width: 34px; height: 34px; border-radius: 50%; background: #F26B1D; border: 3px solid #14213D; display: grid; place-items: center; box-shadow: 0 2px 6px rgba(0,0,0,.35); }
-  .leaflet-popup-content { margin: 10px 12px; font-size: 14px; color: #14213D; }
+  .rider { width: 38px; height: 38px; border-radius: 50%; background: #fff; border: 3px solid #0046B5; display: grid; place-items: center; box-shadow: 0 2px 6px rgba(0,0,0,.35); }
+  .rider img { width: 30px; height: 30px; }
+  .leaflet-popup-content { margin: 10px 12px; font-size: 14px; color: #0046B5; }
   .leaflet-popup-content b { display: block; font-size: 15px; }
 </style>
 </head><body>
@@ -39,7 +40,7 @@ export const MAP_HTML = `<!doctype html>
   map.setMinZoom(map.getZoom());
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(map);
   var meIcon = L.divIcon({ className: '', html: '<div class="me"></div>', iconSize: [18, 18], iconAnchor: [9, 9] });
-  var riderIcon = L.divIcon({ className: '', html: '<div class="rider">${SCOOTER.replace(/"/g, '\\"')}</div>', iconSize: [34, 34], iconAnchor: [17, 17] });
+  var riderIcon = L.divIcon({ className: '', html: '<div class="rider"><img src="${PIN_IMAGE}" alt=""></div>', iconSize: [38, 38], iconAnchor: [19, 19] });
   var me = null, riders = {}, fitted = false, lastRecenter = 0;
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function update(d) {
