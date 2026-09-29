@@ -200,7 +200,7 @@ export function PhoneField({ value, onChangeText, error }: { value: string; onCh
           keyboardType="phone-pad"
           autoComplete="tel"
           textContentType="telephoneNumber"
-          placeholder="61 234 5678"
+          placeholder="63 123 4567"
           placeholderTextColor={theme.textSecondary}
           maxLength={13}
           style={[styles.phoneInput, { color: theme.text }]}
