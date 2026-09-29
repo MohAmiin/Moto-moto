@@ -21,6 +21,13 @@ Rules enforced by the database, not just the app:
 - Riders cannot approve themselves and users cannot make themselves admin.
 - ID photos are stored in a private bucket that only the rider and admins can read.
 
+## Brand
+
+- Colors: navy `#14213D` and orange `#F26B1D`.
+- `assets/brand/` holds the vector files: `sabiq-logo.svg` (full logo), `sabiq-logo-on-dark.svg`, `sabiq-icon.svg` (app icon) and `sabiq-mark.svg` (the S road mark).
+- The logo text uses the Montserrat font; convert the text to outlines before sending files to a printer.
+- `assets/images/` holds the PNGs the app uses (icon, Android adaptive icon, splash, favicon), generated from those SVGs.
+
 ## Project layout
 
 ```

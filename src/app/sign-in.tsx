@@ -1,3 +1,4 @@
+import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -36,15 +37,13 @@ export default function SignIn() {
   return (
     <Screen>
       <LanguageSwitcher />
-      <View style={[styles.hero, { backgroundColor: theme.brand }]}>
+      <View style={[styles.hero, { backgroundColor: '#14213D' }]}>
         <View style={styles.brandRow}>
-          <View style={[styles.logo, { backgroundColor: theme.gold }]}>
-            <Txt style={[styles.logoText, { color: theme.onGold }]}>S</Txt>
-          </View>
-          <Txt style={[styles.wordmark, { color: theme.onBrand }]}>SABIQ</Txt>
+          <Image source={require('@/assets/images/logo-mark.png')} style={styles.logo} contentFit="contain" accessibilityIgnoresInvertColors />
+          <Txt style={[styles.wordmark, { color: '#FFFFFF' }]}>SABIQ</Txt>
         </View>
-        <Txt variant="title" style={{ color: theme.onBrand }}>{t('signin.headline')}</Txt>
-        <Txt style={{ color: theme.onBrand, opacity: 0.9 }}>{t('signin.sub')}</Txt>
+        <Txt variant="title" style={{ color: '#FFFFFF' }}>{t('signin.headline')}</Txt>
+        <Txt style={{ color: '#FFFFFF', opacity: 0.85 }}>{t('signin.sub')}</Txt>
         <View style={[styles.badge, { backgroundColor: theme.gold }]}>
           <Txt style={[styles.badgeText, { color: theme.onGold }]}>{t('signin.badge')}</Txt>
         </View>
@@ -63,8 +62,7 @@ export default function SignIn() {
 const styles = StyleSheet.create({
   hero: { borderRadius: Radius.large + 2, padding: Spacing.four, gap: Spacing.three },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
-  logo: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  logoText: { fontSize: 20, fontWeight: '900' },
+  logo: { width: 44, height: 44 },
   wordmark: { fontSize: 22, fontWeight: '900' },
   badge: { alignSelf: 'flex-start', borderRadius: Radius.pill, paddingHorizontal: 12, paddingVertical: 5 },
   badgeText: { fontWeight: '900', fontSize: 13 },
