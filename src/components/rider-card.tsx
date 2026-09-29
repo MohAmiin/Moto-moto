@@ -3,9 +3,9 @@ import { StyleSheet, View } from 'react-native';
 import { Button, Card, Monogram, Row, Txt } from '@/components/ui';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { callRider } from '@/lib/call';
 import { distanceLabel } from '@/lib/format';
 import { useI18n } from '@/lib/i18n';
-import { callPhone } from '@/lib/location';
 import type { NearbyRider } from '@/lib/types';
 
 /** One online rider with distance, plate and a button that calls their registered phone number. */
@@ -29,7 +29,7 @@ export function RiderCard({ rider }: { rider: NearbyRider }) {
         </View>
       </Row>
       {rider.phone ? (
-        <Button title={t('home.call')} kind="gold" onPress={() => callPhone(rider.phone!)} />
+        <Button title={t('home.call')} kind="gold" onPress={() => callRider(rider.id, rider.phone!)} />
       ) : null}
     </Card>
   );

@@ -22,6 +22,16 @@ Rules enforced by the database:
 - Riders cannot approve themselves and users cannot make themselves admin.
 - ID photos are stored in a private bucket that only the rider and admins can read.
 
+## Calling a rider
+
+Tapping **Call** on Android rings the rider straight away: the first time, Android asks once for permission to make phone calls; if that's refused, the phone's dialler opens with the number. iPhones always show their own "Call +252…?" confirmation, which apps can't skip. The call is a normal phone call from the customer's SIM, so it costs the app nothing.
+
+Calls are always free. Every tap is recorded in the `calls` table (who called which rider, and when) through `log_call()`, so the owner can see how much each rider is used.
+
+## Money
+
+Riders are paid directly by the customer (about $1 a delivery, maybe $1.5 once the app has real users). Jareeye is completely free for now, for customers and riders. Later options: a one-time rider registration fee, or a small percentage of each delivery.
+
 The first migration also contains stores, products and orders for a later marketplace version; the current app does not use them.
 
 ## Maps
@@ -59,7 +69,7 @@ supabase/seed.sql        Sample stores and products
 ### 1. Create the Supabase project
 
 1. Create a project at [supabase.com](https://supabase.com).
-2. In **SQL Editor**, run each file in `supabase/migrations/` in order (`20260928…_init.sql`, `20260929…_nearby_riders.sql`, `20260930…_rider_map.sql`, then `20261001…_service_area.sql`).
+2. In **SQL Editor**, run each file in `supabase/migrations/` in order (`20260928…_init.sql`, `20260929…_nearby_riders.sql`, `20260930…_rider_map.sql`, `20261001…_service_area.sql`, then `20261002…_call_log.sql`).
    (Or with the Supabase CLI: `npx supabase link` then `npx supabase db push`.)
    If only the first migration was applied, `supabase/catch-up-find-a-rider.sql` applies the other three in one go; it is safe to run more than once.
 3. In **Authentication → Sign In / Providers → Phone**, enable phone sign-in and connect an SMS provider (Twilio, MessageBird, Vonage or Textlocal). Check that it delivers to Hormuud, Somtel and Golis numbers before launch.
@@ -106,5 +116,6 @@ npm run lint
 
 - Let a rider mark themselves busy while on a delivery.
 - Ratings, so people can pick trusted riders.
+- Later, once there are real users: a rider registration fee or a small percentage of each delivery (EVC Plus / Zaad).
 - A local Somaliland SMS provider for real login codes (Supabase SMS hook), or phone + PIN for a zero-cost pilot.
 - Later: shops and menus, in-app ordering and mobile money (EVC Plus / Zaad).

@@ -19,7 +19,8 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "so.jareeye.app"
+      "package": "so.jareeye.app",
+      "permissions": ["android.permission.CALL_PHONE"]
     },
     "web": {
       "output": "single",
