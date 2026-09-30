@@ -10,13 +10,15 @@ One app with three roles, chosen at sign-up:
 
 | Role | What they can do |
 |---|---|
-| **Customer** (anyone sending something) | Sign in with phone + SMS code, see a live map of themselves and the approved riders online nearby (nearest first, with distance), and call a rider's registered number |
-| **Rider** | Register with name, ID number, bike plate, area and a photo of their ID, wait for approval, then go online so people nearby can see them on the map and call them. While online the app shares their position every 30 seconds |
-| **Admin** | Approve or reject riders (with their ID photo), see every online rider on a live map |
+| **Customer** (anyone sending something) | Sign in with phone + SMS code, see a live map of themselves and the approved motos online nearby (nearest first, with photo, Jareeye number, rating and distance), call a driver, and rate them 1–5 stars a few minutes later |
+| **Moto driver** | Register with name, face photo, ID number, bike plate, area and a photo of their ID, wait for approval, then go online so people nearby can see them on the map and call them. While online the app shares their position every 30 seconds; "I'm on a delivery" hides them for 45 minutes or until they tap "I'm free again" |
+| **Admin** | Approve or reject drivers (with face and ID photos), see each driver's Jareeye number, calls and rating, and every online driver (busy ones included) on a live map |
 
 Rules enforced by the database:
 
-- Only approved riders who are online and were seen in the last 10 minutes appear in the list.
+- Only approved riders who are online, not busy, and were seen in the last 10 minutes appear in the list.
+- Each driver gets a Jareeye number (JRY-001, JRY-002, …) when first approved; it never changes, so it can be printed on their vest.
+- A call can be rated once, only by the person who made it.
 - Riders' phone numbers and positions are only returned through `nearby_riders()`, to signed-in users.
 - Going offline clears the rider's saved position.
 - Riders cannot approve themselves and users cannot make themselves admin.
@@ -69,7 +71,7 @@ supabase/seed.sql        Sample stores and products
 ### 1. Create the Supabase project
 
 1. Create a project at [supabase.com](https://supabase.com).
-2. In **SQL Editor**, run each file in `supabase/migrations/` in order (`20260928…_init.sql`, `20260929…_nearby_riders.sql`, `20260930…_rider_map.sql`, `20261001…_service_area.sql`, then `20261002…_call_log.sql`).
+2. In **SQL Editor**, run each file in `supabase/migrations/` in order (`20260928…_init.sql`, `20260929…_nearby_riders.sql`, `20260930…_rider_map.sql`, `20261001…_service_area.sql`, `20261002…_call_log.sql`, then `20261003…_trust.sql`).
    (Or with the Supabase CLI: `npx supabase link` then `npx supabase db push`.)
    If only the first migration was applied, `supabase/catch-up-find-a-rider.sql` applies the other three in one go; it is safe to run more than once.
 3. In **Authentication → Sign In / Providers → Phone**, enable phone sign-in and connect an SMS provider (Twilio, MessageBird, Vonage or Textlocal). Check that it delivers to Hormuud, Somtel and Golis numbers before launch.
@@ -114,8 +116,6 @@ npm run lint
 
 ## Next steps
 
-- Let a rider mark themselves busy while on a delivery.
-- Ratings, so people can pick trusted riders.
 - Later, once there are real users: a rider registration fee or a small percentage of each delivery (EVC Plus / Zaad).
 - A local Somaliland SMS provider for real login codes (Supabase SMS hook), or phone + PIN for a zero-cost pilot.
 - Later: shops and menus, in-app ordering and mobile money (EVC Plus / Zaad).

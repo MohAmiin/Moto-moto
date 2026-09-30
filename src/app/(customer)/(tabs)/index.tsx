@@ -5,6 +5,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { LiveMap, type LiveMapData } from '@/components/live-map';
 import { riderPoints } from '@/components/live-map/points';
+import { RatePrompt } from '@/components/rate-prompt';
 import { RiderCard } from '@/components/rider-card';
 import { Button, Card, Empty, LinkButton, Row, Screen, Stack, Txt } from '@/components/ui';
 import { Radius, Spacing } from '@/constants/theme';
@@ -78,6 +79,8 @@ export default function FindRider() {
         <Txt variant="title" style={{ color: '#FFFFFF' }}>{t('home.title')}</Txt>
         <Txt style={{ color: '#FFFFFF', opacity: 0.85 }}>{t('home.sub')}</Txt>
       </View>
+
+      <RatePrompt />
 
       <LiveMap data={mapData} height={320} />
       <Row style={{ justifyContent: 'space-between' }}>

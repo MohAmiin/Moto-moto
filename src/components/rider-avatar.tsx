@@ -1,0 +1,19 @@
+import { Image } from 'expo-image';
+
+import { Monogram } from '@/components/ui';
+import { riderPhotoUrl } from '@/lib/rider';
+
+/** The driver's face photo, or their initials until they add one. */
+export function RiderAvatar({ name, photoPath, size = 52 }: { name: string; photoPath: string | null | undefined; size?: number }) {
+  const url = riderPhotoUrl(photoPath);
+  if (!url) return <Monogram name={name} size={size} />;
+  return (
+    <Image
+      source={{ uri: url }}
+      style={{ width: size, height: size, borderRadius: size * 0.28 }}
+      contentFit="cover"
+      accessibilityLabel={name}
+      transition={150}
+    />
+  );
+}
