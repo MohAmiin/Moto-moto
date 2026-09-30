@@ -155,6 +155,7 @@ function Dashboard() {
       await uploadRiderPhoto(riderId, result.assets[0], profile?.photo_path ?? null);
       await refresh();
     } catch (e) {
+      console.warn('photo upload failed', e);
       setError(t(errorKey(e)));
     } finally {
       setSavingPhoto(false);

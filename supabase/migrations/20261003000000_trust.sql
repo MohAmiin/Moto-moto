@@ -12,6 +12,10 @@ alter table public.profiles add column if not exists busy_until timestamptz;
 insert into storage.buckets (id, name, public) values ('rider-photos', 'rider-photos', true)
 on conflict (id) do update set public = true;
 
+-- Storage needs read access for uploads that may replace a file and for deleting the old photo.
+drop policy if exists "signed-in users read face photos" on storage.objects;
+create policy "signed-in users read face photos" on storage.objects for select to authenticated
+  using (bucket_id = 'rider-photos');
 drop policy if exists "riders upload own face photo" on storage.objects;
 create policy "riders upload own face photo" on storage.objects for insert to authenticated
   with check (bucket_id = 'rider-photos' and (storage.foldername(name))[1] = auth.uid()::text);

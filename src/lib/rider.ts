@@ -30,7 +30,7 @@ export async function uploadRiderPhoto(userId: string, asset: ImagePickerAsset, 
   const path = `${userId}/face-${Date.now()}.${ext}`;
   const { error: uploadError } = await supabase.storage
     .from(PHOTO_BUCKET)
-    .upload(path, body, { contentType: asset.mimeType ?? 'image/jpeg', upsert: true });
+    .upload(path, body, { contentType: asset.mimeType ?? 'image/jpeg' });
   if (uploadError) throw uploadError;
   const { error } = await supabase.from('profiles').update({ photo_path: path }).eq('id', userId);
   if (error) throw error;
