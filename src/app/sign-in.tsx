@@ -42,7 +42,7 @@ export default function SignIn() {
           source={require('@/assets/images/logo-full.png')}
           style={styles.logo}
           contentFit="contain"
-          accessibilityLabel="Jareeye Delivery"
+          accessibilityLabel="Jareeye Moto Delivery"
           accessibilityIgnoresInvertColors
         />
       </View>
