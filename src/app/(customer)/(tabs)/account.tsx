@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { DeleteAccount } from '@/components/delete-account';
 import { Button, Choices, Header, LanguageSwitcher, Monogram, Row, Screen, Stack, Txt } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 import { AREA_OPTIONS, DEFAULT_AREA, formatPhone } from '@/lib/format';
@@ -39,6 +40,7 @@ export default function Account() {
       <Choices label={t('acct.deliveryDistrict')} options={AREA_OPTIONS} value={profile.district ?? DEFAULT_AREA} onChange={changeDistrict} columns={2} />
       {message ? <Txt variant="muted">{message}</Txt> : null}
       <Button title={t('common.signOut')} kind="ghost" onPress={signOut} />
+      <DeleteAccount />
     </Screen>
   );
 }

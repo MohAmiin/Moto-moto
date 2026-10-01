@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, Switch, View } from 'react-native';
 
 import { LiveMap, type LiveMapData } from '@/components/live-map';
+import { DeleteAccount } from '@/components/delete-account';
 import { RiderApplicationForm } from '@/components/rider-application-form';
 import { RiderAvatar } from '@/components/rider-avatar';
 import { Button, Card, Choices, Header, LanguageSwitcher, LinkButton, Row, Screen, Stack, Txt } from '@/components/ui';
@@ -38,6 +39,7 @@ export default function RiderHome() {
         />
         <RiderApplicationForm createProfile={false} />
         <LinkButton title={t('common.signOut')} onPress={signOut} />
+        <DeleteAccount />
       </Screen>
     );
   }
@@ -57,6 +59,7 @@ export default function RiderHome() {
           <Detail label={t('common.district')} value={application.district} />
         </Card>
         <LinkButton title={t('common.signOut')} onPress={signOut} />
+        <DeleteAccount />
       </Screen>
     );
   }
@@ -241,6 +244,7 @@ function Dashboard() {
 
       <LanguageSwitcher />
       <LinkButton title={t('common.signOut')} onPress={signOut} />
+      <DeleteAccount />
     </Screen>
   );
 }
