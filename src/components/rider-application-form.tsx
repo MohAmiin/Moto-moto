@@ -10,6 +10,7 @@ import { useAuth } from '@/lib/auth';
 import { AREA_OPTIONS, DEFAULT_AREA } from '@/lib/format';
 import { useI18n } from '@/lib/i18n';
 import { uploadRiderPhoto } from '@/lib/rider';
+import { accountPhone } from '@/lib/pin';
 import { errorKey, supabase } from '@/lib/supabase';
 
 /**
@@ -64,7 +65,7 @@ export function RiderApplicationForm({ createProfile }: { createProfile: boolean
       if (createProfile) {
         const { error: e } = await supabase
           .from('profiles')
-          .insert({ id: userId, role: 'rider', full_name: name.trim(), phone: session.user.phone ?? null, district });
+          .insert({ id: userId, role: 'rider', full_name: name.trim(), phone: accountPhone(session.user), district });
         if (e) throw e;
       }
 

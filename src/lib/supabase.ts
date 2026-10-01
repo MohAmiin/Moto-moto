@@ -42,6 +42,13 @@ export function errorKey(error: unknown): TKey {
   const message = error instanceof Error ? error.message : String((error as { message?: string })?.message ?? error);
   const known: [string, TKey][] = [
     ['rider is not approved', 'err.notApproved'],
+    ['Invalid login credentials', 'err.badPin'],
+    ['already registered', 'err.pinTaken'],
+    ['rate limit', 'err.tooMany'],
+    ['Too many', 'err.tooMany'],
+    ['Email not confirmed', 'err.pinSetup'],
+    ['Signups not allowed', 'err.pinSetup'],
+    ['signups are disabled', 'err.pinSetup'],
     ['Token has expired or is invalid', 'err.badCode'],
     ['sms', 'err.smsFailed'],
     ['SMS', 'err.smsFailed'],

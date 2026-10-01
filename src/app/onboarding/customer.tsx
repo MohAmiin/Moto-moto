@@ -4,6 +4,7 @@ import { Button, Choices, Field, Header, Screen, Txt } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 import { AREA_OPTIONS, DEFAULT_AREA } from '@/lib/format';
 import { useI18n } from '@/lib/i18n';
+import { accountPhone } from '@/lib/pin';
 import { errorKey, supabase } from '@/lib/supabase';
 
 export default function CustomerOnboarding() {
@@ -23,7 +24,7 @@ export default function CustomerOnboarding() {
     setSaving(true);
     const { error: e } = await supabase
       .from('profiles')
-      .insert({ id: session.user.id, role: 'customer', full_name: name.trim(), phone: session.user.phone ?? null, district });
+      .insert({ id: session.user.id, role: 'customer', full_name: name.trim(), phone: accountPhone(session.user), district });
     if (e) {
       setSaving(false);
       setError(t(errorKey(e)));

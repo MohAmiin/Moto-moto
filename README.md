@@ -10,7 +10,7 @@ One app with three roles, chosen at sign-up:
 
 | Role | What they can do |
 |---|---|
-| **Customer** (anyone sending something) | Sign in with phone + SMS code, see a live map of themselves and the approved motos online nearby (nearest first, with photo, Jareeye number, rating and distance), call a driver, and rate them 1–5 stars a few minutes later |
+| **Customer** (anyone sending something) | Sign in with phone number + 4-digit PIN, see a live map of themselves and the approved motos online nearby (nearest first, with photo, Jareeye number, rating and distance), call a driver, and rate them 1–5 stars a few minutes later |
 | **Moto driver** | Register with name, face photo, ID number, bike plate, area and a photo of their ID, wait for approval, then go online so people nearby can see them on the map and call them. While online the app shares their position every 30 seconds; "I'm on a delivery" hides them for 45 minutes or until they tap "I'm free again" |
 | **Admin** | Approve or reject drivers (with face and ID photos), see each driver's Jareeye number, calls and rating, and every online driver (busy ones included) on a live map |
 
@@ -22,6 +22,15 @@ Rules enforced by the database:
 - Riders' phone numbers and positions are only returned through `nearby_riders()`, to signed-in users.
 - Going offline clears the rider's saved position.
 - Riders cannot approve themselves and users cannot make themselves admin.
+- A profile's phone number always comes from the login itself, so drivers cannot switch it to someone else's number.
+
+## Signing in
+
+People sign in with their **phone number and a 4-digit PIN** they choose, so no SMS provider is needed. Behind the scenes each number becomes a login address `252…@pin.jareeye.app` (unique per number) and the PIN becomes the password; users never see this.
+
+A forgotten PIN is reset by request: the person enters their number and a new PIN, the request appears under **PIN resets** in admin, the admin calls the number to check it's really them, then approves. Approval sets the new PIN and signs the account out on every device. Supabase limits repeated sign-in attempts from the same network.
+
+"Use an SMS code instead" still works for numbers set up as test numbers in Supabase (or for everyone once an SMS provider is connected).
 - ID photos are stored in a private bucket that only the rider and admins can read.
 
 ## Calling a rider
@@ -71,11 +80,12 @@ supabase/seed.sql        Sample stores and products
 ### 1. Create the Supabase project
 
 1. Create a project at [supabase.com](https://supabase.com).
-2. In **SQL Editor**, run each file in `supabase/migrations/` in order (`20260928…_init.sql`, `20260929…_nearby_riders.sql`, `20260930…_rider_map.sql`, `20261001…_service_area.sql`, `20261002…_call_log.sql`, then `20261003…_trust.sql`).
+2. In **SQL Editor**, run each file in `supabase/migrations/` in order (`20260928…_init.sql`, `20260929…_nearby_riders.sql`, `20260930…_rider_map.sql`, `20261001…_service_area.sql`, `20261002…_call_log.sql`, `20261003…_trust.sql`, then `20261004…_pin_login.sql`).
    (Or with the Supabase CLI: `npx supabase link` then `npx supabase db push`.)
    If only the first migration was applied, `supabase/catch-up-find-a-rider.sql` applies the other three in one go; it is safe to run more than once.
-3. In **Authentication → Sign In / Providers → Phone**, enable phone sign-in and connect an SMS provider (Twilio, MessageBird, Vonage or Textlocal). Check that it delivers to Hormuud, Somtel and Golis numbers before launch.
-4. While testing, add **test phone numbers** with fixed codes in the same Phone settings so no real SMS is sent, for example `252610000001` with code `123456`.
+3. For PIN login: in **Authentication → Sign In / Providers → Email**, make sure Email is enabled and switch **Confirm email** off.
+4. Optional, for SMS codes: in **Authentication → Sign In / Providers → Phone**, enable phone sign-in and connect an SMS provider (Twilio, MessageBird, Vonage or Textlocal). Check that it delivers to Hormuud, Somtel and Golis numbers before launch.
+5. While testing SMS codes, add **test phone numbers** with fixed codes in the same Phone settings so no real SMS is sent, for example `252610000001` with code `123456`.
 
 ### 2. Make yourself admin
 
