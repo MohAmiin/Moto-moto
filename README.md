@@ -117,6 +117,19 @@ npx eas-cli@latest build --platform android --profile preview
 
 The first time, answer **Yes** to creating the EAS project and to generating a new Android keystore. The build runs in Expo's cloud (10–20 minutes) and ends with a link and QR code to download the APK, which you can send to riders directly. The `production` profile builds an app bundle for the Play Store.
 
+### 5. Send fixes without a new build (EAS Update)
+
+Builds made after EAS Update was added download fixes by themselves: when the app opens it fetches the latest update for its channel and uses it from the next launch.
+
+```bash
+# fix for the APK testers (preview builds)
+npx eas-cli@latest update --channel preview --message "What changed"
+# fix for Google Play users (production builds)
+npx eas-cli@latest update --channel production --message "What changed"
+```
+
+Updates carry JavaScript, text, images and styles. A change to native parts (a new permission or a new native package) changes the app's fingerprint; older installed builds then ignore the update, and a new build is needed. The Supabase settings for an update come from your local `.env`, so keep it the same as the `env` in `eas.json`.
+
 ## Checks
 
 ```bash

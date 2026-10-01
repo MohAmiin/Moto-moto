@@ -20,7 +20,9 @@
       },
       "predictiveBackGestureEnabled": false,
       "package": "so.jareeye.app",
-      "permissions": ["android.permission.CALL_PHONE"]
+      "permissions": [
+        "android.permission.CALL_PHONE"
+      ]
     },
     "web": {
       "output": "single",
@@ -58,6 +60,12 @@
       "eas": {
         "projectId": "c731ec0f-5c89-4ab6-a95c-8972d62bcadd"
       }
+    },
+    "runtimeVersion": {
+      "policy": "fingerprint"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/c731ec0f-5c89-4ab6-a95c-8972d62bcadd"
     }
   }
 }
