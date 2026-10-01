@@ -72,7 +72,7 @@ Jareeye hadda waxay ka shaqeysaa Hargeysa.
 
 - App category: **Maps & Navigation** (or Business)
 - Tags: delivery, courier, motorbike
-- Contact email: the address shown on your developer profile
+- Contact email: jareeye.help@gmail.com
 - Privacy policy URL: `https://mohamiin.github.io/Moto-moto/privacy-policy.html` (after GitHub Pages is switched on)
 
 ## App access (for Google's reviewers)
