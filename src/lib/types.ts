@@ -22,7 +22,8 @@ export type Profile = {
 
 export type RiderApplication = {
   user_id: string;
-  id_number: string;
+  /** Optional during the pilot. */
+  id_number: string | null;
   plate: string;
   district: string;
   id_photo_path: string | null;

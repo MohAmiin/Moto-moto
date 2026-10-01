@@ -43,16 +43,14 @@ export function RiderApplicationForm({ createProfile }: { createProfile: boolean
   async function submit() {
     const userId = session?.user.id;
     if (!userId) return;
-    if ((createProfile && name.trim().length < 2) || idNumber.trim().length < 3 || plate.trim().length < 2) {
+    // The ID number and ID photo are optional for now; when given, the ID number must be 3+ characters.
+    const id = idNumber.trim();
+    if ((createProfile && name.trim().length < 2) || (id.length > 0 && id.length < 3) || plate.trim().length < 2) {
       setError(t('rf.missingFields'));
       return;
     }
     if (!face && !profile?.photo_path) {
       setError(t('rf.missingFace'));
-      return;
-    }
-    if (!photo && !application?.id_photo_path) {
-      setError(t('rf.missingPhoto'));
       return;
     }
     if (!agree) {
@@ -82,7 +80,7 @@ export function RiderApplicationForm({ createProfile }: { createProfile: boolean
         if (e) throw e;
       }
 
-      const fields = { id_number: idNumber.trim(), plate: plate.trim().toUpperCase(), district, id_photo_path: photoPath, status: 'pending' as const };
+      const fields = { id_number: id || null, plate: plate.trim().toUpperCase(), district, id_photo_path: photoPath, status: 'pending' as const };
       const { error: e } = application
         ? await supabase.from('rider_applications').update(fields).eq('user_id', userId)
         : await supabase.from('rider_applications').insert({ user_id: userId, ...fields });

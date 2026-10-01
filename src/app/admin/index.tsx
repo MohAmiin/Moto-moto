@@ -204,7 +204,7 @@ function ApplicationList({
               </Txt>
             ) : null}
             <Txt variant="muted">{formatPhone(a.profile?.phone)}</Txt>
-            <Txt variant="muted">{t('admin.idLine', { id: a.id_number, plate: a.plate })}</Txt>
+            <Txt variant="muted">{t('admin.idLine', { id: a.id_number ?? '—', plate: a.plate })}</Txt>
             <Txt variant="muted">
               {t('admin.districtLine', {
                 d: a.district,
