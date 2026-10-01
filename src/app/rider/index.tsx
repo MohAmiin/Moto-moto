@@ -13,7 +13,7 @@ import { useAuth } from '@/lib/auth';
 import { AREA_OPTIONS, DEFAULT_AREA, formatPhone } from '@/lib/format';
 import { useI18n, type TKey } from '@/lib/i18n';
 import { currentPosition, type Coords } from '@/lib/location';
-import { riderCode, uploadRiderPhoto } from '@/lib/rider';
+import { ratingLabel, riderCode, uploadRiderPhoto } from '@/lib/rider';
 import { ACTIVE_CITY, inCity } from '@/lib/service-area';
 import { errorKey, supabase } from '@/lib/supabase';
 
@@ -77,7 +77,6 @@ function Detail({ label, value }: { label: string; value: string }) {
 }
 
 function Dashboard() {
-  const theme = useTheme();
   const { t, locale } = useI18n();
   const { profile, application, refresh, signOut } = useAuth();
   const [online, setOnline] = useState(profile?.is_online ?? false);
@@ -91,6 +90,7 @@ function Dashboard() {
   const [now, setNow] = useState(() => Date.now());
   const riderId = profile!.id;
   const busy = online && busyUntil != null && new Date(busyUntil).getTime() > now;
+  const [stats, setStats] = useState<{ today: number; rating: string | null }>({ today: 0, rating: null });
   const code = riderCode(application?.rider_number);
 
   /** Sends the current position (if allowed) and marks the rider as seen now. */
@@ -149,6 +149,28 @@ function Dashboard() {
     return () => clearTimeout(timer);
   }, [busy, busyUntil, now]);
 
+  // Calls today and the average rating, from the call log (drivers can read their own calls).
+  const loadStats = useCallback(async () => {
+    const { data } = await supabase.from('calls').select('stars, created_at').eq('rider_id', riderId);
+    const rows = (data as { stars: number | null; created_at: string }[] | null) ?? [];
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    const rated = rows.filter((r) => r.stars);
+    setStats({
+      today: rows.filter((r) => new Date(r.created_at) >= startOfDay).length,
+      rating: rated.length ? ratingLabel(rated.reduce((sum, r) => sum + r.stars!, 0) / rated.length) : null,
+    });
+  }, [riderId]);
+
+  useEffect(() => {
+    const first = setTimeout(loadStats, 0);
+    const timer = setInterval(loadStats, 60_000);
+    return () => {
+      clearTimeout(first);
+      clearInterval(timer);
+    };
+  }, [loadStats]);
+
   async function changePhoto() {
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.6, allowsEditing: true, aspect: [1, 1] });
     if (result.canceled) return;
@@ -175,44 +197,53 @@ function Dashboard() {
 
   return (
     <Screen>
-      <View style={[styles.head, { backgroundColor: online ? theme.gold : theme.text }]}>
-        <Row style={{ justifyContent: 'space-between' }}>
-          <Row gap={Spacing.three} style={{ flex: 1 }}>
-            <RiderAvatar name={profile!.full_name} photoPath={profile!.photo_path} size={48} />
-            <View style={{ flex: 1 }}>
-              <Txt variant="heading" style={{ color: online ? theme.onGold : theme.background }}>{profile!.full_name}</Txt>
-              <Txt style={{ color: online ? theme.onGold : theme.background, opacity: 0.75, fontSize: 13 }}>
-                {[code, application!.plate, formatPhone(profile!.phone)].filter(Boolean).join(' · ')}
-              </Txt>
-            </View>
-          </Row>
-          <Row>
-            <Txt style={{ color: online ? theme.onGold : theme.background, fontWeight: '800' }}>
-              {t(online ? 'rider.online' : 'rider.offline')}
+      <View style={[styles.head, { backgroundColor: '#0046B5' }]}>
+        <Row gap={Spacing.three}>
+          <RiderAvatar name={profile!.full_name} photoPath={profile!.photo_path} size={56} />
+          <View style={{ flex: 1 }}>
+            <Txt style={styles.headName} numberOfLines={1}>{profile!.full_name}</Txt>
+            <Txt style={styles.headMeta} numberOfLines={1}>
+              {[code, application!.plate, formatPhone(profile!.phone)].filter(Boolean).join(' · ')}
             </Txt>
-            <Switch value={online} onValueChange={toggleOnline} accessibilityLabel={t('rider.online')} />
-          </Row>
+          </View>
         </Row>
-        <Txt variant="title" style={{ color: online ? theme.onGold : theme.background }}>
-          {t(busy ? 'rider.busyTitle' : online ? 'rider.onlineTitle' : 'rider.offlineTitle')}
-        </Txt>
-        <Txt style={{ color: online ? theme.onGold : theme.background, opacity: 0.85 }}>
-          {busy
-            ? t('rider.busyBody', { time: new Date(busyUntil!).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) })
-            : online
-              ? t('rider.onlineBody', { phone: formatPhone(profile!.phone) })
-              : t('rider.offlineBody')}
-        </Txt>
-        {online && hasLocation !== null ? (
-          <Txt style={{ color: theme.onGold, fontWeight: '700' }}>{t(hasLocation ? 'rider.locationShared' : 'rider.locationDenied')}</Txt>
-        ) : null}
+        <View style={styles.status}>
+          <View style={{ flex: 1, gap: 2 }}>
+            <Txt style={styles.statusTitle}>{t(busy ? 'rider.busyTitle' : online ? 'rider.onlineTitle' : 'rider.offlineTitle')}</Txt>
+            <Txt style={styles.statusBody}>
+              {busy
+                ? t('rider.busyBody', { time: new Date(busyUntil!).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) })
+                : online
+                  ? t('rider.onlineBody', { phone: formatPhone(profile!.phone) })
+                  : t('rider.offlineBody')}
+            </Txt>
+            {online && hasLocation !== null ? (
+              <Txt style={[styles.statusBody, { fontWeight: '700', opacity: 1 }]}>
+                {t(hasLocation ? 'rider.locationShared' : 'rider.locationDenied')}
+              </Txt>
+            ) : null}
+          </View>
+          <Switch
+            value={online}
+            onValueChange={toggleOnline}
+            accessibilityLabel={t('rider.online')}
+            trackColor={{ false: 'rgba(255,255,255,0.3)', true: '#22C55E' }}
+            thumbColor="#FFFFFF"
+          />
+        </View>
       </View>
+
+      <Row gap={Spacing.two}>
+        <Stat value={String(stats.today)} label={t('rider.statCalls')} />
+        <Stat value={stats.rating ? `★ ${stats.rating}` : t('rating.new')} label={t('rider.statRating')} />
+        <Stat value={area} label={t('rider.statArea')} />
+      </Row>
 
       {online ? (
         busy ? (
           <Button title={t('rider.goFree')} onPress={() => setBusy(false)} />
         ) : (
-          <Button title={t('rider.goBusy')} kind="ghost" onPress={() => setBusy(true)} />
+          <Button title={t('rider.goBusy')} kind="gold" onPress={() => setBusy(true)} />
         )
       ) : null}
 
@@ -249,6 +280,28 @@ function Dashboard() {
   );
 }
 
+/** A small figure tile: calls today, rating, area. */
+function Stat({ value, label }: { value: string; label: string }) {
+  const theme = useTheme();
+  return (
+    <View style={[styles.stat, { backgroundColor: theme.backgroundElement }]}>
+      <Txt style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>
+        {value}
+      </Txt>
+      <Txt variant="muted" style={{ fontSize: 12 }} numberOfLines={1}>
+        {label}
+      </Txt>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  head: { borderRadius: Radius.large, padding: Spacing.four, gap: Spacing.two },
+  head: { borderRadius: Radius.large + 4, padding: Spacing.four - 4, gap: Spacing.three },
+  headName: { color: '#FFFFFF', fontSize: 20, fontWeight: '800' },
+  headMeta: { color: '#FFFFFF', opacity: 0.8, fontSize: 13 },
+  status: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three, backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: Radius.large - 4, padding: Spacing.three },
+  statusTitle: { color: '#FFFFFF', fontSize: 24, lineHeight: 30, fontWeight: '800' },
+  statusBody: { color: '#FFFFFF', opacity: 0.85, fontSize: 13, lineHeight: 18 },
+  stat: { flex: 1, borderRadius: Radius.medium + 2, padding: Spacing.three - 4, gap: 2 },
+  statValue: { fontSize: 20, fontWeight: '800' },
 });

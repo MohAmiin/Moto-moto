@@ -1,3 +1,8 @@
+import { Rubik_400Regular } from '@expo-google-fonts/rubik/400Regular';
+import { Rubik_500Medium } from '@expo-google-fonts/rubik/500Medium';
+import { Rubik_700Bold } from '@expo-google-fonts/rubik/700Bold';
+import { Rubik_800ExtraBold } from '@expo-google-fonts/rubik/800ExtraBold';
+import { useFonts } from 'expo-font';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -27,7 +32,9 @@ export default function RootLayout() {
 function RootNavigator() {
   const { loading, session, profile } = useAuth();
   const { ready, isRTL } = useI18n();
-  const busy = loading || !ready;
+  const [fontsLoaded, fontError] = useFonts({ Rubik_400Regular, Rubik_500Medium, Rubik_700Bold, Rubik_800ExtraBold });
+  // If the fonts fail to load the app still opens, in the system font.
+  const busy = loading || !ready || (!fontsLoaded && !fontError);
 
   useEffect(() => {
     if (!busy) SplashScreen.hideAsync();

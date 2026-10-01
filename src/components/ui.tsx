@@ -12,13 +12,20 @@ import {
   type StyleProp,
   type TextInputProps,
   type TextProps,
+  type TextStyle,
   type ViewStyle,
 } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
-import { MaxContentWidth, Radius, Spacing, type ThemeColor } from '@/constants/theme';
+import { Fonts, fontFor, MaxContentWidth, Radius, Spacing, type ThemeColor } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { LANGUAGES, useI18n } from '@/lib/i18n';
+
+/** Turns fontWeight into the matching Rubik font file (custom fonts can't be bolded on Android). */
+export function withFont(style: StyleProp<TextStyle>): TextStyle {
+  const { fontWeight, ...rest } = StyleSheet.flatten(style) ?? {};
+  return { ...rest, fontFamily: rest.fontFamily ?? fontFor(fontWeight) };
+}
 
 // ---------------------------------------------------------------------------
 // Layout
@@ -67,7 +74,7 @@ export function Header({ title, subtitle, back = true }: { title: string; subtit
         </Pressable>
       ) : null}
       <View style={{ flex: 1 }}>
-        <Txt variant="heading">{title}</Txt>
+        <Txt variant="title">{title}</Txt>
         {subtitle ? <Txt variant="muted">{subtitle}</Txt> : null}
       </View>
     </View>
@@ -86,10 +93,10 @@ export function Card({ children, style, tone = 'plain' }: { children: ReactNode;
   const theme = useTheme();
   const toneStyle =
     tone === 'soft'
-      ? { backgroundColor: theme.backgroundSelected, borderColor: 'transparent' }
+      ? { backgroundColor: theme.backgroundSelected }
       : tone === 'gold'
-        ? { backgroundColor: theme.gold, borderColor: 'transparent' }
-        : { backgroundColor: theme.background, borderColor: theme.border };
+        ? { backgroundColor: theme.gold }
+        : { backgroundColor: theme.backgroundElement };
   return <View style={[styles.card, toneStyle, style]}>{children}</View>;
 }
 
@@ -102,7 +109,7 @@ type Variant = 'body' | 'title' | 'heading' | 'label' | 'muted' | 'price' | 'big
 export function Txt({ variant = 'body', color, style, ...rest }: TextProps & { variant?: Variant; color?: ThemeColor }) {
   const theme = useTheme();
   const defaultColor: ThemeColor = variant === 'muted' || variant === 'label' ? 'textSecondary' : 'text';
-  return <Text style={[{ color: theme[color ?? defaultColor] }, text[variant], style]} {...rest} />;
+  return <Text style={withFont([{ color: theme[color ?? defaultColor] }, text[variant], style])} {...rest} />;
 }
 
 // ---------------------------------------------------------------------------
@@ -128,10 +135,10 @@ export function Button({
 }) {
   const theme = useTheme();
   const palette = {
-    primary: { bg: theme.brand, fg: theme.onBrand, border: theme.brand },
-    gold: { bg: theme.gold, fg: theme.onGold, border: theme.gold },
-    ghost: { bg: 'transparent', fg: theme.text, border: theme.border },
-    danger: { bg: 'transparent', fg: theme.danger, border: theme.danger },
+    primary: { bg: theme.brand, fg: theme.onBrand },
+    gold: { bg: theme.gold, fg: theme.onGold },
+    ghost: { bg: theme.background, fg: theme.text },
+    danger: { bg: theme.dangerSoft, fg: theme.danger },
   }[kind];
   const inactive = disabled || loading;
   return (
@@ -142,13 +149,15 @@ export function Button({
       onPress={onPress}
       style={({ pressed }) => [
         styles.button,
-        { backgroundColor: palette.bg, borderColor: palette.border, opacity: inactive ? 0.5 : pressed ? 0.85 : 1 },
+        { backgroundColor: palette.bg, opacity: inactive ? 0.5 : pressed ? 0.85 : 1 },
+        kind === 'ghost' && { borderWidth: 1.5, borderColor: theme.border },
+        (kind === 'primary' || kind === 'gold') && [styles.lift, { shadowColor: palette.bg }],
         style,
       ]}>
       {loading ? (
         <ActivityIndicator color={palette.fg} />
       ) : (
-        <Text style={[styles.buttonText, { color: palette.fg }, kind === 'gold' && styles.buttonTextBig]}>{title}</Text>
+        <Text style={withFont([styles.buttonText, { color: palette.fg }, kind === 'gold' && styles.buttonTextBig])}>{title}</Text>
       )}
     </Pressable>
   );
@@ -158,7 +167,7 @@ export function LinkButton({ title, onPress }: { title: string; onPress: () => v
   const theme = useTheme();
   return (
     <Pressable accessibilityRole="button" onPress={onPress} hitSlop={8} style={{ alignSelf: 'flex-start' }}>
-      <Text style={[styles.link, { color: theme.brand }]}>{title}</Text>
+      <Text style={withFont([styles.link, { color: theme.brand }])}>{title}</Text>
     </Pressable>
   );
 }
@@ -177,7 +186,7 @@ export function Field({ label, error, help, ...input }: TextInputProps & { label
         {...input}
         style={[
           styles.input,
-          { backgroundColor: theme.backgroundElement, borderColor: error ? theme.danger : theme.border, color: theme.text },
+          { backgroundColor: theme.backgroundElement, borderColor: error ? theme.danger : 'transparent', color: theme.text },
           input.multiline && { minHeight: 72, textAlignVertical: 'top' },
           input.style,
         ]}
@@ -193,7 +202,7 @@ export function PhoneField({ value, onChangeText, error }: { value: string; onCh
   return (
     <View style={{ gap: Spacing.one + 2 }}>
       <Txt variant="label">{t('common.phone')}</Txt>
-      <View style={[styles.phone, styles.ltr, { backgroundColor: theme.backgroundElement, borderColor: error ? theme.danger : theme.border }]}>
+      <View style={[styles.phone, styles.ltr, { backgroundColor: theme.backgroundElement, borderColor: error ? theme.danger : 'transparent' }]}>
         <Txt style={[styles.prefix, { borderColor: theme.border }]}>+252</Txt>
         <TextInput
           value={value}
@@ -242,8 +251,8 @@ export function Choices<T extends string>({
               onPress={() => onChange(o.id)}
               style={[
                 styles.choice,
-                { flexBasis: `${100 / columns - 3}%`, borderColor: selected ? theme.brand : theme.border },
-                { backgroundColor: selected ? theme.backgroundSelected : theme.background },
+                { flexBasis: `${100 / columns - 3}%`, borderColor: selected ? theme.brand : 'transparent' },
+                { backgroundColor: selected ? theme.backgroundSelected : theme.backgroundElement },
               ]}>
               <Txt style={styles.choiceText}>{o.label}</Txt>
               {o.hint ? <Txt variant="muted" style={styles.small}>{o.hint}</Txt> : null}
@@ -268,7 +277,7 @@ export function Pill({ label, tone = 'neutral' }: { label: string; tone?: 'neutr
   const [bg, fg] = map[tone];
   return (
     <View style={[styles.pill, { backgroundColor: bg }]}>
-      <Text style={[styles.pillText, { color: fg }]}>{label}</Text>
+      <Text style={withFont([styles.pillText, { color: fg }])}>{label}</Text>
     </View>
   );
 }
@@ -279,18 +288,18 @@ export function Stepper({ quantity, onAdd, onRemove }: { quantity: number; onAdd
   if (quantity === 0) {
     return (
       <Pressable accessibilityRole="button" onPress={onAdd} style={[styles.add, { borderColor: theme.brand }]}>
-        <Text style={[styles.addText, { color: theme.brand }]}>{t('common.add')}</Text>
+        <Text style={withFont([styles.addText, { color: theme.brand }])}>{t('common.add')}</Text>
       </Pressable>
     );
   }
   return (
     <View style={[styles.stepper, { backgroundColor: theme.brand }]}>
       <Pressable accessibilityRole="button" accessibilityLabel={t('common.removeOne')} onPress={onRemove} style={styles.stepBtn}>
-        <Text style={[styles.stepText, { color: theme.onBrand }]}>−</Text>
+        <Text style={withFont([styles.stepText, { color: theme.onBrand }])}>−</Text>
       </Pressable>
-      <Text style={[styles.stepText, { color: theme.onBrand, minWidth: 18, textAlign: 'center' }]}>{quantity}</Text>
+      <Text style={withFont([styles.stepText, { color: theme.onBrand, minWidth: 18, textAlign: 'center' }])}>{quantity}</Text>
       <Pressable accessibilityRole="button" accessibilityLabel={t('common.addOne')} onPress={onAdd} style={styles.stepBtn}>
-        <Text style={[styles.stepText, { color: theme.onBrand }]}>+</Text>
+        <Text style={withFont([styles.stepText, { color: theme.onBrand }])}>+</Text>
       </Pressable>
     </View>
   );
@@ -308,7 +317,7 @@ export function Monogram({ name, size = 56 }: { name: string; size?: number }) {
     .toUpperCase();
   return (
     <View style={{ width: size, height: size, borderRadius: size * 0.28, backgroundColor: `hsl(${hash}, 55%, 42%)`, alignItems: 'center', justifyContent: 'center' }}>
-      <Text style={{ color: '#fff', fontWeight: '800', fontSize: size * 0.34 }}>{initials}</Text>
+      <Text style={{ color: '#fff', fontFamily: Fonts.heavy, fontSize: size * 0.34 }}>{initials}</Text>
     </View>
   );
 }
@@ -328,7 +337,7 @@ export function LanguageSwitcher({ onDark = false }: { onDark?: boolean }) {
             accessibilityState={{ selected }}
             onPress={() => setLanguage(l.id)}
             style={[styles.lang, selected && { backgroundColor: theme.background }]}>
-            <Text style={[styles.langText, { color: selected ? theme.text : onDark ? theme.onBrand : theme.textSecondary }]}>{l.label}</Text>
+            <Text style={withFont([styles.langText, { color: selected ? theme.text : onDark ? theme.onBrand : theme.textSecondary }])}>{l.label}</Text>
           </Pressable>
         );
       })}
@@ -358,9 +367,9 @@ export function Loading() {
 
 const text = StyleSheet.create({
   body: { fontSize: 15, lineHeight: 22 },
-  title: { fontSize: 26, lineHeight: 32, fontWeight: '800' },
-  heading: { fontSize: 18, lineHeight: 24, fontWeight: '800' },
-  label: { fontSize: 13, fontWeight: '700' },
+  title: { fontSize: 27, lineHeight: 33, fontWeight: '800', letterSpacing: -0.3 },
+  heading: { fontSize: 18, lineHeight: 24, fontWeight: '700' },
+  label: { fontSize: 13, fontWeight: '500' },
   muted: { fontSize: 14, lineHeight: 20 },
   price: { fontSize: 15, fontWeight: '700', fontVariant: ['tabular-nums'] },
   big: { fontSize: 32, lineHeight: 36, fontWeight: '900', fontVariant: ['tabular-nums'] },
@@ -371,23 +380,25 @@ const styles = StyleSheet.create({
   scroll: { flexGrow: 1 },
   content: { width: '100%', maxWidth: MaxContentWidth, alignSelf: 'center', padding: Spacing.three, gap: Spacing.three, flexGrow: 1 },
   footer: { width: '100%', maxWidth: MaxContentWidth, alignSelf: 'center', paddingHorizontal: Spacing.three, paddingBottom: Spacing.two },
-  header: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, paddingBottom: Spacing.three, borderBottomWidth: StyleSheet.hairlineWidth },
+  header: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three, paddingTop: Spacing.two, paddingBottom: Spacing.one },
   back: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
-  backIcon: { fontSize: 26, lineHeight: 28, fontWeight: '600' },
-  card: { borderWidth: 1, borderRadius: Radius.large, padding: Spacing.three, gap: Spacing.two },
-  button: { minHeight: 50, borderRadius: Radius.medium, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.three },
+  backIcon: { fontSize: 26, lineHeight: 28, fontWeight: '500' },
+  card: { borderRadius: Radius.large, padding: Spacing.three + 2, gap: Spacing.two },
+  button: { minHeight: 54, borderRadius: Radius.medium, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.three },
+  // A soft coloured glow under the main buttons.
+  lift: { shadowOpacity: 0.3, shadowRadius: 10, shadowOffset: { width: 0, height: 5 }, elevation: 3 },
   buttonText: { fontSize: 16, fontWeight: '700' },
-  buttonTextBig: { fontSize: 17, fontWeight: '900' },
+  buttonTextBig: { fontSize: 17, fontWeight: '800' },
   link: { fontSize: 14, fontWeight: '700', paddingVertical: Spacing.one },
-  input: { borderWidth: 1.5, borderRadius: Radius.small + 2, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16 },
-  phone: { flexDirection: 'row', borderWidth: 1.5, borderRadius: Radius.small + 2, overflow: 'hidden' },
-  prefix: { paddingHorizontal: 12, paddingVertical: 12, fontSize: 16, fontWeight: '700', borderRightWidth: 1, writingDirection: 'ltr' },
+  input: { borderWidth: 1.5, borderRadius: Radius.medium, paddingHorizontal: 16, paddingVertical: 14, fontSize: 16, fontFamily: Fonts.medium },
+  phone: { flexDirection: 'row', borderWidth: 1.5, borderRadius: Radius.medium, overflow: 'hidden' },
+  prefix: { paddingHorizontal: 14, paddingVertical: 14, fontSize: 16, fontWeight: '700', borderRightWidth: 1, writingDirection: 'ltr' },
   // Phone numbers read left to right in every language (native only; web ignores `direction`).
   ltr: Platform.OS === 'web' ? {} : { direction: 'ltr' },
-  phoneInput: { flex: 1, paddingHorizontal: 12, fontSize: 16, fontVariant: ['tabular-nums'], textAlign: 'left', writingDirection: 'ltr' },
+  phoneInput: { flex: 1, paddingHorizontal: 14, fontSize: 16, fontFamily: Fonts.medium, fontVariant: ['tabular-nums'], textAlign: 'left', writingDirection: 'ltr' },
   small: { fontSize: 13 },
   choices: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
-  choice: { flexGrow: 1, borderWidth: 1.5, borderRadius: Radius.small + 2, paddingVertical: 10, paddingHorizontal: 8, alignItems: 'center' },
+  choice: { flexGrow: 1, borderWidth: 1.5, borderRadius: Radius.medium, paddingVertical: 12, paddingHorizontal: 8, alignItems: 'center' },
   choiceText: { fontWeight: '700', fontSize: 14, textAlign: 'center' },
   pill: { borderRadius: Radius.pill, paddingHorizontal: 10, paddingVertical: 3, alignSelf: 'flex-start' },
   pillText: { fontSize: 12, fontWeight: '700' },

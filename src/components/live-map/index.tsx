@@ -9,7 +9,8 @@ import { MAP_HTML, type LiveMapData } from './map-html';
 export type { LiveMapData, MapPoint } from './map-html';
 
 /** Live map on phones: Leaflet inside a WebView, updated by injecting the latest data. */
-export function LiveMap({ data, height = 300 }: { data: LiveMapData; height?: number }) {
+/** `rounded={false}` for a map that fills the screen edge to edge. */
+export function LiveMap({ data, height = 300, rounded = true }: { data: LiveMapData; height?: number; rounded?: boolean }) {
   const ref = useRef<WebView>(null);
   const [ready, setReady] = useState(false);
 
@@ -19,7 +20,7 @@ export function LiveMap({ data, height = 300 }: { data: LiveMapData; height?: nu
   }, [ready, data]);
 
   return (
-    <View style={[styles.box, { height }]}>
+    <View style={[styles.box, { height, borderRadius: rounded ? Radius.large : 0 }]}>
       <WebView
         ref={ref}
         source={{ html: MAP_HTML }}
@@ -35,6 +36,6 @@ export function LiveMap({ data, height = 300 }: { data: LiveMapData; height?: nu
 }
 
 const styles = StyleSheet.create({
-  box: { borderRadius: Radius.large, overflow: 'hidden' },
+  box: { overflow: 'hidden' },
   web: { flex: 1, backgroundColor: 'transparent' },
 });

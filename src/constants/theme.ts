@@ -2,12 +2,12 @@
 // The `gold` / `onGold` slots hold the orange accent.
 export const Colors = {
   light: {
-    text: '#14213D',
-    textSecondary: '#5E6472',
+    text: '#0D1220',
+    textSecondary: '#6B7385',
     background: '#FFFFFF',
-    backgroundElement: '#F5F3F0',
-    backgroundSelected: '#E5EDFA',
-    border: '#E6E1DA',
+    backgroundElement: '#F4F6FA',
+    backgroundSelected: '#E8EFFC',
+    border: '#E4E8F0',
     brand: '#0046B5',
     onBrand: '#FFFFFF',
     gold: '#FF6B0A',
@@ -24,7 +24,7 @@ export const Colors = {
     textSecondary: '#9CA3B4',
     background: '#0D1220',
     backgroundElement: '#1A2236',
-    backgroundSelected: '#3A2414',
+    backgroundSelected: '#1C2A4A',
     border: '#283246',
     brand: '#FF8A3D',
     onBrand: '#14213D',
@@ -53,10 +53,24 @@ export const Spacing = {
 } as const;
 
 export const Radius = {
-  small: 10,
-  medium: 14,
-  large: 20,
+  small: 12,
+  medium: 16,
+  large: 24,
   pill: 999,
 } as const;
+
+/** Rubik, the rounded font of the logo. Loaded in the root layout; each weight is its own font file. */
+export const Fonts = {
+  regular: 'Rubik_400Regular',
+  medium: 'Rubik_500Medium',
+  bold: 'Rubik_700Bold',
+  heavy: 'Rubik_800ExtraBold',
+} as const;
+
+/** The Rubik file for a font weight; custom fonts can't be made bold with fontWeight on Android. */
+export function fontFor(weight: string | number | undefined) {
+  const w = Number(weight === 'bold' ? 700 : weight === 'normal' || weight == null ? 400 : weight);
+  return w >= 800 ? Fonts.heavy : w >= 700 ? Fonts.bold : w >= 500 ? Fonts.medium : Fonts.regular;
+}
 
 export const MaxContentWidth = 560;

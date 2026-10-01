@@ -7,7 +7,7 @@ import { MAP_HTML, type LiveMapData } from './map-html';
 export type { LiveMapData, MapPoint } from './map-html';
 
 /** Live map on the web: the same Leaflet page in an iframe, updated with postMessage. */
-export function LiveMap({ data, height = 300 }: { data: LiveMapData; height?: number }) {
+export function LiveMap({ data, height = 300, rounded = true }: { data: LiveMapData; height?: number; rounded?: boolean }) {
   const ref = useRef<HTMLIFrameElement>(null);
   const [ready, setReady] = useState(false);
 
@@ -28,7 +28,7 @@ export function LiveMap({ data, height = 300 }: { data: LiveMapData; height?: nu
       ref={ref}
       title="Map"
       srcDoc={MAP_HTML}
-      style={{ border: 0, width: '100%', height, borderRadius: Radius.large, display: 'block' }}
+      style={{ border: 0, width: '100%', height, borderRadius: rounded ? Radius.large : 0, display: 'block' }}
     />
   );
 }
