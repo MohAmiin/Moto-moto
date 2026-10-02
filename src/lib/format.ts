@@ -17,22 +17,9 @@ export const DEFAULT_AREA: string = AREAS[0];
 /** Choice options for area pickers. */
 export const AREA_OPTIONS = AREAS.map((a) => ({ id: a as string, label: a }));
 
-// Neighbourhoods saved by earlier versions of the app, and the district each belongs to.
-const LEGACY_AREAS: Record<string, string> = {
-  Haleeya: 'Macalin Haaruun',
-  Shiraaqle: 'Macalin Haaruun',
-  'Hodan Hills': 'Macalin Haaruun',
-  'Dooxa Weyn': '26 June',
-  Suuqa: '26 June',
-  Goljano: '26 June',
-  'New Hargeysa': 'Gacan Libaax',
-};
-
-/** The district for a saved area, turning an old neighbourhood into its district; unknown values fall back to the default. */
+/** The saved area if it is one of the districts, otherwise the first district. */
 export function toDistrict(area: string | null | undefined) {
-  if (!area) return DEFAULT_AREA;
-  if ((AREAS as readonly string[]).includes(area)) return area;
-  return LEGACY_AREAS[area] ?? DEFAULT_AREA;
+  return area && (AREAS as readonly string[]).includes(area) ? area : DEFAULT_AREA;
 }
 
 /** "350 m away" under 1 km, otherwise "2.4 km away". */

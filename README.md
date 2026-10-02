@@ -81,7 +81,7 @@ supabase/seed.sql        Sample stores and products
 ### 1. Create the Supabase project
 
 1. Create a project at [supabase.com](https://supabase.com).
-2. In **SQL Editor**, run each file in `supabase/migrations/` in order (`20260928…_init.sql`, `20260929…_nearby_riders.sql`, `20260930…_rider_map.sql`, `20261001…_service_area.sql`, `20261002…_call_log.sql`, `20261003…_trust.sql`, `20261004…_pin_login.sql`, `20261005…_optional_id.sql`, `20261006…_delete_account.sql`, then `20261007…_districts.sql`).
+2. In **SQL Editor**, run each file in `supabase/migrations/` in order (`20260928…_init.sql`, `20260929…_nearby_riders.sql`, `20260930…_rider_map.sql`, `20261001…_service_area.sql`, `20261002…_call_log.sql`, `20261003…_trust.sql`, `20261004…_pin_login.sql`, `20261005…_optional_id.sql`, then `20261006…_delete_account.sql`).
    (Or with the Supabase CLI: `npx supabase link` then `npx supabase db push`.)
    If only the first migration was applied, `supabase/catch-up-find-a-rider.sql` applies the other three in one go; it is safe to run more than once.
 3. For PIN login: in **Authentication → Sign In / Providers → Email**, make sure Email is enabled and switch **Confirm email** off.
