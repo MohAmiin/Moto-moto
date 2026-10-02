@@ -2,7 +2,7 @@
 
 Quick moto delivery for Hargeisa. *Jareeye* is Somali for a fast horse. Anyone who needs something delivered (a shop owner, a family, a business) opens the app, sees the motorbike riders online nearest to them, and calls one. They meet, hand over the package and the receiver's phone number, and the rider delivers it. Payment goes to the rider directly.
 
-The app speaks English (default), Somali and Arabic (right to left), and is built with Expo (React Native) on top of Supabase. Headquarters and launch city: Hargeisa, Somaliland. Phone numbers use +252; Hargeisa numbers usually start with 3, 4, 6 or 9, but any number that receives the SMS code works. A bare 7-digit number gets Telesom's 63 added (474 0002 becomes +252 63 474 0002); delivery areas (xaafad and their degmo) are listed in `src/lib/format.ts`.
+The app speaks English (default), Somali and Arabic (right to left), and is built with Expo (React Native) on top of Supabase. Headquarters and launch city: Hargeisa, Somaliland. Phone numbers use +252; Hargeisa numbers usually start with 3, 4, 6 or 9, but any number that receives the SMS code works. A bare 7-digit number gets Telesom's 63 added (474 0002 becomes +252 63 474 0002); customers and drivers pick one of Hargeisa's eight districts (Koodbuur, 26 June, Gacan Libaax, Macalin Haaruun, Ahmed Dhagax, Maxamed Mooge, Maxamuud Haybe, 31 May), listed in `src/lib/format.ts`.
 
 ## What's in the app
 
@@ -81,7 +81,7 @@ supabase/seed.sql        Sample stores and products
 ### 1. Create the Supabase project
 
 1. Create a project at [supabase.com](https://supabase.com).
-2. In **SQL Editor**, run each file in `supabase/migrations/` in order (`20260928…_init.sql`, `20260929…_nearby_riders.sql`, `20260930…_rider_map.sql`, `20261001…_service_area.sql`, `20261002…_call_log.sql`, `20261003…_trust.sql`, `20261004…_pin_login.sql`, `20261005…_optional_id.sql`, then `20261006…_delete_account.sql`).
+2. In **SQL Editor**, run each file in `supabase/migrations/` in order (`20260928…_init.sql`, `20260929…_nearby_riders.sql`, `20260930…_rider_map.sql`, `20261001…_service_area.sql`, `20261002…_call_log.sql`, `20261003…_trust.sql`, `20261004…_pin_login.sql`, `20261005…_optional_id.sql`, `20261006…_delete_account.sql`, then `20261007…_districts.sql`).
    (Or with the Supabase CLI: `npx supabase link` then `npx supabase db push`.)
    If only the first migration was applied, `supabase/catch-up-find-a-rider.sql` applies the other three in one go; it is safe to run more than once.
 3. For PIN login: in **Authentication → Sign In / Providers → Email**, make sure Email is enabled and switch **Confirm email** off.

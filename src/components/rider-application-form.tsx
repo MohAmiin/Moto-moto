@@ -7,7 +7,7 @@ import { Button, Choices, Field, Stack, Txt } from '@/components/ui';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth';
-import { AREA_OPTIONS, DEFAULT_AREA } from '@/lib/format';
+import { AREA_OPTIONS, toDistrict } from '@/lib/format';
 import { useI18n } from '@/lib/i18n';
 import { uploadRiderPhoto } from '@/lib/rider';
 import { accountPhone } from '@/lib/pin';
@@ -23,7 +23,7 @@ export function RiderApplicationForm({ createProfile }: { createProfile: boolean
   const [name, setName] = useState(profile?.full_name ?? '');
   const [idNumber, setIdNumber] = useState(application?.id_number ?? '');
   const [plate, setPlate] = useState(application?.plate ?? '');
-  const [district, setDistrict] = useState<string>(application?.district ?? profile?.district ?? DEFAULT_AREA);
+  const [district, setDistrict] = useState<string>(toDistrict(application?.district ?? profile?.district));
   const [photo, setPhoto] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const [face, setFace] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const [agree, setAgree] = useState(false);

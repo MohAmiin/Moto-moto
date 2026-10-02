@@ -1,22 +1,39 @@
 import { LTR, PDI, type TKey } from '@/lib/i18n';
 
-// Hargeisa delivery areas: each xaafad (neighbourhood) with the degmo (district) it belongs to.
-// Customers and riders pick the xaafad; the degmo is shown underneath. Add more as the service grows.
+// Hargeisa's eight districts (degmooyin). Customers and drivers pick one; it is stored in profiles.district.
 export const AREAS = [
-  { id: 'Haleeya', district: 'Macalin Haaruun' },
-  { id: 'Shiraaqle', district: 'Macalin Haaruun' },
-  { id: 'Hodan Hills', district: 'Macalin Haaruun' },
-  { id: 'Dooxa Weyn', district: '26 June' },
-  { id: 'Suuqa', district: '26 June' },
-  { id: 'Goljano', district: '26 June' },
-  { id: 'New Hargeysa', district: 'Gacan Libaax' },
-  { id: 'Bada Cas', district: 'Gacmo Dheere' },
+  'Koodbuur',
+  '26 June',
+  'Gacan Libaax',
+  'Macalin Haaruun',
+  'Ahmed Dhagax',
+  'Maxamed Mooge',
+  'Maxamuud Haybe',
+  '31 May',
 ] as const;
 
-export const DEFAULT_AREA = AREAS[0].id;
+export const DEFAULT_AREA: string = AREAS[0];
 
-/** Choice options for area pickers: the neighbourhood with its district underneath. */
-export const AREA_OPTIONS = AREAS.map((a) => ({ id: a.id as string, label: a.id, hint: a.district as string }));
+/** Choice options for area pickers. */
+export const AREA_OPTIONS = AREAS.map((a) => ({ id: a as string, label: a }));
+
+// Neighbourhoods saved by earlier versions of the app, and the district each belongs to.
+const LEGACY_AREAS: Record<string, string> = {
+  Haleeya: 'Macalin Haaruun',
+  Shiraaqle: 'Macalin Haaruun',
+  'Hodan Hills': 'Macalin Haaruun',
+  'Dooxa Weyn': '26 June',
+  Suuqa: '26 June',
+  Goljano: '26 June',
+  'New Hargeysa': 'Gacan Libaax',
+};
+
+/** The district for a saved area, turning an old neighbourhood into its district; unknown values fall back to the default. */
+export function toDistrict(area: string | null | undefined) {
+  if (!area) return DEFAULT_AREA;
+  if ((AREAS as readonly string[]).includes(area)) return area;
+  return LEGACY_AREAS[area] ?? DEFAULT_AREA;
+}
 
 /** "350 m away" under 1 km, otherwise "2.4 km away". */
 export function distanceLabel(km: number | null, t: (key: TKey, vars?: Record<string, string | number>) => string) {

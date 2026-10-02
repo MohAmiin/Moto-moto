@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { DeleteAccount } from '@/components/delete-account';
 import { Button, Choices, Header, LanguageSwitcher, Monogram, Row, Screen, Stack, Txt } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
-import { AREA_OPTIONS, DEFAULT_AREA, formatPhone } from '@/lib/format';
+import { AREA_OPTIONS, formatPhone, toDistrict } from '@/lib/format';
 import { useI18n } from '@/lib/i18n';
 import { errorKey, supabase } from '@/lib/supabase';
 
@@ -37,7 +37,7 @@ export default function Account() {
         <Txt variant="label">{t('common.language')}</Txt>
         <LanguageSwitcher />
       </Stack>
-      <Choices label={t('acct.deliveryDistrict')} options={AREA_OPTIONS} value={profile.district ?? DEFAULT_AREA} onChange={changeDistrict} columns={2} />
+      <Choices label={t('acct.deliveryDistrict')} options={AREA_OPTIONS} value={toDistrict(profile.district)} onChange={changeDistrict} columns={2} />
       {message ? <Txt variant="muted">{message}</Txt> : null}
       <Button title={t('common.signOut')} kind="ghost" onPress={signOut} />
       <DeleteAccount />

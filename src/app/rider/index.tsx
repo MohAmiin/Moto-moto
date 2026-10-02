@@ -10,7 +10,7 @@ import { Button, Card, Choices, Header, LanguageSwitcher, LinkButton, Row, Scree
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth';
-import { AREA_OPTIONS, DEFAULT_AREA, formatPhone } from '@/lib/format';
+import { AREA_OPTIONS, formatPhone, toDistrict } from '@/lib/format';
 import { useI18n, type TKey } from '@/lib/i18n';
 import { currentPosition, type Coords } from '@/lib/location';
 import { ratingLabel, riderCode, uploadRiderPhoto } from '@/lib/rider';
@@ -80,7 +80,7 @@ function Dashboard() {
   const { t, locale } = useI18n();
   const { profile, application, refresh, signOut } = useAuth();
   const [online, setOnline] = useState(profile?.is_online ?? false);
-  const [area, setArea] = useState<string>(profile?.district ?? DEFAULT_AREA);
+  const [area, setArea] = useState<string>(toDistrict(profile?.district));
   const [hasLocation, setHasLocation] = useState<boolean | null>(null);
   const [coords, setCoords] = useState<Coords | null>(null);
   const [error, setError] = useState<string>();
