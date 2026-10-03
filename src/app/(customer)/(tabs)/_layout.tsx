@@ -17,13 +17,14 @@ export default function CustomerTabs() {
         tabBarStyle: { backgroundColor: theme.background, borderTopColor: theme.border },
         tabBarLabelStyle: { fontSize: 12, fontFamily: Fonts.medium },
       }}>
+      {/* Tab colours come from our theme (plain strings), so the cast below is safe. */}
       <Tabs.Screen
         name="index"
-        options={{ title: t('tab.home'), tabBarIcon: ({ color }) => <Icon source={Icons.home} size={24} color={color} /> }}
+        options={{ title: t('tab.home'), tabBarIcon: ({ color }) => <Icon source={Icons.home} size={24} color={color as string} /> }}
       />
       <Tabs.Screen
         name="account"
-        options={{ title: t('tab.account'), tabBarIcon: ({ color }) => <Icon source={Icons.user} size={24} color={color} /> }}
+        options={{ title: t('tab.account'), tabBarIcon: ({ color }) => <Icon source={Icons.user} size={24} color={color as string} /> }}
       />
     </Tabs>
   );
