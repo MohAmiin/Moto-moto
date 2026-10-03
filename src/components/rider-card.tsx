@@ -1,50 +1,60 @@
-import { Image } from 'expo-image';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { Icon, Icons, OnlineDot } from '@/components/feed';
 import { RiderAvatar } from '@/components/rider-avatar';
 import { Pill, Txt } from '@/components/ui';
-import { Radius, Spacing } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { callRider } from '@/lib/call';
-import { distanceLabel } from '@/lib/format';
+import { minutesAway } from '@/lib/format';
 import { useI18n } from '@/lib/i18n';
 import { ratingLabel, riderCode } from '@/lib/rider';
 import type { NearbyRider } from '@/lib/types';
 
-/** One online driver: photo, name, Jareeye number, rating, distance and area, and a round call button. */
-export function RiderCard({ rider }: { rider: NearbyRider }) {
+/** One online driver as a list row: photo, name, Jareeye number, rating, time away and area, and a call button. */
+export function RiderCard({ rider, last = false }: { rider: NearbyRider; last?: boolean }) {
   const theme = useTheme();
   const { t } = useI18n();
-  const distance = distanceLabel(rider.distance_km, t);
   const code = riderCode(rider.rider_number);
   const rating = ratingLabel(rider.rating);
+  const minutes = minutesAway(rider.distance_km);
   const meta = [
-    rating ? `★ ${rating}` : t('rating.new'),
-    distance,
+    rating ? `★ ${rating}${rider.rating_count ? ` (${rider.rating_count})` : ''}` : t('rating.new'),
     rider.area,
   ]
     .filter(Boolean)
     .join(' · ');
 
   return (
-    <View style={[styles.card, { backgroundColor: theme.backgroundElement }]}>
-      <RiderAvatar name={rider.full_name} photoPath={rider.photo_path} size={54} />
+    <View style={[styles.row, !last && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.border }]}>
+      <View>
+        <RiderAvatar name={rider.full_name} photoPath={rider.photo_path} size={48} round />
+        <View style={styles.dot}>
+          <OnlineDot size={12} ring={theme.background} />
+        </View>
+      </View>
       <View style={styles.info}>
         <Txt style={styles.name} numberOfLines={1}>{rider.full_name}</Txt>
         <View style={styles.codeRow}>
-          <Txt style={[styles.code, { color: theme.brand }]}>{[code, rider.plate].filter(Boolean).join(' · ')}</Txt>
+          <Txt style={[styles.code, { color: theme.brand }]} numberOfLines={1}>{[code, rider.plate].filter(Boolean).join(' · ')}</Txt>
           {rider.is_busy ? <Pill label={t('rider.busy')} tone="warning" /> : null}
         </View>
         <Txt variant="muted" style={styles.meta} numberOfLines={1}>{meta}</Txt>
       </View>
+      {minutes != null ? (
+        <View style={styles.time}>
+          <Txt style={styles.timeValue}>{minutes}</Txt>
+          <Txt variant="muted" style={styles.timeUnit}>{t('home.min')}</Txt>
+        </View>
+      ) : null}
       {rider.phone ? (
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`${t('home.call')} ${rider.full_name}`}
+          accessibilityLabel={t('home.callName', { name: rider.full_name })}
           onPress={() => callRider(rider.id, rider.phone!)}
           hitSlop={6}
           style={({ pressed }) => [styles.call, { backgroundColor: theme.gold, opacity: pressed ? 0.8 : 1 }]}>
-          <Image source={require('@/assets/icons/phone.png')} style={styles.callIcon} tintColor="#FFFFFF" />
+          <Icon source={Icons.phone} size={22} color="#FFFFFF" />
         </Pressable>
       ) : null}
     </View>
@@ -52,23 +62,15 @@ export function RiderCard({ rider }: { rider: NearbyRider }) {
 }
 
 const styles = StyleSheet.create({
-  card: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three, padding: Spacing.three - 4, borderRadius: Radius.large - 4 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three, paddingVertical: Spacing.three - 4 },
+  dot: { position: 'absolute', right: -1, bottom: -1 },
   info: { flex: 1, gap: 1 },
   name: { fontSize: 16, fontWeight: '700' },
   codeRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   code: { fontSize: 12, fontWeight: '700' },
   meta: { fontSize: 13 },
-  call: {
-    width: 52,
-    height: 52,
-    borderRadius: Radius.medium,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#FF6B0A',
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
-  },
-  callIcon: { width: 24, height: 24 },
+  time: { alignItems: 'center', minWidth: 32 },
+  timeValue: { fontSize: 18, lineHeight: 22, fontWeight: '700', fontVariant: ['tabular-nums'] },
+  timeUnit: { fontSize: 11, lineHeight: 14 },
+  call: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center' },
 });

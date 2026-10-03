@@ -28,6 +28,11 @@ export function distanceLabel(km: number | null, t: (key: TKey, vars?: Record<st
   return km < 1 ? t('home.mAway', { m: Math.max(50, Math.round((km * 1000) / 50) * 50) }) : t('home.kmAway', { km: km.toFixed(1) });
 }
 
+/** Rough riding time across town at about 20 km/h, at least 1 minute; null without a distance. */
+export function minutesAway(km: number | null | undefined) {
+  return km == null ? null : Math.max(1, Math.round(km * 3));
+}
+
 /** Telesom's mobile prefix in Hargeisa; people often give only the 7 digits after it. */
 export const DEFAULT_OPERATOR_PREFIX = '63';
 

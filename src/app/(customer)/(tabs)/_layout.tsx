@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router/tabs';
 
+import { Icon, Icons } from '@/components/feed';
 import { Fonts } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/lib/i18n';
@@ -14,12 +15,16 @@ export default function CustomerTabs() {
         tabBarActiveTintColor: theme.brand,
         tabBarInactiveTintColor: theme.textSecondary,
         tabBarStyle: { backgroundColor: theme.background, borderTopColor: theme.border },
-        tabBarIcon: () => null,
-        tabBarIconStyle: { display: 'none' },
-        tabBarLabelStyle: { fontSize: 14, fontFamily: Fonts.bold },
+        tabBarLabelStyle: { fontSize: 12, fontFamily: Fonts.medium },
       }}>
-      <Tabs.Screen name="index" options={{ title: t('tab.home') }} />
-      <Tabs.Screen name="account" options={{ title: t('tab.account') }} />
+      <Tabs.Screen
+        name="index"
+        options={{ title: t('tab.home'), tabBarIcon: ({ color }) => <Icon source={Icons.home} size={24} color={color} /> }}
+      />
+      <Tabs.Screen
+        name="account"
+        options={{ title: t('tab.account'), tabBarIcon: ({ color }) => <Icon source={Icons.user} size={24} color={color} /> }}
+      />
     </Tabs>
   );
 }

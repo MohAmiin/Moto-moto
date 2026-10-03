@@ -306,7 +306,7 @@ export function Stepper({ quantity, onAdd, onRemove }: { quantity: number; onAdd
 }
 
 /** Coloured square with initials, used until stores upload real photos. */
-export function Monogram({ name, size = 56 }: { name: string; size?: number }) {
+export function Monogram({ name, size = 56, radius }: { name: string; size?: number; radius?: number }) {
   let hash = 0;
   for (const ch of name) hash = (hash * 31 + ch.charCodeAt(0)) % 360;
   const initials = name
@@ -316,7 +316,7 @@ export function Monogram({ name, size = 56 }: { name: string; size?: number }) {
     .slice(0, 2)
     .toUpperCase();
   return (
-    <View style={{ width: size, height: size, borderRadius: size * 0.28, backgroundColor: `hsl(${hash}, 55%, 42%)`, alignItems: 'center', justifyContent: 'center' }}>
+    <View style={{ width: size, height: size, borderRadius: radius ?? size * 0.28, backgroundColor: `hsl(${hash}, 55%, 42%)`, alignItems: 'center', justifyContent: 'center' }}>
       <Text style={{ color: '#fff', fontFamily: Fonts.heavy, fontSize: size * 0.34 }}>{initials}</Text>
     </View>
   );
