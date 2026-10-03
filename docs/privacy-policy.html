@@ -32,8 +32,9 @@
 <ul>
   <li><strong>Phone number</strong>, used to sign in and as your account name.</li>
   <li><strong>PIN</strong>, which you choose. It is stored only in encrypted (hashed) form; we cannot read it.</li>
+  <li><strong>Sign-in safety records</strong>: how many wrong PINs were entered for a phone number, so we can block guessing. For failed sign-ins, new accounts and PIN reset requests we also keep the internet address they came from, for up to two days.</li>
   <li><strong>Name</strong> and <strong>neighbourhood</strong> in Hargeisa.</li>
-  <li><strong>Calls and ratings</strong>: when you tap Call on a driver, we record which driver you called and when, and any star rating you give afterwards.</li>
+  <li><strong>Call taps and ratings</strong>: when you tap Call on a driver, we record that you tapped Call on that driver, and when. This does not show whether the call connected or a delivery took place. If you rate the driver afterwards, we keep your one current rating of that driver; rating them again replaces it.</li>
 </ul>
 <p><strong>Customers</strong></p>
 <ul>
@@ -49,9 +50,9 @@
 <h2>How we use it</h2>
 <ul>
   <li>To run the service: sign you in, show online drivers on the map, and let customers call them.</li>
-  <li>To keep it safe: check drivers before approval, and let customers rate drivers.</li>
-  <li>To handle PIN resets: we may call your number to confirm a reset request is really from you.</li>
-  <li>To understand how much the app is used (for example the number of calls per driver).</li>
+  <li>To keep it safe: check drivers before approval (we call each driver's number and record that it was confirmed, by whom and when), block PIN guessing, and let customers rate drivers.</li>
+  <li>To handle PIN resets: we call the account's number and ask for the one-time code the app showed to the person who asked for the reset.</li>
+  <li>To understand how much the app is used (for example how often customers tap Call on each driver).</li>
 </ul>
 <p>We do not sell your information, and we do not show advertising.</p>
 
@@ -71,13 +72,13 @@
 </ul>
 
 <h2>How long we keep it</h2>
-<p>We keep your account information while your account exists. Driver positions are cleared when the driver goes Offline. Call and rating records are kept to show ratings and usage. When your account is deleted, your profile, photos and application are deleted.</p>
+<p>We keep your account information while your account exists. Driver positions are cleared when the driver goes Offline. Call-tap and rating records are kept to show ratings and usage. Internet addresses kept for sign-in safety are deleted after about two days. When your account is deleted, your profile, photos, application, PIN, call taps, ratings and reset requests are deleted.</p>
 
 <h2>Your choices and deleting your account</h2>
 <ul>
   <li>You can switch off location for Jareeye in your phone's settings at any time; the app then sorts drivers by neighbourhood.</li>
   <li>Drivers can change their photo and go Offline at any time.</li>
-  <li>To <strong>delete your account and data</strong>, email <a href="mailto:jareeye.help@gmail.com?subject=Delete%20my%20Jareeye%20account">jareeye.help@gmail.com</a> from any address with the subject "Delete my Jareeye account" and your phone number. We will confirm by calling that number and delete the account within 30 days.</li>
+  <li>To <strong>delete your account and data</strong>, use "Delete my account" in the app, or email <a href="mailto:jareeye.help@gmail.com?subject=Delete%20my%20Jareeye%20account">jareeye.help@gmail.com</a> from any address with the subject "Delete my Jareeye account" and your phone number. We will confirm by calling that number and delete the account within 30 days.</li>
 </ul>
 
 <h2>Children</h2>

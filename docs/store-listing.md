@@ -31,10 +31,10 @@ WHY JAREEYE
 • Each driver has a face photo and a Jareeye number (like JRY-007), so you know exactly who is coming
 • Star ratings from other customers, so you can choose trusted drivers
 • Works in English, Somali and Arabic
-• Free to use; sign in with your phone number and a 4-digit PIN
+• Free to use; sign in with your phone number and a 6-digit PIN
 
 FOR MOTO DRIVERS
-Register in the app with your photo and bike plate. Once the Jareeye team approves you, go Online and customers nearby can see and call you. Busy with a delivery? Tap "I'm on a delivery" and you'll be hidden until you're free again.
+Register in the app with your photo and bike plate. Once the Jareeye team has called you to confirm your number and approved you, go Online and customers nearby can see and call you. Busy with a delivery? Tap "I'm on a delivery" and you'll be hidden until you're free again.
 
 Jareeye currently serves Hargeisa.
 
@@ -53,7 +53,7 @@ MAXAA JAREEYE?
 • Darawal kasta wuxuu leeyahay sawir iyo lambar Jareeye (sida JRY-007)
 • Qiimeyn xiddigo ah oo macaamiisha kale bixiyeen
 • Waxay ku shaqeysaa Ingiriisi, Soomaali iyo Carabi
-• Waa bilaash; ku gal lambarkaaga telefoonka iyo PIN 4 lambar ah
+• Waa bilaash; ku gal lambarkaaga telefoonka iyo PIN 6 lambar ah
 
 DARAWALLADA MOOTADA
 Isku diiwaan geli app-ka adigoo isticmaalaya sawirkaaga iyo taarikada mootada. Marka kooxda Jareeye ku ansixiso, noqo Online, macaamiisha kuu dhowna way ku arki karaan oo ku wici karaan.

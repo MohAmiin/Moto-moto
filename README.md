@@ -10,9 +10,9 @@ One app with three roles, chosen at sign-up:
 
 | Role | What they can do |
 |---|---|
-| **Customer** (anyone sending something) | Sign in with phone number + 4-digit PIN, see a live map of themselves and the approved motos online nearby (nearest first, with photo, Jareeye number, rating and distance), call a driver, and rate them 1–5 stars a few minutes later |
+| **Customer** (anyone sending something) | Sign in with phone number + 6-digit PIN (older accounts keep their 4-digit PIN), see a live map of themselves and the approved motos online nearby (nearest first, with photo, Jareeye number, rating and distance), call a driver, and rate them 1–5 stars a few minutes later |
 | **Moto driver** | Register with name, face photo, bike plate and area (ID number and ID photo optional during the pilot), wait for approval, then go online so people nearby can see them on the map and call them. While online the app shares their position every 30 seconds; "I'm on a delivery" hides them for 45 minutes or until they tap "I'm free again" |
-| **Admin** | Approve or reject drivers (with face and ID photos), see each driver's Jareeye number, calls and rating, and every online driver (busy ones included) on a live map |
+| **Admin** | Call each new driver's number and confirm it with the code shown in their app, then approve or reject them (with face and ID photos); confirm PIN resets with the owner's code; see each driver's Jareeye number, Call taps and rating, and every online driver (busy ones included) on a live map |
 
 Rules enforced by the database:
 
@@ -27,9 +27,11 @@ Rules enforced by the database:
 
 ## Signing in
 
-People sign in with their **phone number and a 4-digit PIN** they choose, so no SMS provider is needed. Behind the scenes each number becomes a login address `252…@pin.jareeye.app` (unique per number) and the PIN becomes the password; users never see this.
+People sign in with their **phone number and a PIN** they choose, so no SMS provider is needed: 6 digits for new accounts, while accounts made before October 2026 keep their 4-digit PIN until they reset it. Behind the scenes each number has a login address `252…@pin.jareeye.app` that users never see.
 
-A forgotten PIN is reset by request: the person enters their number and a new PIN, the request appears under **PIN resets** in admin, the admin calls the number to check it's really them, then approves. Approval sets the new PIN and signs the account out on every device. Supabase limits repeated sign-in attempts from the same network.
+The app sends the number and PIN to the `pin-auth` Edge Function (`supabase/functions/pin-auth`), which checks the PIN against `pin_credentials` in the database and only then creates a session. Wrong PINs are counted per number: after 5, the number is locked for 15 minutes, then 30, doubling up to 24 hours. There is also a generous limit per internet address.
+
+A forgotten PIN is reset by request: the person enters their number and a new 6-digit PIN, and the app shows them a one-time 6-digit code (valid 2 hours). In admin under **PIN resets**, the admin calls the account's number, asks for the code, and types it in. Only the request whose code matches is approved. A newer request never replaces an older one, 5 wrong codes close a request, and approval signs the account out on every device. See `docs/pin-security-rollout.md`.
 
 "Use an SMS code instead" still works for numbers set up as test numbers in Supabase (or for everyone once an SMS provider is connected).
 - ID photos are stored in a private bucket that only the rider and admins can read.
@@ -38,7 +40,7 @@ A forgotten PIN is reset by request: the person enters their number and a new PI
 
 Tapping **Call** on Android rings the rider straight away: the first time, Android asks once for permission to make phone calls; if that's refused, the phone's dialler opens with the number. iPhones always show their own "Call +252…?" confirmation, which apps can't skip. The call is a normal phone call from the customer's SIM, so it costs the app nothing.
 
-Calls are always free. Every tap is recorded in the `calls` table (who called which rider, and when) through `log_call()`, so the owner can see how much each rider is used.
+Calls are always free. Every tap on **Call** by a customer is recorded in the `calls` table (who tapped Call on which rider, and when) through `log_call()`. A tap is not proof that the call connected or that a delivery happened. It is used to show how much each rider is used, and to decide who may rate: a customer can rate a rider from 3 minutes to 3 days after tapping Call on them. Each customer has one current rating per rider (`rider_ratings`); rating again replaces it. Riders can't tap Call on or rate themselves.
 
 ## Money
 
@@ -81,7 +83,7 @@ supabase/seed.sql        Sample stores and products
 ### 1. Create the Supabase project
 
 1. Create a project at [supabase.com](https://supabase.com).
-2. In **SQL Editor**, run each file in `supabase/migrations/` in order (`20260928…_init.sql`, `20260929…_nearby_riders.sql`, `20260930…_rider_map.sql`, `20261001…_service_area.sql`, `20261002…_call_log.sql`, `20261003…_trust.sql`, `20261004…_pin_login.sql`, `20261005…_optional_id.sql`, then `20261006…_delete_account.sql`).
+2. In **SQL Editor**, run each file in `supabase/migrations/` in order (`20260928…_init.sql`, `20260929…_nearby_riders.sql`, `20260930…_rider_map.sql`, `20261001…_service_area.sql`, `20261002…_call_log.sql`, `20261003…_trust.sql`, `20261004…_pin_login.sql`, `20261005…_optional_id.sql`, `20261006…_delete_account.sql`, `20261007…_pin_security.sql`, `20261008…_rider_phone_verification.sql`, then `20261009…_one_rating_per_customer.sql`), and deploy the sign-in function: `npx supabase functions deploy pin-auth --no-verify-jwt`.
    (Or with the Supabase CLI: `npx supabase link` then `npx supabase db push`.)
    If only the first migration was applied, `supabase/catch-up-find-a-rider.sql` applies the other three in one go; it is safe to run more than once.
 3. For PIN login: in **Authentication → Sign In / Providers → Email**, make sure Email is enabled and switch **Confirm email** off.
@@ -129,14 +131,18 @@ npx eas-cli@latest update --channel preview --message "What changed"
 npx eas-cli@latest update --channel production --message "What changed"
 ```
 
-Updates carry JavaScript, text, images and styles. A change to native parts (a new permission or a new native package) changes the app's fingerprint; older installed builds then ignore the update, and a new build is needed. The Supabase settings for an update come from your local `.env`, so keep it the same as the `env` in `eas.json`.
+Updates carry JavaScript, text, images and styles. A change to native parts (a new permission or a new native package) changes the app's fingerprint; older installed builds then ignore the update, and a new build is needed. **The `scripts` in `package.json` are part of the fingerprint too**, so leave them alone; test commands live in `scripts/` instead. Check before publishing with `npx eas-cli@latest fingerprint:compare`. The Supabase settings for an update come from your local `.env`, so keep it the same as the `env` in `eas.json`.
 
 ## Checks
 
 ```bash
 npm run typecheck
 npm run lint
+scripts/test.sh        # logic tests: rider online/offline timing, the pin-auth function
+scripts/test-db.sh     # database tests on a throwaway local Postgres (see below)
 ```
+
+`scripts/test-db.sh` applies every migration to a new temporary database on a **local** Postgres, runs `supabase/tests/*.test.sql` (each in a transaction that is rolled back), then deletes the database. It refuses Supabase hosts. With Homebrew: `brew install postgresql@16`, start it, then run `PGHOST=127.0.0.1 PGUSER=postgres scripts/test-db.sh`.
 
 ## Next steps
 
