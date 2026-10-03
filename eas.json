@@ -25,6 +25,18 @@
         "EXPO_PUBLIC_SUPABASE_KEY": "sb_publishable_OncHuAtgmjlzBQcP7ZcnPQ_uEykrby1"
       },
       "channel": "production"
+    },
+    "staging": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "APP_VARIANT": "staging",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://espnowmofsejtshoqcuo.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_KEY": "sb_publishable_FZ19WYPz1JugsSRjwKeY6A_sSiw8iqD"
+      },
+      "channel": "staging"
     }
   }
 }
