@@ -11,18 +11,13 @@ import { RiderAvatar } from '@/components/rider-avatar';
 import { Button, Card, Choices, Header, LanguageSwitcher, LinkButton, Row, Screen, Stack, Txt } from '@/components/ui';
 import { MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useRiderAvailability } from '@/hooks/use-rider-availability';
 import { useAuth } from '@/lib/auth';
 import { AREA_OPTIONS, formatPhone, toDistrict } from '@/lib/format';
 import { LANGUAGES, useI18n, type TKey } from '@/lib/i18n';
-import { currentPosition, type Coords } from '@/lib/location';
 import { ratingLabel, riderCode, uploadRiderPhoto } from '@/lib/rider';
 import { ACTIVE_CITY, inCity } from '@/lib/service-area';
 import { errorKey, supabase } from '@/lib/supabase';
-
-// While online, refresh the rider's position and "last seen" so people see who is really available.
-const PING_MS = 30_000;
-// "I'm on a delivery" hides the driver for this long, in case they forget to come back.
-const BUSY_MINUTES = 45;
 
 export default function RiderHome() {
   const { t } = useI18n();
@@ -113,77 +108,32 @@ function Dashboard() {
   const theme = useTheme();
   const { t, locale, language, setLanguage } = useI18n();
   const { profile, application, refresh, signOut } = useAuth();
-  const [online, setOnline] = useState(profile?.is_online ?? false);
-  const [area, setArea] = useState<string>(toDistrict(profile?.district));
-  const [hasLocation, setHasLocation] = useState<boolean | null>(null);
-  const [coords, setCoords] = useState<Coords | null>(null);
-  const [error, setError] = useState<string>();
-  const [busyUntil, setBusyUntil] = useState<string | null>(profile?.busy_until ?? null);
-  const [savingPhoto, setSavingPhoto] = useState(false);
-  // The clock is read in handlers and timers only, so rendering stays pure.
-  const [now, setNow] = useState(() => Date.now());
   const riderId = profile!.id;
-  const busy = online && busyUntil != null && new Date(busyUntil).getTime() > now;
+  const { online, busy, busyUntil, pending, coords, locationFresh, connected, error: availabilityError, controller } =
+    useRiderAvailability(riderId, { online: profile?.is_online ?? false, busyUntil: profile?.busy_until ?? null });
+  const [area, setArea] = useState<string>(toDistrict(profile?.district));
+  const [error, setError] = useState<string>();
+  const [savingPhoto, setSavingPhoto] = useState(false);
   const [calls, setCalls] = useState<CallRow[]>([]);
   const stats = useMemo(() => summarize(calls), [calls]);
   const code = riderCode(application?.rider_number);
   const letters = t('day.letters').split(',');
 
-  /** Sends the current position (if allowed) and marks the rider as seen now. */
-  const ping = useCallback(async () => {
-    const pos = await currentPosition();
-    setHasLocation(!!pos);
-    setCoords(pos);
-    const { error: e } = await supabase
-      .from('profiles')
-      .update({ is_online: true, lat: pos?.lat ?? null, lng: pos?.lng ?? null, last_seen_at: new Date().toISOString() })
-      .eq('id', riderId);
-    if (e) setError(t(errorKey(e)));
-  }, [riderId, t]);
-
+  // Keep the signed-in profile in step once a change is saved, so a reopened screen starts right.
   useEffect(() => {
-    if (!online) return;
-    const first = setTimeout(ping, 0);
-    const timer = setInterval(ping, PING_MS);
-    return () => {
-      clearTimeout(first);
-      clearInterval(timer);
-    };
-  }, [online, ping]);
-
-  async function toggleOnline(next: boolean) {
-    setOnline(next);
-    setError(undefined);
-    if (!next) {
-      // Going offline also clears the saved position and any busy time.
-      const { error: e } = await supabase
-        .from('profiles')
-        .update({ is_online: false, lat: null, lng: null, busy_until: null })
-        .eq('id', riderId);
-      if (e) setError(t(errorKey(e)));
-      setHasLocation(null);
-      setCoords(null);
-      setBusyUntil(null);
-    }
     refresh();
-  }
+  }, [online, refresh]);
 
-  async function setBusy(next: boolean) {
-    const at = Date.now();
-    const until = next ? new Date(at + BUSY_MINUTES * 60_000).toISOString() : null;
-    setNow(at);
-    setBusyUntil(until);
+  function toggleOnline(next: boolean) {
     setError(undefined);
-    const { error: e } = await supabase.from('profiles').update({ busy_until: until }).eq('id', riderId);
-    if (e) setError(t(errorKey(e)));
+    if (next) controller.goOnline();
+    else controller.goOffline();
   }
 
-  // Re-render when the busy time runs out, so the screen switches back to "online" by itself.
-  useEffect(() => {
-    if (!busy || !busyUntil) return;
-    const timer = setTimeout(() => setNow(Date.now()), new Date(busyUntil).getTime() - now + 500);
-    return () => clearTimeout(timer);
-  }, [busy, busyUntil, now]);
+  function setBusy(next: boolean) {
+    setError(undefined);
+    controller.setBusy(next);
+  }
 
   // The driver's call log (drivers can read their own calls), for the week, today's figures and the rating.
   const loadStats = useCallback(async () => {
@@ -228,6 +178,26 @@ function Dashboard() {
     const i = LANGUAGES.findIndex((l) => l.id === language);
     setLanguage(LANGUAGES[(i + 1) % LANGUAGES.length].id);
   }
+
+  // One line under the status: what is happening now, or a warning while online.
+  const statusNote: { key: TKey; warn: boolean } | null =
+    pending === 'online'
+      ? { key: 'rider.goingOnline', warn: false }
+      : pending
+        ? { key: 'common.saving', warn: false }
+        : !online
+          ? null
+          : connected === false
+            ? { key: 'rider.connectionLost', warn: true }
+            : locationFresh === false
+              ? { key: 'rider.locationStale', warn: true }
+              : { key: 'rider.locationShared', warn: false };
+  const availabilityMessage: Record<NonNullable<typeof availabilityError>, TKey> = {
+    noLocation: 'rider.needLocation',
+    saveFailed: 'rider.saveFailed',
+    endedElsewhere: 'rider.endedElsewhere',
+  };
+  const shownError = error ?? (availabilityError ? t(availabilityMessage[availabilityError]) : undefined);
 
   const activeDays = stats.active.filter(Boolean).length;
   // Status card colours: green online, orange busy, grey offline.
@@ -277,33 +247,44 @@ function Dashboard() {
                     ? t('rider.onlineBody', { phone: formatPhone(profile!.phone) })
                     : t('rider.offlineBody')}
               </Txt>
-              {online && hasLocation !== null ? (
-                <Txt style={[styles.statusBody, { fontWeight: '700', color: status.fg }]}>
-                  {t(hasLocation ? 'rider.locationShared' : 'rider.locationDenied')}
+              {statusNote ? (
+                <Txt
+                  accessibilityLiveRegion="polite"
+                  style={[styles.statusBody, { fontWeight: '700', color: statusNote.warn ? theme.warning : status.fg }]}>
+                  {t(statusNote.key)}
                 </Txt>
               ) : null}
             </View>
+            {/* The switch shows what is saved; while a change is being saved it waits. */}
             <Switch
               value={online}
               onValueChange={toggleOnline}
+              disabled={pending != null}
               accessibilityLabel={t('rider.online')}
+              accessibilityState={{ checked: online, busy: pending != null, disabled: pending != null }}
               trackColor={{ false: theme.border, true: theme.success }}
               thumbColor="#FFFFFF"
             />
           </View>
           {online ? (
             busy ? (
-              <Button title={t('rider.goFree')} onPress={() => setBusy(false)} />
+              <Button title={t('rider.goFree')} onPress={() => setBusy(false)} loading={pending === 'free'} disabled={pending != null} />
             ) : (
               <Pressable
                 accessibilityRole="button"
+                accessibilityState={{ disabled: pending != null, busy: pending === 'busy' }}
+                disabled={pending != null}
                 onPress={() => setBusy(true)}
-                style={({ pressed }) => [styles.busyBtn, { borderColor: theme.gold, opacity: pressed ? 0.7 : 1 }]}>
+                style={({ pressed }) => [styles.busyBtn, { borderColor: theme.gold, opacity: pressed || pending != null ? 0.6 : 1 }]}>
                 <Txt style={[styles.busyText, { color: theme.gold }]}>{t('rider.goBusy')}</Txt>
               </Pressable>
             )
           ) : null}
-          {error ? <Txt color="danger">{error}</Txt> : null}
+          {shownError ? (
+            <Txt color="danger" accessibilityRole="alert">
+              {shownError}
+            </Txt>
+          ) : null}
         </Section>
 
         {/* Your week: the last 7 days, filled where you got calls */}
