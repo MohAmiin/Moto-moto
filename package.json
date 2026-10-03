@@ -48,7 +48,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "start:staging": "EXPO_NO_DOTENV=1 APP_VARIANT=staging EXPO_PUBLIC_SUPABASE_URL=https://espnowmofsejtshoqcuo.supabase.co EXPO_PUBLIC_SUPABASE_KEY=sb_publishable_FZ19WYPz1JugsSRjwKeY6A_sSiw8iqD expo start"
   },
   "private": true
 }
