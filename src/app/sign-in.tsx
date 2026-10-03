@@ -6,26 +6,37 @@ import { StyleSheet, View } from 'react-native';
 import { Button, Card, Field, LanguageSwitcher, LinkButton, PhoneField, Screen, Stack, Txt } from '@/components/ui';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { isValidLocalPhone, normalizeLocalPhone, toE164 } from '@/lib/format';
-import { useI18n } from '@/lib/i18n';
-import { isValidPin, pinEmail, pinPassword } from '@/lib/pin';
+import { formatPhone, isValidLocalPhone, normalizeLocalPhone, toE164 } from '@/lib/format';
+import { useI18n, type TKey } from '@/lib/i18n';
+import { isValidNewPin, isValidSignInPin, pinAuth, type PinAuthError } from '@/lib/pin';
 import { errorKey, supabase } from '@/lib/supabase';
 
 type Mode = 'signIn' | 'create' | 'reset' | 'resetSent';
 
+const PIN_ERRORS: Record<Exclude<PinAuthError, 'locked'>, TKey> = {
+  wrong: 'err.badPin',
+  invalid: 'signin.pinInvalid',
+  too_many: 'err.tooMany',
+  taken: 'err.pinTaken',
+  offline: 'err.offline',
+  server: 'err.generic',
+};
+
 /**
- * Phone number + 4-digit PIN. New users create a PIN; a forgotten PIN becomes a request the admin approves
- * after calling the number. SMS codes still work for numbers set up as test numbers in Supabase.
+ * Phone number + PIN. Older accounts have 4-digit PINs; new accounts and resets use 6 digits. A forgotten
+ * PIN becomes a request with a one-time code: the admin calls the number and the owner reads the code out.
+ * SMS codes still work for numbers set up as test numbers in Supabase.
  */
 export default function SignIn() {
   const theme = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [mode, setMode] = useState<Mode>('signIn');
   const [phone, setPhone] = useState('');
   const [pin, setPin] = useState('');
   const [pin2, setPin2] = useState('');
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
+  const [reset, setReset] = useState<{ code: string; expiresAt: string; phone: string }>();
 
   function switchMode(next: Mode) {
     setMode(next);
@@ -41,8 +52,8 @@ export default function SignIn() {
       setError(t('signin.invalidPhone'));
       return null;
     }
-    if (!isValidPin(pin)) {
-      setError(t('signin.pinInvalid'));
+    if (mode === 'signIn' ? !isValidSignInPin(pin) : !isValidNewPin(pin)) {
+      setError(t(mode === 'signIn' ? 'signin.pinInvalid' : 'signin.pinNewInvalid'));
       return null;
     }
     if (needsConfirm && pin !== pin2) {
@@ -58,17 +69,16 @@ export default function SignIn() {
     if (!local) return;
     setBusy(true);
     try {
-      if (mode === 'signIn') {
-        const { error: e } = await supabase.auth.signInWithPassword({ email: pinEmail(local), password: pinPassword(pin) });
-        if (e) throw e;
-      } else if (mode === 'create') {
-        const { data, error: e } = await supabase.auth.signUp({ email: pinEmail(local), password: pinPassword(pin) });
-        if (e) throw e;
-        // With "Confirm email" switched on in Supabase there is no session yet; PIN sign-up needs it off.
-        if (!data.session) throw new Error('Email not confirmed');
-      } else {
-        const { error: e } = await supabase.rpc('request_pin_reset', { p_phone: `252${local}`, p_password: pinPassword(pin) });
-        if (e) throw e;
+      const phoneDigits = `252${local}`;
+      const result = await pinAuth(mode === 'signIn' ? 'sign-in' : mode === 'create' ? 'sign-up' : 'reset', phoneDigits, pin);
+      if (!result.ok) {
+        setError(
+          result.error === 'locked'
+            ? t('err.locked', { minutes: Math.max(1, Math.ceil((result.retryAfterSeconds ?? 900) / 60)) })
+            : t(PIN_ERRORS[result.error]),
+        );
+      } else if (mode === 'reset' && result.code && result.expiresAt) {
+        setReset({ code: result.code, expiresAt: result.expiresAt, phone: phoneDigits });
         switchMode('resetSent');
       }
       // Signed in: the app moves on to onboarding or the home screen by itself.
@@ -96,7 +106,7 @@ export default function SignIn() {
     router.push({ pathname: '/verify', params: { phone: local } });
   }
 
-  const pinProps = { keyboardType: 'number-pad' as const, secureTextEntry: true, maxLength: 4, style: styles.pin, placeholder: '••••' };
+  const pinProps = { keyboardType: 'number-pad' as const, secureTextEntry: true, maxLength: 6, style: styles.pin, placeholder: '••••••' };
 
   return (
     <Screen>
@@ -121,10 +131,22 @@ export default function SignIn() {
         </View>
       ) : null}
 
-      {mode === 'resetSent' ? (
+      {mode === 'resetSent' && reset ? (
         <Card tone="soft">
           <Txt variant="heading">{t('signin.resetTitle')}</Txt>
-          <Txt>{t('signin.resetSent')}</Txt>
+          <Txt variant="muted">{t('signin.resetCode')}</Txt>
+          <Txt
+            accessibilityLabel={reset.code.split('').join(' ')}
+            selectable
+            style={[styles.code, { color: theme.brand }]}>
+            {`${reset.code.slice(0, 3)} ${reset.code.slice(3)}`}
+          </Txt>
+          <Txt variant="muted">
+            {t('signin.resetExpires', {
+              time: new Date(reset.expiresAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }),
+            })}
+          </Txt>
+          <Txt>{t('signin.resetSent', { phone: formatPhone(reset.phone) })}</Txt>
           <LinkButton title={t('signin.back')} onPress={() => switchMode('signIn')} />
         </Card>
       ) : (
@@ -175,5 +197,6 @@ const styles = StyleSheet.create({
   logo: { width: '100%', height: 190 },
   badge: { alignSelf: 'flex-start', borderRadius: Radius.pill, paddingHorizontal: 12, paddingVertical: 5 },
   badgeText: { fontWeight: '900', fontSize: 13 },
-  pin: { fontSize: 24, letterSpacing: 12, textAlign: 'center', writingDirection: 'ltr' },
+  pin: { fontSize: 24, letterSpacing: 10, textAlign: 'center', writingDirection: 'ltr' },
+  code: { fontSize: 40, lineHeight: 48, fontWeight: '800', letterSpacing: 4, textAlign: 'center', writingDirection: 'ltr' },
 });

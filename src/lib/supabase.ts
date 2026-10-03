@@ -42,6 +42,10 @@ export function errorKey(error: unknown): TKey {
   const message = error instanceof Error ? error.message : String((error as { message?: string })?.message ?? error);
   const known: [string, TKey][] = [
     ['rider is not approved', 'err.notApproved'],
+    ['phone not verified', 'err.phoneNotVerified'],
+    ['app update required', 'err.updateApp'],
+    ['Network request failed', 'err.offline'],
+    ['Failed to fetch', 'err.offline'],
     ['admins cannot delete', 'err.adminDelete'],
     ['Invalid login credentials', 'err.badPin'],
     ['already registered', 'err.pinTaken'],

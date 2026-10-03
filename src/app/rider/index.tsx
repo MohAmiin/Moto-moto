@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Callout, Icon, Icons, Section, Stats } from '@/components/feed';
 import { LiveMap, type LiveMapData } from '@/components/live-map';
+import { PhoneCheck } from '@/components/phone-check';
 import { DeleteAccount } from '@/components/delete-account';
 import { RiderApplicationForm } from '@/components/rider-application-form';
 import { RiderAvatar } from '@/components/rider-avatar';
@@ -47,8 +48,9 @@ export default function RiderHome() {
         <LanguageSwitcher />
         <Stack style={{ alignItems: 'center', paddingTop: Spacing.four }}>
           <Txt variant="title" style={{ textAlign: 'center' }}>{t('rider.pendingTitle')}</Txt>
-          <Txt variant="muted" style={{ textAlign: 'center' }}>{t('rider.pendingBody')}</Txt>
+          <Txt variant="muted" style={{ textAlign: 'center' }}>{t('rider.pendingBody', { phone: formatPhone(profile.phone) })}</Txt>
         </Stack>
+        <PhoneCheck application={application} />
         <Card>
           <Detail label={t('common.name')} value={profile.full_name} />
           <Detail label={t('common.phoneShort')} value={formatPhone(profile.phone)} />
@@ -81,9 +83,12 @@ function dayStart(daysAgo: number) {
   return d;
 }
 
-type CallRow = { stars: number | null; created_at: string };
+type CallRow = { created_at: string };
 
-/** Calls today, calls in the last 7 days, which of those days had calls (oldest first), and the rating. */
+/**
+ * Call taps today, in the last 7 days, and which of those days had any (oldest first). A tap is someone
+ * pressing Call on this rider; it doesn't show whether the call connected.
+ */
 function summarize(rows: CallRow[]) {
   const days = Array.from({ length: 7 }, (_, i) => dayStart(6 - i));
   const weekStart = days[0];
@@ -93,14 +98,11 @@ function summarize(rows: CallRow[]) {
     const end = i < 6 ? days[i + 1] : null;
     return recent.some((c) => c >= d && (!end || c < end));
   });
-  const rated = rows.filter((r) => r.stars);
   return {
     today: recent.filter((d) => d >= today).length,
     week: recent.length,
     days,
     active,
-    rating: rated.length ? ratingLabel(rated.reduce((sum, r) => sum + r.stars!, 0) / rated.length) : null,
-    ratingCount: rated.length,
   };
 }
 
@@ -115,6 +117,7 @@ function Dashboard() {
   const [error, setError] = useState<string>();
   const [savingPhoto, setSavingPhoto] = useState(false);
   const [calls, setCalls] = useState<CallRow[]>([]);
+  const [rating, setRating] = useState<string | null>(null);
   const stats = useMemo(() => summarize(calls), [calls]);
   const code = riderCode(application?.rider_number);
   const letters = t('day.letters').split(',');
@@ -135,10 +138,17 @@ function Dashboard() {
     controller.setBusy(next);
   }
 
-  // The driver's call log (drivers can read their own calls), for the week, today's figures and the rating.
+  // Call taps on this rider (riders can read their own) for the week and today's figures; the rating is
+  // one current rating per customer, from my_rating().
   const loadStats = useCallback(async () => {
-    const { data } = await supabase.from('calls').select('stars, created_at').eq('rider_id', riderId);
-    setCalls((data as CallRow[] | null) ?? []);
+    const since = new Date(Date.now() - 8 * 86_400_000).toISOString();
+    const [taps, mine] = await Promise.all([
+      supabase.from('calls').select('created_at').eq('rider_id', riderId).gte('created_at', since),
+      supabase.rpc('my_rating'),
+    ]);
+    if (!taps.error) setCalls((taps.data as CallRow[] | null) ?? []);
+    const row = (mine.data as { rating: number | null }[] | null)?.[0];
+    if (!mine.error) setRating(ratingLabel(row?.rating));
   }, [riderId]);
 
   useEffect(() => {
@@ -332,7 +342,7 @@ function Dashboard() {
             items={[
               { label: t('rider.statCallsShort'), value: String(stats.today) },
               { label: t('rider.statWeek'), value: String(stats.week) },
-              { label: t('rider.statRating'), value: stats.rating ? `★ ${stats.rating}` : t('rating.new') },
+              { label: t('rider.statRating'), value: rating ? `★ ${rating}` : t('rating.new') },
             ]}
           />
           <Callout icon={Icons.award} body={t('rider.tips')} />

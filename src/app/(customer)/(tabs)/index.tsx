@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { ConnectionBanner } from '@/components/connection-banner';
 import { Callout, Icon, Icons, OnlineDot, Section, Stats } from '@/components/feed';
 import { LiveMap, type LiveMapData } from '@/components/live-map';
 import { riderPoints } from '@/components/live-map/points';
@@ -55,10 +56,14 @@ function isTopRated(rider: NearbyRider, all: NearbyRider[]) {
 
 export default function FindRider() {
   const theme = useTheme();
-  const { t, language, setLanguage } = useI18n();
+  const { t, locale, language, setLanguage } = useI18n();
   const { profile, session } = useAuth();
   const [riders, setRiders] = useState<NearbyRider[]>([]);
   const [loaded, setLoaded] = useState(false);
+  // When the latest refresh failed: riders from the last good refresh stay listed, with a warning.
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [updatedAt, setUpdatedAt] = useState<number | null>(null);
+  const [retrying, setRetrying] = useState(false);
   const [coords, setCoords] = useState<Coords | null>(null);
   const [locating, setLocating] = useState(false);
   const [recenter, setRecenter] = useState(0);
@@ -72,13 +77,23 @@ export default function FindRider() {
   const load = useCallback(async () => {
     // Outside the city your position isn't useful for distances, so motos are sorted by district.
     const c = inCity(coordsRef.current) ? coordsRef.current : null;
-    const [nearby, mine] = await Promise.all([
-      supabase.rpc('nearby_riders', { p_lat: c?.lat ?? null, p_lng: c?.lng ?? null, p_area: area }),
-      userId ? supabase.from('calls').select('rider_id').eq('caller_id', userId) : Promise.resolve({ data: [] }),
-    ]);
-    setRiders((nearby.data as NearbyRider[]) ?? []);
-    setMyRiders(new Set(((mine.data as { rider_id: string }[] | null) ?? []).map((r) => r.rider_id)));
-    setLoaded(true);
+    try {
+      const [nearby, mine] = await Promise.all([
+        supabase.rpc('nearby_riders', { p_lat: c?.lat ?? null, p_lng: c?.lng ?? null, p_area: area }),
+        userId ? supabase.from('calls').select('rider_id').eq('caller_id', userId) : Promise.resolve({ data: [], error: null }),
+      ]);
+      if (nearby.error) {
+        setLoadFailed(true);
+        return;
+      }
+      setRiders((nearby.data as NearbyRider[]) ?? []);
+      if (!mine.error) setMyRiders(new Set(((mine.data as { rider_id: string }[] | null) ?? []).map((r) => r.rider_id)));
+      setLoaded(true);
+      setLoadFailed(false);
+      setUpdatedAt(Date.now());
+    } catch {
+      setLoadFailed(true);
+    }
   }, [area, userId]);
 
   const locate = useCallback(async () => {
@@ -106,6 +121,12 @@ export default function FindRider() {
       .then((v) => setHowSeen(v === '1'))
       .catch(() => setHowSeen(false));
   }, []);
+
+  async function retry() {
+    setRetrying(true);
+    await locate();
+    setRetrying(false);
+  }
 
   function dismissHow() {
     setHowSeen(true);
@@ -161,6 +182,17 @@ export default function FindRider() {
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: Spacing.five }}>
         {/* Motos near you: how many, how soon, and their faces */}
         <Section>
+          {loadFailed ? (
+            <ConnectionBanner
+              message={
+                updatedAt
+                  ? t('home.loadFailed', { time: new Date(updatedAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) })
+                  : t('home.loadFailedEmpty')
+              }
+              onRetry={retry}
+              retrying={retrying}
+            />
+          ) : null}
           <Row style={{ justifyContent: 'space-between' }}>
             <Txt variant="heading">{t('home.title')}</Txt>
             {riders.length > 0 ? (
@@ -197,8 +229,10 @@ export default function FindRider() {
                 ) : null}
               </Row>
             </Row>
-          ) : loaded ? (
+          ) : loaded && !loadFailed ? (
             <Empty title={t('home.noRiders')} body={t('home.noRidersBody')} />
+          ) : !loaded && !loadFailed ? (
+            <Txt variant="muted" accessibilityLiveRegion="polite">{t('common.loading')}</Txt>
           ) : null}
 
           {coords && !inside ? (

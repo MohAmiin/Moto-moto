@@ -31,6 +31,10 @@ export type RiderApplication = {
   rider_number: number | null;
   status: ApplicationStatus;
   reviewed_at: string | null;
+  /** The admin who called the rider's number and confirmed it, when, and which number. */
+  phone_verified_by: string | null;
+  phone_verified_at: string | null;
+  phone_verified_number: string | null;
   created_at: string;
 };
 
@@ -47,7 +51,7 @@ export type NearbyRider = {
   last_seen_at: string;
   photo_path: string | null;
   rider_number: number | null;
-  /** Average stars, or null before the first rating. */
+  /** Average stars (one current rating per customer), or null before the first rating. */
   rating: number | null;
   rating_count: number;
   /** Only admins see busy drivers. */
