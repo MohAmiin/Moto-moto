@@ -471,6 +471,15 @@ const so = {
   'mem.endedLabel': "Wuxuu dhammaaday",
   'mem.monthly': "Qiimaha bishii",
   'mem.howToPay': "Sida loo bixiyo",
+  'phone.correct': "Sax lambarka taleefanka",
+  'phone.newNumber': "Lambarka saxda ah",
+  'phone.change': "Beddel lambarka",
+  'phone.effectTitle': "Waxa dhacaya",
+  'phone.effectRider': "Wuxuu ku soo galayaa lambarka cusub iyo PIN-kii hore. Taariikhdiisa iyo lambarka Jareeye way sii jiraan. Waa laga saarayaa, waana inuu xaqiijiyaa lambarka cusub oo mar kale la ansixiyaa ka hor intaan macaamiishu wici karin.",
+  'phone.effectCustomer': "Wuxuu ku soo galayaa lambarka cusub iyo PIN-kii hore. Taariikhdiisu way sii jirtaa. Hal mar ayaa laga saarayaa.",
+  'phone.errTaken': "Akoon kale ayaa horay u isticmaala lambarkan. Waxba lama beddelin.",
+  'phone.errSame': "Kani horay ayuu u ahaa lambarka akoonkan.",
+  'phone.changed': "Lambarka waxaa loo beddelay {phone}.",
 };
 
 export type TKey = keyof typeof so;
@@ -918,6 +927,15 @@ const en: Dictionary = {
   'mem.endedLabel': "Ended",
   'mem.monthly': "Monthly price",
   'mem.howToPay': "How to pay",
+  'phone.correct': "Correct phone number",
+  'phone.newNumber': "Correct number",
+  'phone.change': "Change number",
+  'phone.effectTitle': "What happens",
+  'phone.effectRider': "They sign in with the new number and the same PIN. Their history and Jareeye number stay. They are signed out, and must confirm the new number and be approved again before customers can call them.",
+  'phone.effectCustomer': "They sign in with the new number and the same PIN. Their history stays. They are signed out once.",
+  'phone.errTaken': "Another account already uses this number. Nothing was changed.",
+  'phone.errSame': "That is already this account’s number.",
+  'phone.changed': "Number changed to {phone}.",
 };
 
 const ar: Dictionary = {
@@ -1362,6 +1380,15 @@ const ar: Dictionary = {
   'mem.endedLabel': "انتهت",
   'mem.monthly': "السعر الشهري",
   'mem.howToPay': "طريقة الدفع",
+  'phone.correct': "تصحيح رقم الهاتف",
+  'phone.newNumber': "الرقم الصحيح",
+  'phone.change': "تغيير الرقم",
+  'phone.effectTitle': "ما الذي سيحدث",
+  'phone.effectRider': "يسجّل الدخول بالرقم الجديد ونفس الرمز. يبقى سجله ورقم Jareeye. يُسجَّل خروجه، ويجب أن يؤكد الرقم الجديد ويُقبل مجدداً قبل أن يتصل به العملاء.",
+  'phone.effectCustomer': "يسجّل الدخول بالرقم الجديد ونفس الرمز. يبقى سجله. يُسجَّل خروجه مرة واحدة.",
+  'phone.errTaken': "حساب آخر يستخدم هذا الرقم. لم يتغير شيء.",
+  'phone.errSame': "هذا هو رقم الحساب بالفعل.",
+  'phone.changed': "تم تغيير الرقم إلى {phone}.",
 };
 
 const DICTIONARIES: Record<Language, Dictionary> = { so, en, ar };

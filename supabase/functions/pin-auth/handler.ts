@@ -32,16 +32,30 @@ const PIN_DOMAIN = 'pin.jareeye.app';
 // Somali numbers: 252 and 6 to 10 more digits (the app adds the 63 prefix to 7-digit numbers). Signing in
 // and resets accept that range so older accounts keep working; new accounts need a full 9-digit mobile number.
 const PHONE = /^252\d{6,10}$/;
-const PHONE_NEW = /^252\d{9}$/;
+// A national number never starts with 0 (that is a trunk prefix, removed above).
+const PHONE_NEW = /^252[1-9]\d{8}$/;
 const PIN_SIGN_IN = /^(\d{4}|\d{6})$/;
 const PIN_NEW = /^\d{6}$/;
 
 export const pinEmail = (phone: string) => `${phone}@${PIN_DOMAIN}`;
 
+/**
+ * One form per number, whatever the caller sent: digits only, without 00/252 or a leading 0, and 63 added
+ * to a 7-digit number, then 252 in front. So 4421785, 634421785, 0634421785 and +252 63 442 1785 are all
+ * 252634421785. Matches canonical_phone() in the database and normalizeLocalPhone() in the app.
+ */
+export function canonicalPhone(input: string) {
+  let d = input.replace(/\D/g, '').replace(/^(00)?252/, '').replace(/^0/, '');
+  if (d.length === 7) d = `63${d}`;
+  return `252${d}`;
+}
+
 export function parseRequest(body: unknown): PinAuthRequest | null {
   if (!body || typeof body !== 'object') return null;
-  const { action, phone, pin } = body as Record<string, unknown>;
-  if (typeof phone !== 'string' || typeof pin !== 'string' || !PHONE.test(phone)) return null;
+  const { action, phone: raw, pin } = body as Record<string, unknown>;
+  if (typeof raw !== 'string' || typeof pin !== 'string') return null;
+  const phone = canonicalPhone(raw);
+  if (!PHONE.test(phone)) return null;
   if (action === 'sign-in' && PIN_SIGN_IN.test(pin)) return { action, phone, pin };
   if (action === 'sign-up' && PIN_NEW.test(pin) && PHONE_NEW.test(phone)) return { action, phone, pin };
   if (action === 'reset' && PIN_NEW.test(pin)) return { action, phone, pin };
@@ -87,6 +101,11 @@ async function signUp(phone: string, pin: string, ip: string | null, deps: PinAu
   const allowed = await deps.rpc<boolean>('pin_signup_allowed', { p_ip: ip });
   if (allowed.error) return { ok: false, error: 'server' };
   if (allowed.data !== true) return { ok: false, error: 'too_many' };
+
+  // The number may already be used by an older account (an SMS login, or a profile) under another form.
+  const free = await deps.rpc<boolean>('pin_phone_available', { p_phone: phone });
+  if (free.error) return { ok: false, error: 'server' };
+  if (free.data !== true) return { ok: false, error: 'taken' };
 
   const created = await deps.createUser(pinEmail(phone));
   if (created === 'taken') return { ok: false, error: 'taken' };

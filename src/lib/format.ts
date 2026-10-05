@@ -37,12 +37,12 @@ export function minutesAway(km: number | null | undefined) {
 export const DEFAULT_OPERATOR_PREFIX = '63';
 
 /**
- * Keeps digits only, drops a leading 252 or 0, and adds 63 to a bare 7-digit number,
+ * Keeps digits only, drops a leading 252, 00252 or 0, and adds 63 to a bare 7-digit number,
  * so "063 4740002", "+252 63 4740002" and "474 0002" all become "634740002".
  */
 export function normalizeLocalPhone(input: string) {
-  let digits = input.replace(/\D/g, '');
-  if (digits.startsWith('252')) digits = digits.slice(3);
+  // Same rules as canonicalPhone() in pin-auth and canonical_phone() in the database.
+  let digits = input.replace(/\D/g, '').replace(/^(00)?252/, '');
   if (digits.startsWith('0')) digits = digits.slice(1);
   if (digits.length === 7) digits = DEFAULT_OPERATOR_PREFIX + digits;
   return digits;
@@ -60,7 +60,7 @@ export function isValidLocalPhone(digits: string) {
  * calling the wrong person. Use after normalizeLocalPhone, which accepts +252, 0 and 7-digit forms.
  */
 export function isValidNewLocalPhone(digits: string) {
-  return /^\d{9}$/.test(digits);
+  return /^[1-9]\d{8}$/.test(digits);
 }
 
 export function toE164(digits: string) {

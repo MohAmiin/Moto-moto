@@ -2,6 +2,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Linking, RefreshControl, StyleSheet, View } from 'react-native';
 
+import { PhoneCorrection } from '@/components/admin/phone-correction';
 import { AdminButton, AdminScreen, DetailBar, EmptyNote, InfoLine, Panel, SectionTitle } from '@/components/kit';
 import { ConnectionBanner } from '@/components/connection-banner';
 import { Monogram, Txt } from '@/components/ui';
@@ -92,6 +93,7 @@ export default function CustomerDetail() {
             <InfoLine label={t('common.district')} value={customer.district} />
             <InfoLine label={t('adm.joinedLabel')} value={date(customer.created_at)} last />
           </Panel>
+          <PhoneCorrection userId={customer.id} isRider={false} onChanged={load} />
 
           {usage ? (
             <>

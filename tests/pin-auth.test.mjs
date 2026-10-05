@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { clientIp, handlePinAuth, parseRequest } from '../supabase/functions/pin-auth/handler.ts';
+import { canonicalPhone, clientIp, handlePinAuth, parseRequest } from '../supabase/functions/pin-auth/handler.ts';
 
 const SESSION = { access_token: 'a', refresh_token: 'r' };
 
@@ -43,7 +43,7 @@ test('requests are validated: sign-in takes 4 or 6 digits, new PINs need 6', () 
   assert.equal(parseRequest({ action: 'sign-in', phone: '252634740002', pin: '12345' }), null);
   assert.equal(parseRequest({ action: 'sign-up', phone: '252634740002', pin: '1234' }), null, 'new accounts need 6 digits');
   assert.equal(parseRequest({ action: 'reset', phone: '252634740002', pin: '1234' }), null, 'resets need 6 digits');
-  assert.equal(parseRequest({ action: 'sign-in', phone: '+252634740002', pin: '1234' }), null, 'digits only');
+  assert.equal(parseRequest({ action: 'sign-in', phone: '+252634740002', pin: '1234' })?.phone, '252634740002', 'other forms are normalized');
   assert.equal(parseRequest({ action: 'sign-in', phone: '254712345678', pin: '1234' }), null, '+252 numbers only');
   assert.equal(parseRequest({ action: 'delete', phone: '252634740002', pin: '123456' }), null);
   // New accounts need the full 9 digits after 252; signing in and resets still accept older, shorter or longer numbers.
@@ -84,19 +84,20 @@ test('sign-in: database errors fail closed', async () => {
 test('sign-up: creates the login, saves the 6-digit PIN, then signs in', async () => {
   const { deps, calls } = fakeDeps({
     pin_signup_allowed: { data: true, error: null },
+    pin_phone_available: { data: true, error: null },
     pin_set_credential: { data: null, error: null },
   });
   const res = await handlePinAuth({ action: 'sign-up', phone: '252634000002', pin: '135790' }, '196.1.1.2', deps);
   assert.deepEqual(res, { ok: true, session: SESSION });
   assert.deepEqual(
     calls.map(([fn]) => fn),
-    ['pin_signup_allowed', 'createUser', 'pin_set_credential', 'createSession'],
+    ['pin_signup_allowed', 'pin_phone_available', 'createUser', 'pin_set_credential', 'createSession'],
   );
-  assert.deepEqual(calls[2][1], { p_user_id: 'new-id', p_phone: '252634000002', p_pin: '135790' });
+  assert.deepEqual(calls[3][1], { p_user_id: 'new-id', p_phone: '252634000002', p_pin: '135790' });
 });
 
 test('sign-up: taken numbers, busy addresses and failed saves', async () => {
-  let { deps } = fakeDeps({ pin_signup_allowed: { data: true, error: null } });
+  let { deps } = fakeDeps({ pin_signup_allowed: { data: true, error: null }, pin_phone_available: { data: true, error: null } });
   assert.deepEqual(await handlePinAuth({ action: 'sign-up', phone: '252634000001', pin: '135790' }, null, deps), { ok: false, error: 'taken' });
 
   ({ deps } = fakeDeps({ pin_signup_allowed: { data: false, error: null } }));
@@ -105,6 +106,7 @@ test('sign-up: taken numbers, busy addresses and failed saves', async () => {
 
   ({ deps } = fakeDeps({
     pin_signup_allowed: { data: true, error: null },
+    pin_phone_available: { data: true, error: null },
     pin_set_credential: { data: null, error: { message: 'credential already set' } },
   }));
   assert.deepEqual(await handlePinAuth({ action: 'sign-up', phone: '252634000004', pin: '135790' }, null, deps), { ok: false, error: 'server' });
@@ -126,4 +128,25 @@ test('client address prefers the header callers cannot set', () => {
   assert.equal(clientIp('196.1.1.1', '1.2.3.4, 10.0.0.1'), '196.1.1.1');
   assert.equal(clientIp(null, ' 1.2.3.4 , 10.0.0.1'), '1.2.3.4');
   assert.equal(clientIp(null, null), null);
+});
+
+test('phone numbers: every form of a number is one account', async () => {
+  for (const form of ['4421785', '634421785', '0634421785', '+252634421785', '+252 63 442 1785', '00252634421785', '2520634421785']) {
+    assert.equal(canonicalPhone(form), '252634421785', form);
+  }
+  assert.equal(parseRequest({ action: 'sign-up', phone: '4421785', pin: '135790' })?.phone, '252634421785');
+  assert.equal(parseRequest({ action: 'sign-up', phone: '+252 63 442 1785', pin: '135790' })?.phone, '252634421785');
+
+  // An older account under another form (an SMS login or a profile) makes the number taken; no login is made.
+  const { deps, calls } = fakeDeps({ pin_signup_allowed: { data: true, error: null }, pin_phone_available: { data: false, error: null } });
+  assert.deepEqual(await handlePinAuth({ action: 'sign-up', phone: '4421785', pin: '135790' }, null, deps), { ok: false, error: 'taken' });
+  assert.deepEqual(calls.find(([fn]) => fn === 'pin_phone_available')[1], { p_phone: '252634421785' });
+  assert.ok(!calls.some(([fn]) => fn === 'createUser'), 'no login made for a taken number');
+
+  // Signing in with any form reaches the same account; an unknown number still just says "wrong".
+  const signIn = fakeDeps(login('ok'));
+  await handlePinAuth({ action: 'sign-in', phone: '4421785', pin: '1234' }, null, signIn.deps);
+  assert.deepEqual(signIn.calls[0], ['pin_login', { p_phone: '252634421785', p_pin: '1234', p_ip: null }]);
+  const unknown = fakeDeps(login('wrong'));
+  assert.deepEqual(await handlePinAuth({ action: 'sign-in', phone: '634421785', pin: '1234' }, null, unknown.deps), { ok: false, error: 'wrong' });
 });
