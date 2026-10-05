@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router/tabs';
 
-import { Icon, Icons } from '@/components/feed';
+import { AdminIcon } from '@/components/kit';
 import { Fonts } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/lib/i18n';
@@ -12,19 +12,19 @@ export default function CustomerTabs() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: theme.brand,
+        tabBarActiveTintColor: theme.primaryText,
         tabBarInactiveTintColor: theme.textSecondary,
-        tabBarStyle: { backgroundColor: theme.background, borderTopColor: theme.border },
-        tabBarLabelStyle: { fontSize: 12, fontFamily: Fonts.medium },
+        tabBarStyle: { backgroundColor: theme.surface, borderTopColor: theme.hairline },
+        tabBarLabelStyle: { fontSize: 11, fontFamily: Fonts.medium },
       }}>
-      {/* Tab colours come from our theme (plain strings), so the cast below is safe. */}
+      {/* Tab colours come from our theme (plain strings), so the casts below are safe. */}
       <Tabs.Screen
         name="index"
-        options={{ title: t('tab.home'), tabBarIcon: ({ color }) => <Icon source={Icons.home} size={24} color={color as string} /> }}
+        options={{ title: t('tab.home'), tabBarIcon: ({ color }) => <AdminIcon name="home" size={22} color={color as string} /> }}
       />
       <Tabs.Screen
         name="account"
-        options={{ title: t('tab.account'), tabBarIcon: ({ color }) => <Icon source={Icons.user} size={24} color={color as string} /> }}
+        options={{ title: t('tab.account'), tabBarIcon: ({ color }) => <AdminIcon name="account" size={22} color={color as string} /> }}
       />
     </Tabs>
   );

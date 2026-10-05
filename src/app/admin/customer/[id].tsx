@@ -2,7 +2,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Linking, RefreshControl, StyleSheet, View } from 'react-native';
 
-import { AdminButton, AdminScreen, DetailBar, EmptyNote, InfoLine, Panel, SectionTitle } from '@/components/admin/ui';
+import { AdminButton, AdminScreen, DetailBar, EmptyNote, InfoLine, Panel, SectionTitle } from '@/components/kit';
 import { ConnectionBanner } from '@/components/connection-banner';
 import { Monogram, Txt } from '@/components/ui';
 import { Spacing } from '@/constants/theme';

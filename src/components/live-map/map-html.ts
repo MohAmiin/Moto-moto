@@ -12,6 +12,8 @@ export type LiveMapData = {
   riders: MapPoint[];
   /** Change this number to fit the view to everyone again (the first update always does). */
   recenter?: number;
+  /** The rider picked in the list or on the map; their pin is outlined in orange. */
+  selected?: string | null;
 };
 
 const B = ACTIVE_CITY.bounds;
@@ -26,6 +28,7 @@ export const MAP_HTML = `<!doctype html>
   .me { width: 18px; height: 18px; border-radius: 50%; background: #2F6FED; border: 3px solid #fff; box-shadow: 0 0 0 6px rgba(47,111,237,.25); }
   .rider { width: 38px; height: 38px; border-radius: 50%; background: #fff; border: 3px solid #0046B5; display: grid; place-items: center; box-shadow: 0 2px 6px rgba(0,0,0,.35); }
   .rider img { width: 30px; height: 30px; }
+  .rider.on { border-color: #FF6B0A; box-shadow: 0 0 0 4px rgba(255,107,10,.3), 0 2px 6px rgba(0,0,0,.35); }
   .leaflet-popup-content { margin: 10px 12px; font-size: 14px; color: #0046B5; }
   .leaflet-popup-content b { display: block; font-size: 15px; }
 </style>
@@ -41,6 +44,12 @@ export const MAP_HTML = `<!doctype html>
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(map);
   var meIcon = L.divIcon({ className: '', html: '<div class="me"></div>', iconSize: [18, 18], iconAnchor: [9, 9] });
   var riderIcon = L.divIcon({ className: '', html: '<div class="rider"><img src="${PIN_IMAGE}" alt=""></div>', iconSize: [38, 38], iconAnchor: [19, 19] });
+  var riderOnIcon = L.divIcon({ className: '', html: '<div class="rider on"><img src="${PIN_IMAGE}" alt=""></div>', iconSize: [38, 38], iconAnchor: [19, 19] });
+  // Tells the app which rider was tapped, so it can show that rider's card.
+  function post(msg) {
+    if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage(msg);
+    else if (window.parent) window.parent.postMessage('jareeye-map-' + msg, '*');
+  }
   var me = null, riders = {}, fitted = false, lastRecenter = 0;
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function update(d) {
@@ -52,8 +61,9 @@ export const MAP_HTML = `<!doctype html>
     (d.riders || []).forEach(function (r) {
       seen[r.id] = true;
       var html = '<b>' + esc(r.title) + '</b>' + esc(r.subtitle);
-      if (riders[r.id]) riders[r.id].setLatLng([r.lat, r.lng]).setPopupContent(html);
-      else riders[r.id] = L.marker([r.lat, r.lng], { icon: riderIcon }).addTo(map).bindPopup(html);
+      var icon = d.selected === r.id ? riderOnIcon : riderIcon;
+      if (riders[r.id]) riders[r.id].setLatLng([r.lat, r.lng]).setPopupContent(html).setIcon(icon).setZIndexOffset(d.selected === r.id ? 500 : 0);
+      else riders[r.id] = L.marker([r.lat, r.lng], { icon: icon }).addTo(map).bindPopup(html).on('click', (function (id) { return function () { post('select:' + id); }; })(r.id));
     });
     Object.keys(riders).forEach(function (id) { if (!seen[id]) { map.removeLayer(riders[id]); delete riders[id]; } });
     if (!fitted || (d.recenter && d.recenter !== lastRecenter)) {
@@ -69,7 +79,6 @@ export const MAP_HTML = `<!doctype html>
   document.addEventListener('message', receive);
   window.update = update;
   // Tell the app the map is ready for data.
-  if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage('ready');
-  else if (window.parent) window.parent.postMessage('jareeye-map-ready', '*');
+  post('ready');
 </script>
 </body></html>`;

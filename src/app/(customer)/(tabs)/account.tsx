@@ -1,7 +1,11 @@
 import { useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 
+import { AdminButton, AdminScreen, FilterChips, Panel, SectionTitle, TopBar } from '@/components/kit';
 import { DeleteAccount } from '@/components/delete-account';
-import { Button, Choices, Header, LanguageSwitcher, Monogram, Row, Screen, Stack, Txt } from '@/components/ui';
+import { Preferences } from '@/components/preferences';
+import { Monogram, Txt } from '@/components/ui';
+import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/lib/auth';
 import { AREA_OPTIONS, formatPhone, toDistrict } from '@/lib/format';
 import { useI18n } from '@/lib/i18n';
@@ -24,23 +28,40 @@ export default function Account() {
   }
 
   return (
-    <Screen edges={['top']}>
-      <Header title={t('acct.title')} back={false} />
-      <Row gap={16}>
-        <Monogram name={profile.full_name} size={60} />
-        <Stack gap={2}>
-          <Txt variant="heading">{profile.full_name}</Txt>
-          <Txt variant="muted">{formatPhone(profile.phone)}</Txt>
-        </Stack>
-      </Row>
-      <Stack gap={8}>
-        <Txt variant="label">{t('common.language')}</Txt>
-        <LanguageSwitcher />
-      </Stack>
-      <Choices label={t('acct.deliveryDistrict')} options={AREA_OPTIONS} value={toDistrict(profile.district)} onChange={changeDistrict} columns={2} />
-      {message ? <Txt variant="muted">{message}</Txt> : null}
-      <Button title={t('common.signOut')} kind="ghost" onPress={signOut} />
+    <AdminScreen header={<TopBar title={t('acct.title')} showProfile={false} />}>
+      <Panel>
+        <View style={styles.head}>
+          <Monogram name={profile.full_name} size={52} radius={26} />
+          <View style={{ flex: 1, gap: 2 }}>
+            <Txt style={styles.name}>{profile.full_name}</Txt>
+            <Txt variant="muted" style={styles.small}>
+              {formatPhone(profile.phone)}
+            </Txt>
+          </View>
+        </View>
+      </Panel>
+
+      <SectionTitle title={t('acct.deliveryDistrict')} />
+      <Panel>
+        <View style={styles.wrap}>
+          <FilterChips options={AREA_OPTIONS} value={toDistrict(profile.district)} onChange={changeDistrict} />
+        </View>
+        <Txt variant="muted" style={styles.small} accessibilityLiveRegion="polite">
+          {message ?? t('cx.districtHint')}
+        </Txt>
+      </Panel>
+
+      <Preferences />
+
+      <AdminButton title={t('common.signOut')} kind="danger" icon="signOut" onPress={signOut} style={{ marginTop: Spacing.two }} />
       <DeleteAccount />
-    </Screen>
+    </AdminScreen>
   );
 }
+
+const styles = StyleSheet.create({
+  head: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three - 4 },
+  name: { fontSize: 17, lineHeight: 23, fontWeight: '500' },
+  small: { fontSize: 13, lineHeight: 18 },
+  wrap: { marginHorizontal: -Spacing.three, paddingHorizontal: Spacing.three },
+});

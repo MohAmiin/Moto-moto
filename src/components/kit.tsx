@@ -54,6 +54,16 @@ const ICONS = {
   appearance: { ios: 'circle.lefthalf.filled', glyph: '◐' },
   language: { ios: 'globe', glyph: '◎' },
   server: { ios: 'server.rack', glyph: '≡' },
+  locate: { ios: 'location', png: Icons.locate },
+  locationOff: { ios: 'location.slash', png: Icons.locate },
+  pin: { ios: 'mappin.and.ellipse', png: Icons.map },
+  offline: { ios: 'wifi.exclamationmark', glyph: '!' },
+  info: { ios: 'info.circle', glyph: 'i' },
+  camera: { ios: 'camera', glyph: '◉' },
+  power: { ios: 'power', glyph: '⏻' },
+  delivery: { ios: 'shippingbox', png: Icons.route },
+  home: { ios: 'house', png: Icons.home },
+  account: { ios: 'person.crop.circle', png: Icons.user },
 } satisfies Record<string, { ios: SFSymbol; png?: number; glyph?: string }>;
 
 export type AdminIconName = keyof typeof ICONS;
@@ -105,28 +115,118 @@ export function AdminScreen({
   );
 }
 
-/** Logo, screen title, and a small button to Settings. */
-export function TopBar({ title, showProfile = true }: { title: string; showProfile?: boolean }) {
+/** The logo, a title (with an optional line below), and something on the other side. */
+export function TopBar({
+  title,
+  subtitle,
+  leading,
+  trailing,
+  showProfile = true,
+}: {
+  title: string;
+  subtitle?: string | null;
+  /** Replaces the logo, e.g. with the rider's photo. */
+  leading?: ReactNode;
+  /** Replaces the admin's Settings button. */
+  trailing?: ReactNode;
+  showProfile?: boolean;
+}) {
   const theme = useTheme();
   const { t } = useI18n();
   return (
     <View style={[styles.bar, { borderBottomColor: theme.hairline, backgroundColor: theme.canvas }]}>
       <View style={styles.barInner}>
-        <Image source={require('@/assets/images/logo-mark.png')} style={styles.logo} contentFit="contain" accessibilityIgnoresInvertColors accessible={false} />
-        <Txt style={styles.barTitle} accessibilityRole="header" numberOfLines={1}>
-          {title}
-        </Txt>
-        {showProfile ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={t('adm.settings')}
-            onPress={() => router.navigate('/admin/settings')}
-            hitSlop={6}
-            style={({ pressed }) => [styles.round, { backgroundColor: theme.surface, borderColor: theme.hairline, opacity: pressed ? 0.7 : 1 }]}>
-            <AdminIcon name="person" size={20} color={theme.textSecondary} />
-          </Pressable>
+        {leading ?? (
+          <Image source={require('@/assets/images/logo-mark.png')} style={styles.logo} contentFit="contain" accessibilityIgnoresInvertColors accessible={false} />
+        )}
+        <View style={{ flex: 1 }}>
+          <Txt style={styles.barTitle} accessibilityRole="header" numberOfLines={1}>
+            {title}
+          </Txt>
+          {subtitle ? (
+            <Txt variant="muted" style={styles.barSub} numberOfLines={1}>
+              {subtitle}
+            </Txt>
+          ) : null}
+        </View>
+        {trailing ??
+          (showProfile ? (
+            <IconButton icon="person" label={t('adm.settings')} onPress={() => router.navigate('/admin/settings')} />
+          ) : null)}
+      </View>
+    </View>
+  );
+}
+
+/** A round 38-point button with an icon, e.g. account or recenter. */
+export function IconButton({
+  icon,
+  label,
+  onPress,
+  color,
+  style,
+}: {
+  icon: AdminIconName;
+  label: string;
+  onPress: () => void;
+  color?: string;
+  style?: StyleProp<ViewStyle>;
+}) {
+  const theme = useTheme();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPress={onPress}
+      hitSlop={6}
+      style={({ pressed }) => [styles.round, { backgroundColor: theme.surface, borderColor: theme.hairline, opacity: pressed ? 0.7 : 1 }, style]}>
+      <AdminIcon name={icon} size={19} color={color ?? theme.textSecondary} />
+    </Pressable>
+  );
+}
+
+/** A tinted strip for a problem or a hint, with an optional action. */
+export function Notice({
+  icon,
+  title,
+  body,
+  tone = 'warning',
+  action,
+}: {
+  icon: AdminIconName;
+  title: string;
+  body?: string;
+  tone?: 'warning' | 'info' | 'danger';
+  action?: { label: string; onPress: () => void; busy?: boolean };
+}) {
+  const theme = useTheme();
+  const [bg, fg] = {
+    warning: [theme.warningSoft, theme.warning],
+    info: [theme.primarySoft, theme.primaryText],
+    danger: [theme.dangerSoft, theme.danger],
+  }[tone];
+  return (
+    <View accessibilityRole={tone === 'info' ? undefined : 'alert'} style={[styles.notice, { backgroundColor: bg }]}>
+      <AdminIcon name={icon} size={18} color={fg} />
+      <View style={{ flex: 1, gap: 2 }}>
+        <Txt style={[styles.noticeTitle, { color: theme.text }]}>{title}</Txt>
+        {body ? (
+          <Txt variant="muted" style={styles.noticeBody}>
+            {body}
+          </Txt>
         ) : null}
       </View>
+      {action ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ busy: action.busy, disabled: action.busy }}
+          disabled={action.busy}
+          onPress={action.onPress}
+          hitSlop={8}
+          style={({ pressed }) => [styles.noticeAction, { borderColor: fg, opacity: pressed || action.busy ? 0.6 : 1 }]}>
+          {action.busy ? <ActivityIndicator size="small" color={fg} /> : <Txt style={[styles.noticeActionText, { color: fg }]}>{action.label}</Txt>}
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -146,7 +246,7 @@ export function DetailBar({ title }: { title: string }) {
           style={({ pressed }) => [styles.round, { backgroundColor: theme.surface, borderColor: theme.hairline, opacity: pressed ? 0.7 : 1 }]}>
           <AdminIcon name="backward" size={18} color={theme.text} />
         </Pressable>
-        <Txt style={styles.barTitle} accessibilityRole="header" numberOfLines={1}>
+        <Txt style={[styles.barTitle, { flex: 1 }]} accessibilityRole="header" numberOfLines={1}>
           {title}
         </Txt>
       </View>
@@ -459,7 +559,13 @@ const styles = StyleSheet.create({
     minHeight: 52,
   },
   logo: { width: 34, height: 34 },
-  barTitle: { flex: 1, fontSize: 18, lineHeight: 24, fontWeight: '500' },
+  barTitle: { fontSize: 18, lineHeight: 24, fontWeight: '500' },
+  barSub: { fontSize: 13, lineHeight: 17 },
+  notice: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three - 4, borderRadius: 12, paddingHorizontal: Spacing.three - 2, paddingVertical: Spacing.two + 2 },
+  noticeTitle: { fontSize: 14, lineHeight: 19, fontWeight: '500' },
+  noticeBody: { fontSize: 13, lineHeight: 18 },
+  noticeAction: { minHeight: 36, minWidth: 44, paddingHorizontal: Spacing.three - 2, borderRadius: 999, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  noticeActionText: { fontSize: 13, fontWeight: '500' },
   round: { width: 38, height: 38, borderRadius: 19, borderWidth: StyleSheet.hairlineWidth, alignItems: 'center', justifyContent: 'center' },
   panel: { borderRadius: 14, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
   panelPadded: { padding: Spacing.three, gap: Spacing.two },

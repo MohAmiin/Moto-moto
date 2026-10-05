@@ -1,12 +1,12 @@
 import { StyleSheet, View } from 'react-native';
 
-import { AdminButton, AdminScreen, FilterChips, InfoLine, Panel, SectionTitle, TopBar } from '@/components/admin/ui';
+import { AdminButton, AdminScreen, InfoLine, Panel, SectionTitle, TopBar } from '@/components/kit';
+import { Preferences } from '@/components/preferences';
 import { Monogram, Txt } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
-import { setAppearance, useAppearance, type AppearanceChoice } from '@/lib/appearance';
 import { useAuth } from '@/lib/auth';
 import { formatPhone } from '@/lib/format';
-import { LANGUAGES, useI18n } from '@/lib/i18n';
+import { useI18n } from '@/lib/i18n';
 
 // Which Supabase project this build talks to, so a staging build is easy to tell apart.
 const SERVER = (() => {
@@ -18,15 +18,8 @@ const SERVER = (() => {
 })();
 
 export default function Settings() {
-  const { t, language, setLanguage } = useI18n();
+  const { t } = useI18n();
   const { profile, signOut } = useAuth();
-  const appearance = useAppearance();
-
-  const appearanceOptions: { id: AppearanceChoice; label: string }[] = [
-    { id: 'system', label: t('adm.appearanceSystem') },
-    { id: 'light', label: t('adm.appearanceLight') },
-    { id: 'dark', label: t('adm.appearanceDark') },
-  ];
 
   return (
     <AdminScreen header={<TopBar title={t('adm.settings')} showProfile={false} />}>
@@ -42,18 +35,7 @@ export default function Settings() {
         </View>
       </Panel>
 
-      <SectionTitle title={t('common.language')} />
-      <Panel>
-        <FilterChips options={LANGUAGES.map((l) => ({ id: l.id, label: l.label }))} value={language} onChange={setLanguage} />
-      </Panel>
-
-      <SectionTitle title={t('adm.appearance')} />
-      <Panel>
-        <FilterChips options={appearanceOptions} value={appearance} onChange={setAppearance} />
-        <Txt variant="muted" style={styles.small}>
-          {t('adm.appearanceHint')}
-        </Txt>
-      </Panel>
+      <Preferences />
 
       <SectionTitle title={t('adm.about')} />
       <Panel>

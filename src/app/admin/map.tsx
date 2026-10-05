@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
-import { AdminScreen, Badge, DetailBar, EmptyNote, ListRow, Panel, SectionTitle } from '@/components/admin/ui';
+import { AdminScreen, Badge, DetailBar, EmptyNote, ListRow, Panel, SectionTitle } from '@/components/kit';
 import { ConnectionBanner } from '@/components/connection-banner';
 import { LiveMap, type LiveMapData } from '@/components/live-map';
 import { riderPoints } from '@/components/live-map/points';

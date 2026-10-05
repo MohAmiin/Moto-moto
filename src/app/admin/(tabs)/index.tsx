@@ -13,7 +13,7 @@ import {
   TopBar,
   type AdminIconName,
   type Metric,
-} from '@/components/admin/ui';
+} from '@/components/kit';
 import { ConnectionBanner } from '@/components/connection-banner';
 import { LiveMap, type LiveMapData } from '@/components/live-map';
 import { riderPoints } from '@/components/live-map/points';

@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router/tabs';
 
-import { AdminIcon } from '@/components/admin/ui';
+import { AdminIcon } from '@/components/kit';
 import { Fonts } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/lib/i18n';

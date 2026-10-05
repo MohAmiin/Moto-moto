@@ -10,7 +10,18 @@ export type { LiveMapData, MapPoint } from './map-html';
 
 /** Live map on phones: Leaflet inside a WebView, updated by injecting the latest data. */
 /** `rounded={false}` for a map that fills the screen edge to edge. */
-export function LiveMap({ data, height = 300, rounded = true }: { data: LiveMapData; height?: number; rounded?: boolean }) {
+export function LiveMap({
+  data,
+  height = 300,
+  rounded = true,
+  onSelect,
+}: {
+  data: LiveMapData;
+  height?: number;
+  rounded?: boolean;
+  /** Called with a rider's id when their pin is tapped. */
+  onSelect?: (id: string) => void;
+}) {
   const ref = useRef<WebView>(null);
   const [ready, setReady] = useState(false);
 
@@ -26,7 +37,9 @@ export function LiveMap({ data, height = 300, rounded = true }: { data: LiveMapD
         source={{ html: MAP_HTML }}
         originWhitelist={['*']}
         onMessage={(e) => {
-          if (e.nativeEvent.data === 'ready') setReady(true);
+          const msg = e.nativeEvent.data;
+          if (msg === 'ready') setReady(true);
+          else if (msg.startsWith('select:')) onSelect?.(msg.slice('select:'.length));
         }}
         scrollEnabled={false}
         style={styles.web}

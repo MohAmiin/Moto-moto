@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Linking, StyleSheet, TextInput, View } from 'react-native';
 
-import { AdminButton } from '@/components/admin/ui';
+import { AdminButton } from '@/components/kit';
 import { Txt, withFont } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';

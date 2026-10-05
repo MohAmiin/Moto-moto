@@ -2,7 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { RefreshControl, StyleSheet, View } from 'react-native';
 
-import { AdminScreen, Badge, EmptyNote, FilterChips, ListRow, Panel, SearchField, TopBar, type BadgeTone } from '@/components/admin/ui';
+import { AdminScreen, Badge, EmptyNote, FilterChips, ListRow, Panel, SearchField, TopBar, type BadgeTone } from '@/components/kit';
 import { ConnectionBanner } from '@/components/connection-banner';
 import { RiderAvatar } from '@/components/rider-avatar';
 import { Spacing } from '@/constants/theme';

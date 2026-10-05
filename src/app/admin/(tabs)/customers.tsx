@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { RefreshControl, StyleSheet, View } from 'react-native';
 
-import { AdminScreen, EmptyNote, ListRow, Panel, SearchField, SectionTitle, TopBar } from '@/components/admin/ui';
+import { AdminScreen, EmptyNote, ListRow, Panel, SearchField, SectionTitle, TopBar } from '@/components/kit';
 import { ConnectionBanner } from '@/components/connection-banner';
 import { Monogram } from '@/components/ui';
 import { Spacing } from '@/constants/theme';

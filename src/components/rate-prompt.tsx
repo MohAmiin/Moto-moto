@@ -3,7 +3,8 @@ import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { RiderAvatar } from '@/components/rider-avatar';
-import { Card, LinkButton, Row, Txt } from '@/components/ui';
+import { Panel } from '@/components/kit';
+import { LinkButton, Row, Txt } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n } from '@/lib/i18n';
@@ -46,21 +47,23 @@ export function RatePrompt() {
 
   if (thanks) {
     return (
-      <Card tone="soft">
-        <Txt style={{ fontWeight: '700' }}>{t('rate.thanks')}</Txt>
-      </Card>
+      <Panel>
+        <Txt style={styles.title}>{t('rate.thanks')}</Txt>
+      </Panel>
     );
   }
   if (!call) return null;
 
   const code = riderCode(call.rider_number);
   return (
-    <Card tone="soft">
-      <Row gap={Spacing.three}>
-        <RiderAvatar name={call.full_name} photoPath={call.photo_path} size={44} />
+    <Panel>
+      <Row gap={Spacing.three - 4}>
+        <RiderAvatar name={call.full_name} photoPath={call.photo_path} size={40} round />
         <View style={{ flex: 1 }}>
-          <Txt variant="heading">{t('rate.title', { name: call.full_name })}</Txt>
-          <Txt variant="muted">{code ? `${code} · ${t('rate.sub')}` : t('rate.sub')}</Txt>
+          <Txt style={styles.title}>{t('rate.title', { name: call.full_name })}</Txt>
+          <Txt variant="muted" style={styles.sub}>
+            {code ? `${code} · ${t('rate.sub')}` : t('rate.sub')}
+          </Txt>
         </View>
       </Row>
       <View style={styles.stars}>
@@ -73,16 +76,18 @@ export function RatePrompt() {
             accessibilityLabel={t('rate.stars', { n })}
             hitSlop={6}
             style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1 })}>
-            <Txt style={[styles.star, { color: theme.gold }]}>★</Txt>
+            <Txt style={[styles.star, { color: theme.accent }]}>★</Txt>
           </Pressable>
         ))}
       </View>
       <LinkButton title={t('rate.skip')} onPress={() => answer(null)} />
-    </Card>
+    </Panel>
   );
 }
 
 const styles = StyleSheet.create({
+  title: { fontSize: 15, lineHeight: 20, fontWeight: '500' },
+  sub: { fontSize: 13, lineHeight: 18 },
   stars: { flexDirection: 'row', justifyContent: 'center', gap: Spacing.three },
-  star: { fontSize: 38, lineHeight: 44 },
+  star: { fontSize: 32, lineHeight: 40, minWidth: 40, textAlign: 'center' },
 });

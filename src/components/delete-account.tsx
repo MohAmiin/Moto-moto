@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { View } from 'react-native';
 
-import { Button, Card, LinkButton, Txt } from '@/components/ui';
+import { AdminButton, Panel } from '@/components/kit';
+import { LinkButton, Txt } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n';
@@ -44,14 +45,16 @@ export function DeleteAccount() {
   if (!confirming) return <LinkButton title={t('acct.delete')} onPress={() => setConfirming(true)} />;
 
   return (
-    <Card>
-      <Txt variant="heading">{t('acct.deleteTitle')}</Txt>
-      <Txt>{t('acct.deleteBody')}</Txt>
+    <Panel>
+      <Txt style={{ fontSize: 16, lineHeight: 22, fontWeight: '500' }}>{t('acct.deleteTitle')}</Txt>
+      <Txt variant="muted" style={{ fontSize: 14, lineHeight: 20 }}>
+        {t('acct.deleteBody')}
+      </Txt>
       {error ? <Txt color="danger">{error}</Txt> : null}
       <View style={{ gap: Spacing.two }}>
-        <Button title={t('acct.deleteConfirm')} kind="danger" onPress={remove} loading={deleting} />
-        <Button title={t('acct.deleteCancel')} kind="ghost" onPress={() => setConfirming(false)} disabled={deleting} />
+        <AdminButton title={t('acct.deleteConfirm')} kind="danger" onPress={remove} loading={deleting} />
+        <AdminButton title={t('acct.deleteCancel')} kind="outline" onPress={() => setConfirming(false)} disabled={deleting} />
       </View>
-    </Card>
+    </Panel>
   );
 }

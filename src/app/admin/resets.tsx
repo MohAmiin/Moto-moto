@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { RefreshControl, StyleSheet, View } from 'react-native';
 
 import { CodeEntry } from '@/components/admin/code-entry';
-import { AdminButton, AdminScreen, Badge, DetailBar, EmptyNote, Panel } from '@/components/admin/ui';
+import { AdminButton, AdminScreen, Badge, DetailBar, EmptyNote, Panel } from '@/components/kit';
 import { ConnectionBanner } from '@/components/connection-banner';
 import { RiderAvatar } from '@/components/rider-avatar';
 import { Txt } from '@/components/ui';
