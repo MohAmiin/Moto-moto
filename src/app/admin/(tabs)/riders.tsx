@@ -1,0 +1,134 @@
+import { router, useLocalSearchParams } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
+import { RefreshControl, StyleSheet, View } from 'react-native';
+
+import { AdminScreen, Badge, EmptyNote, FilterChips, ListRow, Panel, SearchField, TopBar, type BadgeTone } from '@/components/admin/ui';
+import { ConnectionBanner } from '@/components/connection-banner';
+import { RiderAvatar } from '@/components/rider-avatar';
+import { Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { fetchApplications, fetchOnlineRiders, matchesRiderNumber, searchKey, useAdminRefresh, usePullToRefresh, type Application } from '@/lib/admin';
+import { formatPhone } from '@/lib/format';
+import { useI18n, type TKey } from '@/lib/i18n';
+import { riderCode } from '@/lib/rider';
+import type { NearbyRider } from '@/lib/types';
+
+const FILTERS = ['all', 'pending', 'approved', 'online', 'rejected'] as const;
+type Filter = (typeof FILTERS)[number];
+
+const STATUS: Record<Application['status'], { label: TKey; tone: BadgeTone }> = {
+  pending: { label: 'admin.pending', tone: 'accent' },
+  approved: { label: 'admin.approved', tone: 'success' },
+  rejected: { label: 'admin.rejected', tone: 'danger' },
+};
+
+export default function Riders() {
+  const theme = useTheme();
+  const { t } = useI18n();
+  const params = useLocalSearchParams<{ filter?: string }>();
+  const asFilter = (f: string | undefined): Filter | null => (f && (FILTERS as readonly string[]).includes(f) ? (f as Filter) : null);
+  const [filter, setFilter] = useState<Filter>(asFilter(params.filter) ?? 'all');
+  // Overview links here with a filter, e.g. pending approvals; a new link switches to it.
+  const [linked, setLinked] = useState(params.filter);
+  if (params.filter !== linked) {
+    setLinked(params.filter);
+    const next = asFilter(params.filter);
+    if (next) setFilter(next);
+  }
+  const [query, setQuery] = useState('');
+  const [apps, setApps] = useState<Application[]>();
+  const [online, setOnline] = useState<Map<string, NearbyRider>>(new Map());
+  const [failed, setFailed] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const load = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      const [a, o] = await Promise.all([fetchApplications(), fetchOnlineRiders()]);
+      setApps(a);
+      setOnline(new Map(o.map((r) => [r.id, r])));
+      setFailed(false);
+    } catch {
+      setFailed(true);
+    } finally {
+      setRefreshing(false);
+    }
+  }, []);
+
+  useAdminRefresh(load, 'admin-riders');
+  const pull = usePullToRefresh(load);
+
+  const counts = useMemo(() => {
+    const list = apps ?? [];
+    return {
+      all: list.length,
+      pending: list.filter((a) => a.status === 'pending').length,
+      approved: list.filter((a) => a.status === 'approved').length,
+      rejected: list.filter((a) => a.status === 'rejected').length,
+      online: list.filter((a) => online.has(a.user_id)).length,
+    } satisfies Record<Filter, number>;
+  }, [apps, online]);
+
+  const shown = useMemo(() => {
+    const q = searchKey(query);
+    return (apps ?? []).filter((a) => {
+      if (filter === 'online' ? !online.has(a.user_id) : filter !== 'all' && a.status !== filter) return false;
+      if (!q) return true;
+      return (
+        searchKey(a.profile?.full_name).includes(q) ||
+        searchKey(a.profile?.phone).includes(q.replace(/^0/, '')) ||
+        matchesRiderNumber(a.rider_number, query)
+      );
+    });
+  }, [apps, filter, query, online]);
+
+  const labels: Record<Filter, TKey> = { all: 'adm.all', pending: 'admin.pending', approved: 'admin.approved', rejected: 'admin.rejected', online: 'adm.online' };
+
+  return (
+    <AdminScreen
+      header={<TopBar title={t('adm.riders')} />}
+      refreshControl={<RefreshControl refreshing={pull.refreshing} onRefresh={pull.onRefresh} tintColor={theme.textSecondary} />}>
+      <SearchField value={query} onChangeText={setQuery} placeholder={t('adm.searchRiders')} />
+      <FilterChips options={FILTERS.map((id) => ({ id, label: t(labels[id]), count: apps ? counts[id] : undefined }))} value={filter} onChange={setFilter} />
+      {failed ? <ConnectionBanner message={t('admin.loadFailed')} onRetry={load} retrying={refreshing} /> : null}
+
+      <Panel padded={false}>
+        {apps === undefined ? (
+          <View style={styles.padded}>
+            <EmptyNote icon="riders" title={failed ? t('adm.failedShort') : t('common.loading')} />
+          </View>
+        ) : shown.length === 0 ? (
+          <View style={styles.padded}>
+            <EmptyNote
+              icon={query ? 'search' : 'riders'}
+              title={query ? t('adm.noMatches') : t('admin.noApplications')}
+              body={query ? t('adm.noMatchesBody') : filter === 'pending' ? t('adm.noPendingBody') : undefined}
+            />
+          </View>
+        ) : (
+          shown.map((a, i) => {
+            const live = online.get(a.user_id);
+            const status = STATUS[a.status];
+            const code = riderCode(a.rider_number);
+            const name = a.profile?.full_name ?? '—';
+            return (
+              <ListRow
+                key={a.user_id}
+                leading={<RiderAvatar name={name} photoPath={a.profile?.photo_path} size={42} round />}
+                title={name}
+                subtitle={[code, formatPhone(a.profile?.phone), live ? t(live.is_busy ? 'adm.busy' : 'adm.available') : null].filter(Boolean).join(' · ')}
+                trailing={<Badge label={t(status.label)} tone={status.tone} />}
+                onPress={() => router.push({ pathname: '/admin/rider/[id]', params: { id: a.user_id } })}
+                last={i === shown.length - 1}
+              />
+            );
+          })
+        )}
+      </Panel>
+    </AdminScreen>
+  );
+}
+
+const styles = StyleSheet.create({
+  padded: { paddingHorizontal: Spacing.three, paddingVertical: Spacing.two },
+});

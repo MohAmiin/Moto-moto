@@ -10,10 +10,12 @@ import { useEffect } from 'react';
 import { Platform, View } from 'react-native';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { loadAppearance } from '@/lib/appearance';
 import { AuthProvider, useAuth } from '@/lib/auth';
 import { LanguageProvider, useI18n } from '@/lib/i18n';
 
 SplashScreen.preventAutoHideAsync();
+loadAppearance();
 
 export default function RootLayout() {
   const scheme = useColorScheme();
