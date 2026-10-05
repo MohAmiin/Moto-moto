@@ -30,6 +30,7 @@ export const MAP_HTML = `<!doctype html>
   .rider img { width: 30px; height: 30px; }
   .rider.on { border-color: #FF6B0A; box-shadow: 0 0 0 4px rgba(255,107,10,.3), 0 2px 6px rgba(0,0,0,.35); }
   .leaflet-popup-content { margin: 10px 12px; font-size: 14px; color: #0046B5; }
+  .leaflet-control-attribution { font-size: 9px; line-height: 13px; padding: 0 4px; background: rgba(255,255,255,.75) !important; color: #444; }
   .leaflet-popup-content b { display: block; font-size: 15px; }
 </style>
 </head><body>
@@ -38,10 +39,13 @@ export const MAP_HTML = `<!doctype html>
 <script>
   // The map is locked to the city Jareeye serves: it can't be panned or zoomed out beyond it.
   var city = L.latLngBounds([[${B.south}, ${B.west}], [${B.north}, ${B.east}]]);
-  var map = L.map('map', { zoomControl: false, maxBounds: city.pad(0.02), maxBoundsViscosity: 1.0 });
+  var map = L.map('map', { zoomControl: false, attributionControl: false, maxBounds: city.pad(0.02), maxBoundsViscosity: 1.0 });
+  // The OpenStreetMap credit stays visible, small and bottom-left; the app puts its buttons bottom-right.
+  // Plain text, not a link: a link would open inside the map view.
+  L.control.attribution({ position: 'bottomleft', prefix: false }).addTo(map);
   map.fitBounds(city);
   map.setMinZoom(map.getZoom());
-  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(map);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }).addTo(map);
   var meIcon = L.divIcon({ className: '', html: '<div class="me"></div>', iconSize: [18, 18], iconAnchor: [9, 9] });
   var riderIcon = L.divIcon({ className: '', html: '<div class="rider"><img src="${PIN_IMAGE}" alt=""></div>', iconSize: [38, 38], iconAnchor: [19, 19] });
   var riderOnIcon = L.divIcon({ className: '', html: '<div class="rider on"><img src="${PIN_IMAGE}" alt=""></div>', iconSize: [38, 38], iconAnchor: [19, 19] });

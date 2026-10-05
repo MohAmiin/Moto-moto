@@ -137,9 +137,11 @@ export default function FindRider() {
         <Txt style={styles.heading} accessibilityRole="header">
           {t('cx.title')}
         </Txt>
-        <Txt variant="muted" style={styles.sub} accessibilityLiveRegion="polite">
-          {riders === undefined ? t('common.loading') : list.length ? t('cx.availableNow', { n: list.length }) : t('cx.noneNow')}
-        </Txt>
+        {riders === undefined || list.length > 0 ? (
+          <Txt variant="muted" style={styles.sub} accessibilityLiveRegion="polite">
+            {riders === undefined ? t('common.loading') : t('cx.availableNow', { n: list.length })}
+          </Txt>
+        ) : null}
       </View>
 
       {loadFailed ? (

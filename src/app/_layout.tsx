@@ -23,7 +23,8 @@ export default function RootLayout() {
     <ThemeProvider value={scheme === 'dark' ? DarkTheme : DefaultTheme}>
       <LanguageProvider>
         <AuthProvider>
-          <StatusBar style="auto" />
+          {/* Dark icons on the light theme, light icons on the dark theme (the theme can differ from the phone's). */}
+          <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
           <RootNavigator />
         </AuthProvider>
       </LanguageProvider>
