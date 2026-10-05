@@ -67,3 +67,35 @@ export type CallToRate = {
   rider_number: number | null;
   called_at: string;
 };
+
+/** Rider membership (20261010000000_rider_membership.sql). `free` while the admin switch is off. */
+export type MembershipStatus = 'free' | 'active' | 'expiring' | 'expired' | 'unpaid';
+
+/** A row from my_membership() or admin_rider_memberships(). */
+export type Membership = {
+  status: MembershipStatus;
+  expires_at: string | null;
+  /** Whole days left, rounded up; null without a membership. */
+  days_left: number | null;
+};
+
+export type MembershipSettings = {
+  required: boolean;
+  price_usd: number | null;
+  instructions: string | null;
+  first_enabled_at: string | null;
+  updated_at: string;
+};
+
+/** A row from admin_membership_history(). */
+export type MembershipPayment = {
+  id: string;
+  kind: 'payment' | 'grace';
+  amount_usd: number;
+  reference: string | null;
+  confirmed_at: string;
+  confirmed_by_name: string | null;
+  previous_expires_at: string | null;
+  period_start: string;
+  period_end: string;
+};

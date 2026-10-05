@@ -32,6 +32,7 @@ import {
   type PinReset,
 } from '@/lib/admin';
 import { formatPhone } from '@/lib/format';
+import { fetchMembershipSettings, fetchMemberships, needsPayment } from '@/lib/membership';
 import { useI18n, type TKey } from '@/lib/i18n';
 import { supabase } from '@/lib/supabase';
 import type { NearbyRider } from '@/lib/types';
@@ -120,6 +121,8 @@ export default function Overview() {
   const [activity, setActivity] = useState<Activity[] | null>();
   const [failed, setFailed] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  // Riders whose membership needs renewing (expiring, expired or unpaid); null while paid membership is off.
+  const [renew, setRenew] = useState<{ user_id: string; due: boolean }[] | null>(null);
 
   const load = useCallback(async () => {
     setRefreshing(true);
@@ -132,6 +135,12 @@ export default function Overview() {
       fetchRecentCalls(),
       fetchNewCustomers(),
     ]);
+    // Memberships are an extra: a failure here leaves the rest of the overview alone.
+    Promise.all([fetchMembershipSettings(), fetchMemberships()])
+      .then(([settings, all]) =>
+        setRenew(settings?.required ? [...all.entries()].filter(([, m]) => m.status === 'expiring' || needsPayment(m.status)).map(([user_id, m]) => ({ user_id, due: needsPayment(m.status) })) : null),
+      )
+      .catch(() => {});
     // A failed refresh keeps what was already on screen; a figure that never loaded shows as failed.
     const keep = <T,>(res: PromiseSettledResult<T>, set: (fn: (prev: T | null | undefined) => T | null | undefined) => void) =>
       set((prev) => (res.status === 'fulfilled' ? res.value : prev === undefined ? null : prev));
@@ -157,6 +166,10 @@ export default function Overview() {
   const pendingApps = apps?.filter((x) => x.status === 'pending') ?? [];
   const pending: Metric = apps === undefined ? undefined : apps === null ? null : pendingApps.length;
   const resetCount: Metric = resets === undefined ? undefined : resets === null ? null : resets.length;
+  // Only approved riders need a membership.
+  const approved = new Set((apps ?? []).filter((x) => x.status === 'approved').map((x) => x.user_id));
+  const renewList = renew?.filter((m) => approved.has(m.user_id)) ?? null;
+  const renewCount = renewList ? renewList.length : 0;
   const mapData = useMemo<LiveMapData>(() => ({ me: null, riders: riderPoints(online ?? [], t) }), [online, t]);
 
   const names = (list: (string | null | undefined)[]) => {
@@ -190,7 +203,7 @@ export default function Overview() {
           <View style={styles.padded}>
             <EmptyNote icon="clock" title={t('common.loading')} />
           </View>
-        ) : pending === 0 && resetCount === 0 ? (
+        ) : pending === 0 && resetCount === 0 && renewCount === 0 ? (
           <View style={styles.padded}>
             <EmptyNote icon="check" title={t('adm.allClear')} body={t('adm.allClearBody')} />
           </View>
@@ -209,8 +222,21 @@ export default function Overview() {
                 resetCount === null ? t('adm.failedShort') : resetCount ? names((resets ?? []).map((x) => x.full_name ?? formatPhone(x.phone))) : t('adm.noneWaiting')
               }
               onPress={() => router.push('/admin/resets')}
-              last
+              last={!renewList}
             />
+            {renewList ? (
+              <ListRow
+                leading={<CountDot value={renewCount} />}
+                title={t('mem.toRenew')}
+                subtitle={
+                  renewCount
+                    ? names(renewList.map((m) => (apps ?? []).find((x) => x.user_id === m.user_id)?.profile?.full_name))
+                    : t('adm.noneWaiting')
+                }
+                onPress={() => router.navigate({ pathname: '/admin/riders', params: { filter: renewList.some((m) => m.due) ? 'renew' : 'expiring' } })}
+                last
+              />
+            ) : null}
           </>
         )}
       </Panel>

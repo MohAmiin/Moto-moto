@@ -486,6 +486,45 @@ export function EmptyNote({ icon, title, body }: { icon: AdminIconName; title: s
   );
 }
 
+/** A labelled text input in the kit's style. */
+export function TextField({
+  label,
+  help,
+  error,
+  style,
+  ...input
+}: React.ComponentProps<typeof TextInput> & { label: string; help?: string; error?: string }) {
+  const theme = useTheme();
+  return (
+    <View style={{ gap: 4 }}>
+      <Txt variant="muted" style={styles.fieldLabel}>
+        {label}
+      </Txt>
+      <TextInput
+        placeholderTextColor={theme.textSecondary}
+        accessibilityLabel={label}
+        {...input}
+        style={[
+          withFont({ fontWeight: '400' }),
+          styles.field,
+          { color: theme.text, backgroundColor: theme.surfaceMuted, borderColor: error ? theme.danger : theme.hairline },
+          input.multiline && { minHeight: 84, textAlignVertical: 'top' },
+          style,
+        ]}
+      />
+      {error ? (
+        <Txt color="danger" style={styles.fieldHelp}>
+          {error}
+        </Txt>
+      ) : help ? (
+        <Txt variant="muted" style={styles.fieldHelp}>
+          {help}
+        </Txt>
+      ) : null}
+    </View>
+  );
+}
+
 /** A labelled value on a detail screen. */
 export function InfoLine({ label, value, last = false }: { label: string; value: string | null | undefined; last?: boolean }) {
   const theme = useTheme();
@@ -602,6 +641,9 @@ const styles = StyleSheet.create({
   emptyTitle: { fontSize: 14, lineHeight: 19, fontWeight: '500' },
   emptyBody: { fontSize: 13, lineHeight: 18 },
   info: { paddingVertical: Spacing.two + 2, gap: 2 },
+  fieldLabel: { fontSize: 12, lineHeight: 16 },
+  field: { borderWidth: 1, borderRadius: 12, minHeight: 46, paddingHorizontal: Spacing.three - 4, paddingVertical: Spacing.two + 2, fontSize: 15 },
+  fieldHelp: { fontSize: 12, lineHeight: 16 },
   infoLabel: { fontSize: 12, lineHeight: 16 },
   infoValue: { fontSize: 15, lineHeight: 21 },
   button: { minHeight: 48, borderRadius: 12, borderWidth: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Spacing.two, paddingHorizontal: Spacing.three },

@@ -10,10 +10,12 @@ import { useTheme } from '@/hooks/use-theme';
 import { fetchApplications, fetchOnlineRiders, matchesRiderNumber, searchKey, useAdminRefresh, usePullToRefresh, type Application } from '@/lib/admin';
 import { formatPhone } from '@/lib/format';
 import { useI18n, type TKey } from '@/lib/i18n';
+import { MEMBERSHIP_LOOK, fetchMembershipSettings, fetchMemberships, needsPayment } from '@/lib/membership';
 import { riderCode } from '@/lib/rider';
-import type { NearbyRider } from '@/lib/types';
+import type { Membership, NearbyRider } from '@/lib/types';
 
-const FILTERS = ['all', 'pending', 'approved', 'online', 'rejected'] as const;
+// "expiring" and "renew" (expired or unpaid) only appear while paid membership is on.
+const FILTERS = ['all', 'pending', 'approved', 'online', 'expiring', 'renew', 'rejected'] as const;
 type Filter = (typeof FILTERS)[number];
 
 const STATUS: Record<Application['status'], { label: TKey; tone: BadgeTone }> = {
@@ -38,15 +40,25 @@ export default function Riders() {
   const [query, setQuery] = useState('');
   const [apps, setApps] = useState<Application[]>();
   const [online, setOnline] = useState<Map<string, NearbyRider>>(new Map());
+  const [memberships, setMemberships] = useState<Map<string, Membership>>(new Map());
+  const [required, setRequired] = useState(false);
   const [failed, setFailed] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
     setRefreshing(true);
     try {
-      const [a, o] = await Promise.all([fetchApplications(), fetchOnlineRiders()]);
+      const [a, o, m, settings] = await Promise.all([
+        fetchApplications(),
+        fetchOnlineRiders(),
+        // Memberships are an extra: if they can't be read, the list works as with membership off.
+        fetchMemberships().catch(() => new Map<string, Membership>()),
+        fetchMembershipSettings().catch(() => null),
+      ]);
       setApps(a);
       setOnline(new Map(o.map((r) => [r.id, r])));
+      setMemberships(m);
+      setRequired(settings?.required ?? false);
       setFailed(false);
     } catch {
       setFailed(true);
@@ -66,13 +78,22 @@ export default function Riders() {
       approved: list.filter((a) => a.status === 'approved').length,
       rejected: list.filter((a) => a.status === 'rejected').length,
       online: list.filter((a) => online.has(a.user_id)).length,
+      expiring: list.filter((a) => a.status === 'approved' && memberships.get(a.user_id)?.status === 'expiring').length,
+      renew: list.filter((a) => a.status === 'approved' && needsPayment(memberships.get(a.user_id)?.status)).length,
     } satisfies Record<Filter, number>;
-  }, [apps, online]);
+  }, [apps, online, memberships]);
+  // Membership filters only while paid membership is on.
+  const filters = FILTERS.filter((f) => required || (f !== 'expiring' && f !== 'renew'));
+  const activeFilter: Filter = filters.includes(filter) ? filter : 'all';
 
   const shown = useMemo(() => {
     const q = searchKey(query);
     return (apps ?? []).filter((a) => {
-      if (filter === 'online' ? !online.has(a.user_id) : filter !== 'all' && a.status !== filter) return false;
+      const m = memberships.get(a.user_id)?.status;
+      if (activeFilter === 'online' && !online.has(a.user_id)) return false;
+      if (activeFilter === 'expiring' && !(a.status === 'approved' && m === 'expiring')) return false;
+      if (activeFilter === 'renew' && !(a.status === 'approved' && needsPayment(m))) return false;
+      if (['pending', 'approved', 'rejected'].includes(activeFilter) && a.status !== activeFilter) return false;
       if (!q) return true;
       return (
         searchKey(a.profile?.full_name).includes(q) ||
@@ -80,16 +101,24 @@ export default function Riders() {
         matchesRiderNumber(a.rider_number, query)
       );
     });
-  }, [apps, filter, query, online]);
+  }, [apps, activeFilter, query, online, memberships]);
 
-  const labels: Record<Filter, TKey> = { all: 'adm.all', pending: 'admin.pending', approved: 'admin.approved', rejected: 'admin.rejected', online: 'adm.online' };
+  const labels: Record<Filter, TKey> = {
+    all: 'adm.all',
+    pending: 'admin.pending',
+    approved: 'admin.approved',
+    rejected: 'admin.rejected',
+    online: 'adm.online',
+    expiring: 'mem.expiring',
+    renew: 'mem.filterRenew',
+  };
 
   return (
     <AdminScreen
       header={<TopBar title={t('adm.riders')} />}
       refreshControl={<RefreshControl refreshing={pull.refreshing} onRefresh={pull.onRefresh} tintColor={theme.textSecondary} />}>
       <SearchField value={query} onChangeText={setQuery} placeholder={t('adm.searchRiders')} />
-      <FilterChips options={FILTERS.map((id) => ({ id, label: t(labels[id]), count: apps ? counts[id] : undefined }))} value={filter} onChange={setFilter} />
+      <FilterChips options={filters.map((id) => ({ id, label: t(labels[id]), count: apps ? counts[id] : undefined }))} value={activeFilter} onChange={setFilter} />
       {failed ? <ConnectionBanner message={t('admin.loadFailed')} onRetry={load} retrying={refreshing} /> : null}
 
       <Panel padded={false}>
@@ -102,13 +131,15 @@ export default function Riders() {
             <EmptyNote
               icon={query ? 'search' : 'riders'}
               title={query ? t('adm.noMatches') : t('admin.noApplications')}
-              body={query ? t('adm.noMatchesBody') : filter === 'pending' ? t('adm.noPendingBody') : undefined}
+              body={query ? t('adm.noMatchesBody') : activeFilter === 'pending' ? t('adm.noPendingBody') : undefined}
             />
           </View>
         ) : (
           shown.map((a, i) => {
             const live = online.get(a.user_id);
-            const status = STATUS[a.status];
+            // While paid membership is on, approved riders show their membership instead.
+            const m = required && a.status === 'approved' ? memberships.get(a.user_id) : undefined;
+            const status = m ? MEMBERSHIP_LOOK[m.status] : STATUS[a.status];
             const code = riderCode(a.rider_number);
             const name = a.profile?.full_name ?? '—';
             return (

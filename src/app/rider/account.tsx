@@ -6,10 +6,12 @@ import { AdminButton, AdminScreen, InfoLine, Panel, SectionTitle, TopBar } from 
 import { DeleteAccount } from '@/components/delete-account';
 import { Preferences } from '@/components/preferences';
 import { RiderAvatar } from '@/components/rider-avatar';
+import { RiderMembershipCard } from '@/components/rider-membership-card';
 import { Txt } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { useAuth } from '@/lib/auth';
 import { formatPhone } from '@/lib/format';
+import { useMyMembership } from '@/lib/membership';
 import { useI18n } from '@/lib/i18n';
 import { riderCode, uploadRiderPhoto } from '@/lib/rider';
 import { errorKey } from '@/lib/supabase';
@@ -19,6 +21,7 @@ export default function RiderAccount() {
   const { profile, application, refresh, signOut } = useAuth();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string>();
+  const { membership } = useMyMembership();
   if (!profile) return null;
 
   async function changePhoto() {
@@ -65,6 +68,8 @@ export default function RiderAccount() {
         <InfoLine label={t('common.plate')} value={application?.plate} />
         <InfoLine label={t('common.phoneShort')} value={formatPhone(profile.phone)} last />
       </Panel>
+
+      <RiderMembershipCard membership={membership} />
 
       <Preferences />
 

@@ -1,6 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
 import { AdminButton, AdminScreen, InfoLine, Panel, SectionTitle, TopBar } from '@/components/kit';
+import { MembershipSettingsSection } from '@/components/admin/membership-settings';
 import { Preferences } from '@/components/preferences';
 import { Monogram, Txt } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
@@ -34,6 +35,8 @@ export default function Settings() {
           </View>
         </View>
       </Panel>
+
+      <MembershipSettingsSection />
 
       <Preferences />
 

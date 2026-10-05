@@ -4,12 +4,14 @@ import { StyleSheet, View } from 'react-native';
 
 import { AdminButton, AdminScreen, Notice, Panel, SectionTitle, TopBar } from '@/components/kit';
 import { RiderAvatar } from '@/components/rider-avatar';
+import { RiderMembershipCard } from '@/components/rider-membership-card';
 import { Txt } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth';
 import { formatPhone } from '@/lib/format';
 import { useI18n, type TKey } from '@/lib/i18n';
+import { needsPayment, useMyMembership } from '@/lib/membership';
 import { ratingLabel, riderCode } from '@/lib/rider';
 import { useAvailability } from '@/lib/rider-availability-context';
 import { ACTIVE_CITY, inCity } from '@/lib/service-area';
@@ -58,6 +60,9 @@ export default function RiderHome() {
   const [rating, setRating] = useState<string | null | undefined>();
   const [statsFailed, setStatsFailed] = useState(false);
   const now = useNow(30_000);
+  // While paid membership is on, an expired or unpaid rider can't go online (the database refuses it too).
+  const { membership, reload: reloadMembership } = useMyMembership();
+  const blocked = needsPayment(membership?.status);
   const stats = useMemo(() => (calls ? summarize(calls) : null), [calls]);
   const riderId = profile!.id;
 
@@ -117,7 +122,14 @@ export default function RiderHome() {
         </View>
 
         {state === 'offline' ? (
-          <AdminButton title={t('rx.goOnline')} icon="power" onPress={() => controller.goOnline()} loading={pending === 'online'} disabled={pending != null} />
+          <AdminButton
+            title={t('rx.goOnline')}
+            icon="power"
+            // Afterwards re-check the membership: if the database refused, the screen explains why.
+            onPress={() => controller.goOnline().then(reloadMembership)}
+            loading={pending === 'online'}
+            disabled={pending != null || blocked}
+          />
         ) : state === 'available' ? (
           <>
             <AdminButton title={t('rider.goBusy')} icon="delivery" onPress={() => controller.setBusy(true)} loading={pending === 'busy'} disabled={pending != null} />
@@ -129,6 +141,11 @@ export default function RiderHome() {
             <AdminButton title={t('rx.goOffline')} kind="outline" onPress={() => controller.goOffline()} loading={pending === 'offline'} disabled={pending != null} />
           </>
         )}
+        {membership?.status === 'active' ? (
+          <Txt variant="muted" style={styles.small}>
+            {t('mem.activeLine', { n: membership.days_left ?? 0 })}
+          </Txt>
+        ) : null}
         {saving ? (
           <Txt variant="muted" style={styles.small} accessibilityLiveRegion="polite">
             {saving}
@@ -136,7 +153,8 @@ export default function RiderHome() {
         ) : null}
       </Panel>
 
-      {error ? <Notice icon="attention" tone="danger" title={t(ERRORS[error])} /> : null}
+      <RiderMembershipCard membership={membership} compact />
+      {error && !(blocked && error === 'saveFailed') ? <Notice icon="attention" tone="danger" title={t(ERRORS[error])} /> : null}
       {online && connected === false ? <Notice icon="offline" title={t('rider.connectionLost')} body={t('rx.connectionBody')} /> : null}
       {online && connected !== false && locationFresh === false ? <Notice icon="locationOff" title={t('rider.locationStale')} body={t('rx.locationBody')} /> : null}
       {online && coords && !inCity(coords) ? (

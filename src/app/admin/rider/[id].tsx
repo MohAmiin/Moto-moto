@@ -4,6 +4,7 @@ import { useCallback, useState } from 'react';
 import { RefreshControl, StyleSheet, View } from 'react-native';
 
 import { CodeEntry } from '@/components/admin/code-entry';
+import { RiderMembership } from '@/components/admin/rider-membership';
 import { AdminButton, AdminScreen, Badge, DetailBar, EmptyNote, InfoLine, Panel, SectionTitle } from '@/components/kit';
 import { ConnectionBanner } from '@/components/connection-banner';
 import { RiderAvatar } from '@/components/rider-avatar';
@@ -179,6 +180,8 @@ export default function RiderDetail() {
               </Panel>
             </>
           ) : null}
+
+          {app.status !== 'rejected' ? <RiderMembership userId={app.user_id} /> : null}
 
           <SectionTitle title={t('adm.details')} />
           <Panel>
