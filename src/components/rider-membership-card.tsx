@@ -51,7 +51,7 @@ export function RiderMembershipCard({ membership, compact = false }: { membershi
               ) : null}
             </View>
             <InfoLine label={t(due ? 'mem.endedLabel' : 'mem.validUntil')} value={until} />
-            <InfoLine label={t('mem.monthly')} value={usd(membership.price_usd)} />
+            <InfoLine label={t('mem.pricePer30')} value={usd(membership.price_usd)} />
             <InfoLine label={t('mem.howToPay')} value={howToPay} last />
           </Panel>
         </>

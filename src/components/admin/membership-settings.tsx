@@ -15,7 +15,7 @@ const ERRORS: Record<string, TKey> = {
 };
 
 /**
- * The paid-membership switch, the monthly price and the payment instructions riders see. Turning the
+ * The paid-membership switch, the price per 30 days and the payment instructions riders see. Turning the
  * switch on asks for confirmation first and explains what will happen.
  */
 export function MembershipSettingsSection() {

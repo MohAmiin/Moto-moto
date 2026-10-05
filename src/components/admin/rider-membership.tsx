@@ -1,19 +1,24 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { AdminButton, Badge, EmptyNote, InfoLine, Panel, SectionTitle, TextField } from '@/components/kit';
+import { AdminButton, Badge, EmptyNote, FilterChips, InfoLine, Notice, Panel, SectionTitle, TextField } from '@/components/kit';
 import { Txt } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useI18n, type TKey } from '@/lib/i18n';
 import {
+  METHOD_LABEL,
   MEMBERSHIP_LOOK,
+  PAYMENT_METHODS,
   confirmMembershipPayment,
+  needsAccount,
+  needsReference,
   fetchMembershipHistory,
   fetchMemberships,
   newRequestId,
   parseUsd,
   usd,
+  type PaymentMethod,
 } from '@/lib/membership';
 import type { Membership, MembershipPayment } from '@/lib/types';
 
@@ -21,6 +26,10 @@ const ERRORS: Record<string, TKey> = {
   'possible duplicate': 'mem.errDuplicate',
   'invalid amount': 'mem.errAmount',
   'reference too long': 'mem.errReference',
+  'reference already used': 'mem.errRefUsed',
+  'reference required': 'mem.errRefRequired',
+  'receiving account required': 'mem.errAccountRequired',
+  'receiving account too long': 'mem.errReference',
   'not a rider': 'err.generic',
 };
 
@@ -35,6 +44,8 @@ export function RiderMembership({ userId }: { userId: string }) {
   const [history, setHistory] = useState<MembershipPayment[]>();
   const [amount, setAmount] = useState('');
   const [reference, setReference] = useState('');
+  const [method, setMethod] = useState<PaymentMethod>('zaad');
+  const [receivedInto, setReceivedInto] = useState('');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ text: string; error: boolean }>();
   // When the data was loaded, for the preview below (read in the loader, not while rendering).
@@ -61,16 +72,19 @@ export function RiderMembership({ userId }: { userId: string }) {
 
   const date = (iso: string | null | undefined) => (iso ? new Date(iso).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' }) : null);
   const amountValue = parseUsd(amount);
+  const ready =
+    amountValue != null && (!needsReference(method) || reference.trim() !== '') && (!needsAccount(method) || receivedInto.trim() !== '');
 
   async function confirm() {
-    if (amountValue == null || busy) return;
+    if (!ready || amountValue == null || busy) return;
     setBusy(true);
     setMessage(undefined);
     try {
-      const r = await confirmMembershipPayment(userId, amountValue, reference, requestId.current);
+      const r = await confirmMembershipPayment(userId, { amountUsd: amountValue, method, reference, receivedInto }, requestId.current);
       requestId.current = newRequestId();
       setAmount('');
       setReference('');
+      setReceivedInto('');
       setMessage({ text: t(r.duplicate ? 'mem.alreadyRecorded' : 'mem.recorded', { date: date(r.period_end) ?? '' }), error: false });
       await load();
     } catch (e) {
@@ -107,12 +121,47 @@ export function RiderMembership({ userId }: { userId: string }) {
               ) : null}
             </View>
 
-            <TextField label={t('mem.amount')} value={amount} onChangeText={setAmount} keyboardType="decimal-pad" placeholder="0.00" />
-            <TextField label={t('mem.reference')} value={reference} onChangeText={setReference} maxLength={120} placeholder={t('mem.referencePh')} autoCapitalize="characters" />
+            <Notice icon="info" tone="info" title={t('mem.verifyFirst')} body={t('mem.verifyFirstBody')} />
+            <Txt variant="muted" style={styles.label}>
+              {t('mem.method')}
+            </Txt>
+            <FilterChips
+              options={PAYMENT_METHODS.map((m) => ({ id: m, label: t(METHOD_LABEL[m]) }))}
+              value={method}
+              onChange={(m) => {
+                setMethod(m);
+                setMessage(undefined);
+              }}
+            />
+            <TextField label={t('mem.amount')} value={amount} onChangeText={setAmount} keyboardType="decimal-pad" placeholder="1.00" />
+            {needsReference(method) ? (
+              <TextField
+                label={t('mem.referenceRequired')}
+                value={reference}
+                onChangeText={setReference}
+                maxLength={120}
+                placeholder={t('mem.referencePh')}
+                autoCapitalize="characters"
+                autoCorrect={false}
+                help={t('mem.referenceHelp')}
+              />
+            ) : (
+              <TextField label={t('mem.reference')} value={reference} onChangeText={setReference} maxLength={120} placeholder={t('mem.cashRefPh')} autoCorrect={false} />
+            )}
+            {method !== 'cash' ? (
+              <TextField
+                label={t(needsAccount(method) ? 'mem.receivedIntoRequired' : 'mem.receivedInto')}
+                value={receivedInto}
+                onChangeText={setReceivedInto}
+                maxLength={60}
+                placeholder={t('mem.receivedIntoPh')}
+                autoCorrect={false}
+              />
+            ) : null}
             <Txt variant="muted" style={styles.small}>
               {t(start ? 'mem.previewRenew' : 'mem.previewNew', { date: date(previewEnd.toISOString()) ?? '' })}
             </Txt>
-            <AdminButton title={t('mem.activate')} kind="accent" icon="check" onPress={confirm} loading={busy} disabled={amountValue == null} />
+            <AdminButton title={t('mem.activate')} kind="accent" icon="check" onPress={confirm} loading={busy} disabled={!ready} />
             {message ? (
               <Txt color={message.error ? 'danger' : undefined} style={[styles.small, !message.error && { color: theme.success }]} accessibilityLiveRegion="polite">
                 {message.text}
@@ -129,7 +178,15 @@ export function RiderMembership({ userId }: { userId: string }) {
             {history.map((h, i) => (
               <InfoLine
                 key={h.id}
-                label={`${date(h.confirmed_at)} · ${h.kind === 'grace' ? t('mem.grace') : usd(h.amount_usd)}${h.reference ? ` · ${h.reference}` : ''}`}
+                label={[
+                  date(h.confirmed_at),
+                  h.kind === 'grace' ? t('mem.grace') : usd(h.amount_usd),
+                  h.method && h.method in METHOD_LABEL ? t(METHOD_LABEL[h.method as PaymentMethod]) : null,
+                  h.reference,
+                  h.received_into,
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
                 value={t('mem.historyLine', { from: date(h.period_start) ?? '', to: date(h.period_end) ?? '', name: h.confirmed_by_name ?? '—' })}
                 last={i === history.length - 1}
               />
@@ -144,4 +201,5 @@ export function RiderMembership({ userId }: { userId: string }) {
 const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: Spacing.two },
   small: { fontSize: 13, lineHeight: 18 },
+  label: { fontSize: 12, lineHeight: 16, marginBottom: -4 },
 });

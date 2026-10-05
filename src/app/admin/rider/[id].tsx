@@ -4,6 +4,7 @@ import { useCallback, useState } from 'react';
 import { RefreshControl, StyleSheet, View } from 'react-native';
 
 import { CodeEntry } from '@/components/admin/code-entry';
+import { PhoneCorrection } from '@/components/admin/phone-correction';
 import { RiderMembership } from '@/components/admin/rider-membership';
 import { AdminButton, AdminScreen, Badge, DetailBar, EmptyNote, InfoLine, Panel, SectionTitle } from '@/components/kit';
 import { ConnectionBanner } from '@/components/connection-banner';
@@ -11,12 +12,11 @@ import { RiderAvatar } from '@/components/rider-avatar';
 import { Txt } from '@/components/ui';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { fetchApplication, fetchOnlineRiders, phoneConfirmed, useAdminRefresh, usePullToRefresh, type Application, type CodeResult } from '@/lib/admin';
+import { fetchApplication, fetchOnlineRiders, onlineLabel, phoneConfirmed, useAdminRefresh, usePullToRefresh, type Application, type CodeResult, type OnlineRider } from '@/lib/admin';
 import { formatPhone } from '@/lib/format';
 import { useI18n } from '@/lib/i18n';
 import { ratingLabel, riderCode } from '@/lib/rider';
 import { errorKey, supabase } from '@/lib/supabase';
-import type { NearbyRider } from '@/lib/types';
 
 type Stats = { taps: number; ratings: number; average: number | null };
 
@@ -27,7 +27,7 @@ export default function RiderDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [app, setApp] = useState<Application | null>();
   const [idPhoto, setIdPhoto] = useState<string>();
-  const [live, setLive] = useState<NearbyRider | null>(null);
+  const [live, setLive] = useState<OnlineRider | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
   const [failed, setFailed] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -124,7 +124,8 @@ export default function RiderDetail() {
                     label={t(app.status === 'pending' ? 'admin.pending' : app.status === 'approved' ? 'admin.approved' : 'admin.rejected')}
                     tone={app.status === 'pending' ? 'accent' : app.status === 'approved' ? 'success' : 'danger'}
                   />
-                  {live ? <Badge label={t(live.is_busy ? 'adm.busy' : 'adm.available')} tone={live.is_busy ? 'primary' : 'success'} /> : null}
+                  {live ? <Badge label={t('adm.reportingOnline')} tone="neutral" /> : null}
+                  {live ? <Badge label={t(onlineLabel(live).label)} tone={onlineLabel(live).tone} /> : null}
                 </View>
               </View>
             </View>
@@ -191,6 +192,7 @@ export default function RiderDetail() {
             <InfoLine label={t('adm.applied')} value={date(app.created_at)} />
             <InfoLine label={t('adm.reviewed')} value={date(app.reviewed_at)} last />
           </Panel>
+          <PhoneCorrection userId={app.user_id} isRider onChanged={load} />
 
           {idPhoto ? (
             <>

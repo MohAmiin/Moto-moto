@@ -8,16 +8,15 @@ import { LiveMap, type LiveMapData } from '@/components/live-map';
 import { riderPoints } from '@/components/live-map/points';
 import { RiderAvatar } from '@/components/rider-avatar';
 import { Spacing } from '@/constants/theme';
-import { fetchOnlineRiders, useAdminRefresh } from '@/lib/admin';
+import { fetchOnlineRiders, onlineLabel, useAdminRefresh, type OnlineRider } from '@/lib/admin';
 import { useI18n } from '@/lib/i18n';
 import { riderCode } from '@/lib/rider';
-import type { NearbyRider } from '@/lib/types';
 
 /** Every rider online now, available or busy, on a map and in a list. */
 export default function AdminMap() {
   const { t } = useI18n();
   const { height } = useWindowDimensions();
-  const [online, setOnline] = useState<NearbyRider[]>();
+  const [online, setOnline] = useState<OnlineRider[]>();
   const [failed, setFailed] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -44,7 +43,9 @@ export default function AdminMap() {
       <Panel padded={false}>
         <LiveMap data={data} height={Math.max(280, Math.round(height * 0.45))} rounded={false} />
       </Panel>
-      <SectionTitle title={online ? `${t('admin.online')} · ${online.length}` : t('admin.online')} />
+      <SectionTitle
+        title={online ? t('adm.reportingCount', { n: online.length, available: online.filter((r) => r.available).length }) : t('adm.reportingOnline')}
+      />
       <Panel padded={false}>
         {online === undefined ? (
           <View style={styles.padded}>
@@ -61,7 +62,7 @@ export default function AdminMap() {
               leading={<RiderAvatar name={r.full_name} photoPath={r.photo_path} size={40} round />}
               title={r.full_name}
               subtitle={[riderCode(r.rider_number), r.plate, r.area, r.lat == null ? t('adm.noPosition') : null].filter(Boolean).join(' · ')}
-              trailing={<Badge label={t(r.is_busy ? 'adm.busy' : 'adm.available')} tone={r.is_busy ? 'primary' : 'success'} />}
+              trailing={<Badge label={t(onlineLabel(r).label)} tone={onlineLabel(r).tone} />}
               onPress={() => router.push({ pathname: '/admin/rider/[id]', params: { id: r.id } })}
               last={i === online.length - 1}
             />

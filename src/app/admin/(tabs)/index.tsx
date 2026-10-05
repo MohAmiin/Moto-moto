@@ -29,13 +29,13 @@ import {
   useAdminRefresh,
   usePullToRefresh,
   type Application,
+  type OnlineRider,
   type PinReset,
 } from '@/lib/admin';
 import { formatPhone } from '@/lib/format';
 import { fetchMembershipSettings, fetchMemberships, needsPayment } from '@/lib/membership';
 import { useI18n, type TKey } from '@/lib/i18n';
 import { supabase } from '@/lib/supabase';
-import type { NearbyRider } from '@/lib/types';
 
 /** Something that happened, taken from existing records (no invented events). */
 type Activity = {
@@ -113,7 +113,7 @@ export default function Overview() {
   const theme = useTheme();
   const { t, locale } = useI18n();
   // undefined while loading, null when that request failed, otherwise the real figure (which may be 0).
-  const [online, setOnline] = useState<NearbyRider[] | null>();
+  const [online, setOnline] = useState<OnlineRider[] | null>();
   const [apps, setApps] = useState<Application[] | null>();
   const [resets, setResets] = useState<PinReset[] | null>();
   const [customers, setCustomers] = useState<Metric>();
@@ -161,7 +161,8 @@ export default function Overview() {
   useAdminRefresh(load, 'admin-overview');
   const pull = usePullToRefresh(load);
 
-  const available: Metric = online === undefined ? undefined : online === null ? null : online.filter((x) => !x.is_busy).length;
+  // "Available" is what customers get; busy and membership-hidden riders are reporting online but not available.
+  const available: Metric = online === undefined ? undefined : online === null ? null : online.filter((x) => x.available).length;
   const busy: Metric = online === undefined ? undefined : online === null ? null : online.filter((x) => x.is_busy).length;
   const pendingApps = apps?.filter((x) => x.status === 'pending') ?? [];
   const pending: Metric = apps === undefined ? undefined : apps === null ? null : pendingApps.length;

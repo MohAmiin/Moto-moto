@@ -7,12 +7,12 @@ import { ConnectionBanner } from '@/components/connection-banner';
 import { RiderAvatar } from '@/components/rider-avatar';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { fetchApplications, fetchOnlineRiders, matchesRiderNumber, searchKey, useAdminRefresh, usePullToRefresh, type Application } from '@/lib/admin';
+import { fetchApplications, fetchOnlineRiders, matchesRiderNumber, onlineLabel, searchKey, useAdminRefresh, usePullToRefresh, type Application, type OnlineRider } from '@/lib/admin';
 import { formatPhone } from '@/lib/format';
 import { useI18n, type TKey } from '@/lib/i18n';
 import { MEMBERSHIP_LOOK, fetchMembershipSettings, fetchMemberships, needsPayment } from '@/lib/membership';
 import { riderCode } from '@/lib/rider';
-import type { Membership, NearbyRider } from '@/lib/types';
+import type { Membership } from '@/lib/types';
 
 // "expiring" and "renew" (expired or unpaid) only appear while paid membership is on.
 const FILTERS = ['all', 'pending', 'approved', 'online', 'expiring', 'renew', 'rejected'] as const;
@@ -39,7 +39,7 @@ export default function Riders() {
   }
   const [query, setQuery] = useState('');
   const [apps, setApps] = useState<Application[]>();
-  const [online, setOnline] = useState<Map<string, NearbyRider>>(new Map());
+  const [online, setOnline] = useState<Map<string, OnlineRider>>(new Map());
   const [memberships, setMemberships] = useState<Map<string, Membership>>(new Map());
   const [required, setRequired] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -108,7 +108,7 @@ export default function Riders() {
     pending: 'admin.pending',
     approved: 'admin.approved',
     rejected: 'admin.rejected',
-    online: 'adm.online',
+    online: 'adm.reportingOnline',
     expiring: 'mem.expiring',
     renew: 'mem.filterRenew',
   };
@@ -147,7 +147,7 @@ export default function Riders() {
                 key={a.user_id}
                 leading={<RiderAvatar name={name} photoPath={a.profile?.photo_path} size={42} round />}
                 title={name}
-                subtitle={[code, formatPhone(a.profile?.phone), live ? t(live.is_busy ? 'adm.busy' : 'adm.available') : null].filter(Boolean).join(' · ')}
+                subtitle={[code, formatPhone(a.profile?.phone), live ? t(onlineLabel(live).label) : null].filter(Boolean).join(' · ')}
                 trailing={<Badge label={t(status.label)} tone={status.tone} />}
                 onPress={() => router.push({ pathname: '/admin/rider/[id]', params: { id: a.user_id } })}
                 last={i === shown.length - 1}

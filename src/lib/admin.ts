@@ -2,7 +2,9 @@ import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 
 import { supabase } from '@/lib/supabase';
-import type { NearbyRider, Profile, RiderApplication } from '@/lib/types';
+import type { BadgeTone } from '@/components/kit';
+import type { TKey } from '@/lib/i18n';
+import type { MembershipStatus, NearbyRider, Profile, RiderApplication } from '@/lib/types';
 
 // Data for the admin screens. Everything here is read with the admin's own session, so row-level
 // security (is_admin()) and the admin-only database functions decide what comes back.
@@ -44,11 +46,30 @@ export async function fetchApplication(userId: string) {
   return (data as Application | null) ?? null;
 }
 
-/** Riders online now. Admins also get busy riders (is_busy). */
-export async function fetchOnlineRiders() {
-  const { data, error } = await supabase.rpc('nearby_riders', { p_lat: null, p_lng: null, p_area: null });
-  if (error) throw error;
-  return (data as NearbyRider[]) ?? [];
+/** A rider reporting online (approved, fresh location), with whether customers can find them and why not. */
+export type OnlineRider = NearbyRider & { available: boolean; membership_status: MembershipStatus };
+
+/**
+ * Riders reporting online, for admins: busy riders and riders hidden for membership included, each
+ * labelled (admin_online_riders). Customers only ever get the available ones (nearby_riders).
+ */
+export async function fetchOnlineRiders(): Promise<OnlineRider[]> {
+  const { data, error } = await supabase.rpc('admin_online_riders');
+  if (!error) return (data as OnlineRider[]) ?? [];
+  // Before 20261010000000_rider_membership.sql is applied there is no membership: use the older function.
+  if (error.code === 'PGRST202' || /admin_online_riders/.test(error.message)) {
+    const old = await supabase.rpc('nearby_riders', { p_lat: null, p_lng: null, p_area: null });
+    if (old.error) throw old.error;
+    return ((old.data as NearbyRider[]) ?? []).map((r) => ({ ...r, available: !r.is_busy, membership_status: 'free' as const }));
+  }
+  throw error;
+}
+
+/** "Available to customers", "Busy", or reporting online but hidden for membership. */
+export function onlineLabel(r: OnlineRider): { label: TKey; tone: BadgeTone } {
+  if (r.available) return { label: 'adm.availableToCustomers', tone: 'success' };
+  if (r.is_busy) return { label: 'adm.busy', tone: 'primary' };
+  return { label: 'adm.hiddenMembership', tone: 'danger' };
 }
 
 export async function fetchPinResets() {

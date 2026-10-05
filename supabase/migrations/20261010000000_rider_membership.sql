@@ -1,8 +1,8 @@
 -- Rider memberships. An admin switch, OFF by default: while it is off nothing changes for riders. While it
 -- is on, an approved rider can go online and be found by customers only while their membership is paid up.
 --
--- Payments are taken outside the app. An admin records each one (amount in USD, optional reference) and
--- it adds 30 days: from the current expiry when renewing early, from now when expired or new. The first
+-- Payments are taken outside the app. An admin checks the money arrived in their own account, then records
+-- it (amount in USD, payment method, and the transaction reference unless it was cash) and it adds 30 days: from the current expiry when renewing early, from now when expired or new. The first
 -- time the switch is turned on, riders already approved get 30 days' grace, once; turning it off and on
 -- again grants nothing more. Everything uses the database clock, so it holds while the app is closed.
 
@@ -12,7 +12,7 @@
 create table if not exists public.membership_settings (
   id boolean primary key default true check (id),
   required boolean not null default false,
-  -- Monthly price shown to riders. Must be set before the switch can be turned on; no default price.
+  -- Price per 30 days shown to riders. Needed before the switch can be turned on.
   price_usd numeric(10, 2) check (price_usd is null or price_usd > 0),
   -- How to pay and whom to contact, shown to riders whose membership is ending or has ended.
   instructions text check (instructions is null or length(instructions) <= 1000),
@@ -21,7 +21,8 @@ create table if not exists public.membership_settings (
   updated_by uuid references public.profiles (id) on delete set null,
   updated_at timestamptz not null default now()
 );
-insert into public.membership_settings default values on conflict (id) do nothing;
+-- The pilot's intended price is $1 per 30 days. The switch stays off: the pilot is free.
+insert into public.membership_settings (price_usd) values (1.00) on conflict (id) do nothing;
 
 create table if not exists public.rider_memberships (
   user_id uuid primary key references public.profiles (id) on delete cascade,
@@ -36,16 +37,32 @@ create table if not exists public.membership_payments (
   user_id uuid references public.profiles (id) on delete set null,
   kind text not null check (kind in ('payment', 'grace')),
   amount_usd numeric(10, 2) not null check (amount_usd >= 0 and (kind = 'grace' or amount_usd > 0)),
+  -- How the money arrived. Required for payments; cash needs no reference.
+  method text check (method in ('cash', 'zaad', 'edahab', 'evc_plus', 'sahal', 'bank', 'other')),
+  -- Transaction reference as typed, and the same with only letters and digits, upper case, for matching.
   reference text check (reference is null or length(reference) <= 120),
+  reference_key text generated always as (nullif(upper(regexp_replace(coalesce(reference, ''), '[^A-Za-z0-9]', '', 'g')), '')) stored,
+  -- The admin's receiving account (number or bank account). Required for bank and other, where a
+  -- reference is only unique within one account.
+  received_into text check (received_into is null or length(received_into) <= 60),
+  received_key text generated always as (nullif(upper(regexp_replace(coalesce(received_into, ''), '[^A-Za-z0-9]', '', 'g')), '')) stored,
   -- Sent by the admin's screen with each confirmation, so a retry or double tap can't renew twice.
   request_id uuid unique,
   confirmed_by uuid references public.profiles (id) on delete set null,
   confirmed_at timestamptz not null default now(),
   previous_expires_at timestamptz,
   period_start timestamptz not null,
-  period_end timestamptz not null
+  period_end timestamptz not null,
+  constraint payment_has_method check (kind = 'grace' or method is not null),
+  constraint non_cash_has_reference check (kind = 'grace' or method = 'cash' or reference_key is not null),
+  constraint bank_has_account check (kind = 'grace' or method not in ('bank', 'other') or received_key is not null)
 );
 create index if not exists membership_payments_user on public.membership_payments (user_id, confirmed_at desc);
+-- A transaction reference can be credited once: per provider for mobile money (their IDs are unique per
+-- provider), per receiving account for bank and other.
+create unique index if not exists membership_payments_reference on public.membership_payments (
+  method, (case when method in ('bank', 'other') then received_key else '' end), reference_key
+) where reference_key is not null;
 
 alter table public.membership_settings enable row level security;
 alter table public.rider_memberships enable row level security;
@@ -168,11 +185,12 @@ end;
 $$;
 
 -- Records a payment taken outside the app and adds 30 days. `p_request_id` comes from the admin's screen:
--- sending the same one again returns the first result and changes nothing. A second confirmation for the
--- same rider, amount and reference within 2 minutes is refused as a likely double tap.
+-- sending the same one again returns the first result and changes nothing. A transaction reference can
+-- be credited only once (see membership_payments_reference), to any rider. Cash has no reference, so a
+-- second cash payment for the same rider and amount within 2 minutes is refused as a likely double tap.
 -- Does not put the rider online.
 create or replace function public.admin_confirm_membership_payment(
-  p_user_id uuid, p_amount_usd numeric, p_reference text, p_request_id uuid
+  p_user_id uuid, p_amount_usd numeric, p_method text, p_reference text, p_received_into text, p_request_id uuid
 ) returns table (payment_id uuid, period_start timestamptz, period_end timestamptz, duplicate boolean)
 language plpgsql security definer set search_path = public as $$
 declare
@@ -180,18 +198,17 @@ declare
   v_prev timestamptz;
   v_start timestamptz;
   v_ref text := nullif(btrim(coalesce(p_reference, '')), '');
+  v_ref_key text := nullif(upper(regexp_replace(coalesce(p_reference, ''), '[^A-Za-z0-9]', '', 'g')), '');
+  v_into text := nullif(btrim(coalesce(p_received_into, '')), '');
+  v_into_key text := nullif(upper(regexp_replace(coalesce(p_received_into, ''), '[^A-Za-z0-9]', '', 'g')), '');
 begin
   if not is_admin() then raise exception 'admins only'; end if;
   if p_request_id is null then raise exception 'request id required'; end if;
-  if p_amount_usd is null or p_amount_usd <= 0 or p_amount_usd > 10000 then raise exception 'invalid amount'; end if;
-  if v_ref is not null and length(v_ref) > 120 then raise exception 'reference too long'; end if;
-  if not exists (select 1 from rider_applications a join profiles p on p.id = a.user_id where a.user_id = p_user_id and p.role = 'rider') then
-    raise exception 'not a rider';
-  end if;
 
   -- One confirmation at a time per rider.
   perform pg_advisory_xact_lock(hashtextextended('membership:' || p_user_id::text, 0));
 
+  -- A retry of a confirmation that went through: the original result, nothing more.
   select * into pay from membership_payments where request_id = p_request_id;
   if found then
     if pay.user_id is distinct from p_user_id then raise exception 'request id already used'; end if;
@@ -199,10 +216,30 @@ begin
     return;
   end if;
 
-  if exists (
+  if p_amount_usd is null or p_amount_usd <= 0 or p_amount_usd > 10000 then raise exception 'invalid amount'; end if;
+  if p_method is null or p_method not in ('cash', 'zaad', 'edahab', 'evc_plus', 'sahal', 'bank', 'other') then raise exception 'invalid method'; end if;
+  if p_method <> 'cash' and v_ref_key is null then raise exception 'reference required'; end if;
+  if p_method in ('bank', 'other') and v_into_key is null then raise exception 'receiving account required'; end if;
+  if v_ref is not null and length(v_ref) > 120 then raise exception 'reference too long'; end if;
+  if v_into is not null and length(v_into) > 60 then raise exception 'receiving account too long'; end if;
+  if not exists (select 1 from rider_applications a join profiles p on p.id = a.user_id where a.user_id = p_user_id and p.role = 'rider') then
+    raise exception 'not a rider';
+  end if;
+
+  if v_ref_key is not null then
+    -- Two confirmations with the same reference (for any riders) wait for each other.
+    perform pg_advisory_xact_lock(hashtextextended('membership-ref:' || p_method || ':' || v_ref_key, 0));
+    if exists (
+      select 1 from membership_payments mp
+      where mp.method = p_method and mp.reference_key = v_ref_key
+        and (p_method not in ('bank', 'other') or mp.received_key = v_into_key)
+    ) then
+      raise exception 'reference already used';
+    end if;
+  elsif exists (
     select 1 from membership_payments mp
     where mp.user_id = p_user_id and mp.kind = 'payment' and mp.amount_usd = p_amount_usd
-      and mp.reference is not distinct from v_ref and mp.confirmed_at > now() - interval '2 minutes'
+      and mp.reference_key is null and mp.confirmed_at > now() - interval '2 minutes'
   ) then
     raise exception 'possible duplicate';
   end if;
@@ -213,9 +250,14 @@ begin
   insert into rider_memberships as m (user_id, expires_at) values (p_user_id, v_start + interval '30 days')
   on conflict (user_id) do update set expires_at = excluded.expires_at, updated_at = now();
 
-  insert into membership_payments (user_id, kind, amount_usd, reference, request_id, confirmed_by, previous_expires_at, period_start, period_end)
-  values (p_user_id, 'payment', p_amount_usd, v_ref, p_request_id, auth.uid(), v_prev, v_start, v_start + interval '30 days')
-  returning * into pay;
+  begin
+    insert into membership_payments (user_id, kind, amount_usd, method, reference, received_into, request_id, confirmed_by, previous_expires_at, period_start, period_end)
+    values (p_user_id, 'payment', p_amount_usd, p_method, v_ref, v_into, p_request_id, auth.uid(), v_prev, v_start, v_start + interval '30 days')
+    returning * into pay;
+  exception when unique_violation then
+    -- The unique index is the last word, even against a race the locks above missed.
+    raise exception 'reference already used';
+  end;
 
   return query select pay.id, pay.period_start, pay.period_end, false;
 end;
@@ -224,14 +266,14 @@ $$;
 -- A rider's payments and grace periods, newest first, with who confirmed them.
 create or replace function public.admin_membership_history(p_user_id uuid)
 returns table (
-  id uuid, kind text, amount_usd numeric, reference text, confirmed_at timestamptz, confirmed_by_name text,
-  previous_expires_at timestamptz, period_start timestamptz, period_end timestamptz
+  id uuid, kind text, amount_usd numeric, method text, reference text, received_into text, confirmed_at timestamptz,
+  confirmed_by_name text, previous_expires_at timestamptz, period_start timestamptz, period_end timestamptz
 )
 language plpgsql stable security definer set search_path = public as $$
 begin
   if not is_admin() then raise exception 'admins only'; end if;
   return query
-    select mp.id, mp.kind, mp.amount_usd, mp.reference, mp.confirmed_at, p.full_name,
+    select mp.id, mp.kind, mp.amount_usd, mp.method, mp.reference, mp.received_into, mp.confirmed_at, p.full_name,
            mp.previous_expires_at, mp.period_start, mp.period_end
     from membership_payments mp left join profiles p on p.id = mp.confirmed_by
     where mp.user_id = p_user_id
@@ -320,6 +362,39 @@ create or replace function public.nearby_riders(
   limit 50;
 $$;
 
+-- Riders reporting online, for admins: the same approval, freshness and service-area rules as
+-- nearby_riders, but including busy riders and riders hidden for membership, each labelled.
+-- `available` is what customers get: not busy and membership in order.
+create or replace function public.admin_online_riders()
+returns table (
+  id uuid, full_name text, phone text, plate text, area text, lat double precision, lng double precision,
+  distance_km double precision, last_seen_at timestamptz, photo_path text, rider_number int,
+  rating numeric, rating_count int, is_busy boolean, available boolean, membership_status text
+) language plpgsql stable security definer set search_path = public as $$
+begin
+  if not is_admin() then raise exception 'admins only'; end if;
+  return query
+    select p.id, p.full_name, p.phone, a.plate, p.district, p.lat, p.lng, null::double precision,
+           p.last_seen_at, p.photo_path, a.rider_number, r.rating, r.rating_count,
+           coalesce(p.busy_until > now(), false),
+           not coalesce(p.busy_until > now(), false) and membership_ok(p.id),
+           st.status
+    from profiles p
+    join rider_applications a on a.user_id = p.id
+    cross join lateral (
+      select round(avg(rr.stars)::numeric, 1) as rating, count(*)::int as rating_count
+      from rider_ratings rr where rr.rider_id = p.id
+    ) r
+    cross join lateral membership_status_of(p.id) st
+    where p.role = 'rider'
+      and a.status = 'approved'
+      and p.is_online
+      and p.last_seen_at > now() - interval '10 minutes'
+      and (p.lat is null or in_service_area(p.lat, p.lng))
+    order by p.last_seen_at desc;
+end;
+$$;
+
 -- ---------------------------------------------------------------------------------------------------
 -- Permissions
 -- ---------------------------------------------------------------------------------------------------
@@ -330,15 +405,17 @@ revoke execute on function
   public.my_membership(),
   public.admin_rider_memberships(),
   public.admin_set_membership_settings(boolean, numeric, text),
-  public.admin_confirm_membership_payment(uuid, numeric, text, uuid),
+  public.admin_confirm_membership_payment(uuid, numeric, text, text, text, uuid),
   public.admin_membership_history(uuid),
+  public.admin_online_riders(),
   public.nearby_riders(double precision, double precision, text)
 from public, anon, authenticated;
 grant execute on function
   public.my_membership(),
   public.admin_rider_memberships(),
   public.admin_set_membership_settings(boolean, numeric, text),
-  public.admin_confirm_membership_payment(uuid, numeric, text, uuid),
+  public.admin_confirm_membership_payment(uuid, numeric, text, text, text, uuid),
   public.admin_membership_history(uuid),
+  public.admin_online_riders(),
   public.nearby_riders(double precision, double precision, text)
 to authenticated;

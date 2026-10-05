@@ -92,7 +92,10 @@ export type MembershipPayment = {
   id: string;
   kind: 'payment' | 'grace';
   amount_usd: number;
+  /** null for grace periods. */
+  method: string | null;
   reference: string | null;
+  received_into: string | null;
   confirmed_at: string;
   confirmed_by_name: string | null;
   previous_expires_at: string | null;

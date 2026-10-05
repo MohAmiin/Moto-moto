@@ -68,11 +68,33 @@ export async function fetchMembershipHistory(userId: string) {
 
 export type ConfirmResult = { payment_id: string; period_start: string; period_end: string; duplicate: boolean };
 
-export async function confirmMembershipPayment(userId: string, amountUsd: number, reference: string, requestId: string) {
+/** How the money arrived. Mobile-money references are unique per provider; bank and other per receiving account. */
+export const PAYMENT_METHODS = ['zaad', 'edahab', 'evc_plus', 'sahal', 'cash', 'bank', 'other'] as const;
+export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
+export const METHOD_LABEL: Record<PaymentMethod, TKey> = {
+  zaad: 'mem.mZaad',
+  edahab: 'mem.mEdahab',
+  evc_plus: 'mem.mEvc',
+  sahal: 'mem.mSahal',
+  cash: 'mem.mCash',
+  bank: 'mem.mBank',
+  other: 'mem.mOther',
+};
+/** Cash needs no reference; bank and other also need the account the money went into. */
+export const needsReference = (m: PaymentMethod) => m !== 'cash';
+export const needsAccount = (m: PaymentMethod) => m === 'bank' || m === 'other';
+
+export async function confirmMembershipPayment(
+  userId: string,
+  payment: { amountUsd: number; method: PaymentMethod; reference: string; receivedInto: string },
+  requestId: string,
+) {
   const { data, error } = await supabase.rpc('admin_confirm_membership_payment', {
     p_user_id: userId,
-    p_amount_usd: amountUsd,
-    p_reference: reference,
+    p_amount_usd: payment.amountUsd,
+    p_method: payment.method,
+    p_reference: payment.reference,
+    p_received_into: payment.receivedInto,
     p_request_id: requestId,
   });
   if (error) throw error;
