@@ -1,79 +1,19 @@
-import * as ImagePicker from 'expo-image-picker';
+import { router } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { StyleSheet, View } from 'react-native';
 
-import { Callout, Icon, Icons, Section, Stats } from '@/components/feed';
-import { LiveMap, type LiveMapData } from '@/components/live-map';
-import { PhoneCheck } from '@/components/phone-check';
-import { DeleteAccount } from '@/components/delete-account';
-import { RiderApplicationForm } from '@/components/rider-application-form';
+import { AdminButton, AdminScreen, Notice, Panel, SectionTitle, TopBar } from '@/components/kit';
 import { RiderAvatar } from '@/components/rider-avatar';
-import { Button, Card, Choices, Header, LanguageSwitcher, LinkButton, Row, Screen, Stack, Txt } from '@/components/ui';
-import { MaxContentWidth, Radius, Spacing } from '@/constants/theme';
+import { Txt } from '@/components/ui';
+import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { useRiderAvailability } from '@/hooks/use-rider-availability';
 import { useAuth } from '@/lib/auth';
-import { AREA_OPTIONS, formatPhone, toDistrict } from '@/lib/format';
-import { LANGUAGES, useI18n, type TKey } from '@/lib/i18n';
-import { ratingLabel, riderCode, uploadRiderPhoto } from '@/lib/rider';
+import { formatPhone } from '@/lib/format';
+import { useI18n, type TKey } from '@/lib/i18n';
+import { ratingLabel, riderCode } from '@/lib/rider';
+import { useAvailability } from '@/lib/rider-availability-context';
 import { ACTIVE_CITY, inCity } from '@/lib/service-area';
-import { errorKey, supabase } from '@/lib/supabase';
-
-export default function RiderHome() {
-  const { t } = useI18n();
-  const { profile, application, signOut } = useAuth();
-  if (!profile) return null;
-
-  if (!application || application.status === 'rejected') {
-    const rejected = application?.status === 'rejected';
-    return (
-      <Screen>
-        <LanguageSwitcher />
-        <Header
-          title={t(rejected ? 'rider.rejectedTitle' : 'rider.completeTitle')}
-          subtitle={t(rejected ? 'rider.rejectedSub' : 'rider.completeSub')}
-          back={false}
-        />
-        <RiderApplicationForm createProfile={false} />
-        <LinkButton title={t('common.signOut')} onPress={signOut} />
-        <DeleteAccount />
-      </Screen>
-    );
-  }
-
-  if (application.status === 'pending') {
-    return (
-      <Screen>
-        <LanguageSwitcher />
-        <Stack style={{ alignItems: 'center', paddingTop: Spacing.four }}>
-          <Txt variant="title" style={{ textAlign: 'center' }}>{t('rider.pendingTitle')}</Txt>
-          <Txt variant="muted" style={{ textAlign: 'center' }}>{t('rider.pendingBody', { phone: formatPhone(profile.phone) })}</Txt>
-        </Stack>
-        <PhoneCheck application={application} />
-        <Card>
-          <Detail label={t('common.name')} value={profile.full_name} />
-          <Detail label={t('common.phoneShort')} value={formatPhone(profile.phone)} />
-          <Detail label={t('common.plate')} value={application.plate} />
-          <Detail label={t('common.district')} value={application.district} />
-        </Card>
-        <LinkButton title={t('common.signOut')} onPress={signOut} />
-        <DeleteAccount />
-      </Screen>
-    );
-  }
-
-  return <Dashboard />;
-}
-
-function Detail({ label, value }: { label: string; value: string }) {
-  return (
-    <Row style={{ justifyContent: 'space-between' }}>
-      <Txt variant="muted">{label}</Txt>
-      <Txt style={{ fontWeight: '600' }}>{value}</Txt>
-    </Row>
-  );
-}
+import { supabase } from '@/lib/supabase';
 
 /** Midnight at the start of the day `daysAgo` days before today, in local time. */
 function dayStart(daysAgo: number) {
@@ -85,61 +25,44 @@ function dayStart(daysAgo: number) {
 
 type CallRow = { created_at: string };
 
-/**
- * Call taps today, in the last 7 days, and which of those days had any (oldest first). A tap is someone
- * pressing Call on this rider; it doesn't show whether the call connected.
- */
+/** Call taps today and in the last 7 days. A tap is someone pressing Call on this rider; it doesn't show whether the call connected. */
 function summarize(rows: CallRow[]) {
-  const days = Array.from({ length: 7 }, (_, i) => dayStart(6 - i));
-  const weekStart = days[0];
-  const today = days[6];
+  const weekStart = dayStart(6);
+  const today = dayStart(0);
   const recent = rows.map((r) => new Date(r.created_at)).filter((d) => d >= weekStart);
-  const active = days.map((d, i) => {
-    const end = i < 6 ? days[i + 1] : null;
-    return recent.some((c) => c >= d && (!end || c < end));
-  });
-  return {
-    today: recent.filter((d) => d >= today).length,
-    week: recent.length,
-    days,
-    active,
-  };
+  return { today: recent.filter((d) => d >= today).length, week: recent.length };
 }
 
-function Dashboard() {
-  const theme = useTheme();
-  const { t, locale, language, setLanguage } = useI18n();
-  const { profile, application, refresh, signOut } = useAuth();
-  const riderId = profile!.id;
-  const { online, busy, busyUntil, pending, coords, locationFresh, connected, error: availabilityError, controller } =
-    useRiderAvailability(riderId, { online: profile?.is_online ?? false, busyUntil: profile?.busy_until ?? null });
-  const [area, setArea] = useState<string>(toDistrict(profile?.district));
-  const [error, setError] = useState<string>();
-  const [savingPhoto, setSavingPhoto] = useState(false);
-  const [calls, setCalls] = useState<CallRow[]>([]);
-  const [rating, setRating] = useState<string | null>(null);
-  const stats = useMemo(() => summarize(calls), [calls]);
-  const code = riderCode(application?.rider_number);
-  const letters = t('day.letters').split(',');
-
-  // Keep the signed-in profile in step once a change is saved, so a reopened screen starts right.
+/** Re-renders every `ms` so countdowns stay current. The clock is read in the timer, not during render. */
+function useNow(ms: number) {
+  const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
-    refresh();
-  }, [online, refresh]);
+    const timer = setInterval(() => setNow(Date.now()), ms);
+    return () => clearInterval(timer);
+  }, [ms]);
+  return now;
+}
 
-  function toggleOnline(next: boolean) {
-    setError(undefined);
-    if (next) controller.goOnline();
-    else controller.goOffline();
-  }
+const ERRORS: Record<'noLocation' | 'saveFailed' | 'endedElsewhere', TKey> = {
+  noLocation: 'rider.needLocation',
+  saveFailed: 'rider.saveFailed',
+  endedElsewhere: 'rider.endedElsewhere',
+};
 
-  function setBusy(next: boolean) {
-    setError(undefined);
-    controller.setBusy(next);
-  }
+export default function RiderHome() {
+  const theme = useTheme();
+  const { t, locale } = useI18n();
+  const { profile, application } = useAuth();
+  const { online, busy, busyUntil, pending, coords, locationFresh, connected, error, controller } = useAvailability();
+  const [calls, setCalls] = useState<CallRow[]>();
+  const [rating, setRating] = useState<string | null | undefined>();
+  const [statsFailed, setStatsFailed] = useState(false);
+  const now = useNow(30_000);
+  const stats = useMemo(() => (calls ? summarize(calls) : null), [calls]);
+  const riderId = profile!.id;
 
-  // Call taps on this rider (riders can read their own) for the week and today's figures; the rating is
-  // one current rating per customer, from my_rating().
+  // Call taps on this rider (riders can read their own) for the week and today; the rating is one current
+  // rating per customer, from my_rating().
   const loadStats = useCallback(async () => {
     const since = new Date(Date.now() - 8 * 86_400_000).toISOString();
     const [taps, mine] = await Promise.all([
@@ -147,8 +70,8 @@ function Dashboard() {
       supabase.rpc('my_rating'),
     ]);
     if (!taps.error) setCalls((taps.data as CallRow[] | null) ?? []);
-    const row = (mine.data as { rating: number | null }[] | null)?.[0];
-    if (!mine.error) setRating(ratingLabel(row?.rating));
+    if (!mine.error) setRating(ratingLabel((mine.data as { rating: number | null }[] | null)?.[0]?.rating));
+    setStatsFailed(!!(taps.error || mine.error));
   }, [riderId]);
 
   useEffect(() => {
@@ -160,239 +83,104 @@ function Dashboard() {
     };
   }, [loadStats]);
 
-  async function changePhoto() {
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.6, allowsEditing: true, aspect: [1, 1] });
-    if (result.canceled) return;
-    setSavingPhoto(true);
-    setError(undefined);
-    try {
-      await uploadRiderPhoto(riderId, result.assets[0], profile?.photo_path ?? null);
-      await refresh();
-    } catch (e) {
-      console.warn('photo upload failed', e);
-      setError(t(errorKey(e)));
-    } finally {
-      setSavingPhoto(false);
-    }
-  }
-
-  const mapData = useMemo<LiveMapData>(() => ({ me: coords ? { ...coords, label: t('map.you') } : null, riders: [] }), [coords, t]);
-
-  async function changeArea(next: string) {
-    setArea(next);
-    const { error: e } = await supabase.from('profiles').update({ district: next }).eq('id', riderId);
-    if (e) setError(t(errorKey(e)));
-  }
-
-  function nextLanguage() {
-    const i = LANGUAGES.findIndex((l) => l.id === language);
-    setLanguage(LANGUAGES[(i + 1) % LANGUAGES.length].id);
-  }
-
-  // One line under the status: what is happening now, or a warning while online.
-  const statusNote: { key: TKey; warn: boolean } | null =
-    pending === 'online'
-      ? { key: 'rider.goingOnline', warn: false }
-      : pending
-        ? { key: 'common.saving', warn: false }
-        : !online
-          ? null
-          : connected === false
-            ? { key: 'rider.connectionLost', warn: true }
-            : locationFresh === false
-              ? { key: 'rider.locationStale', warn: true }
-              : { key: 'rider.locationShared', warn: false };
-  const availabilityMessage: Record<NonNullable<typeof availabilityError>, TKey> = {
-    noLocation: 'rider.needLocation',
-    saveFailed: 'rider.saveFailed',
-    endedElsewhere: 'rider.endedElsewhere',
-  };
-  const shownError = error ?? (availabilityError ? t(availabilityMessage[availabilityError]) : undefined);
-
-  const activeDays = stats.active.filter(Boolean).length;
-  // Status card colours: green online, orange busy, grey offline.
-  const status = busy
-    ? { bg: theme.warningSoft, fg: theme.warning }
-    : online
-      ? { bg: theme.successSoft, fg: theme.success }
-      : { bg: theme.backgroundElement, fg: theme.text };
+  const state: 'offline' | 'available' | 'busy' = busy ? 'busy' : online ? 'available' : 'offline';
+  const minutesLeft = busy && busyUntil ? Math.max(1, Math.ceil((new Date(busyUntil).getTime() - now) / 60_000)) : 0;
+  const untilTime = busyUntil ? new Date(busyUntil).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) : '';
+  const look = {
+    offline: { dot: theme.textSecondary, bg: theme.surfaceMuted, fg: theme.text, title: t('rider.offlineTitle'), body: t('rx.offlineBody') },
+    available: { dot: theme.success, bg: theme.successSoft, fg: theme.success, title: t('rx.available'), body: t('rx.availableBody', { phone: formatPhone(profile!.phone) }) },
+    busy: { dot: theme.primaryText, bg: theme.primarySoft, fg: theme.primaryText, title: t('rx.busyLeft', { n: minutesLeft }), body: t('rx.busyBody', { time: untilTime }) },
+  }[state];
+  const saving = pending === 'online' ? t('rider.goingOnline') : pending ? t('common.saving') : null;
+  const code = riderCode(application?.rider_number);
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: theme.background }}>
-      {/* Top bar: photo, name and Jareeye number, language */}
-      <View style={[styles.bar, { borderBottomColor: theme.border }]}>
-        <Row gap={Spacing.three} style={styles.barInner}>
-          <Pressable accessibilityRole="button" accessibilityLabel={t('rider.changePhoto')} onPress={changePhoto} hitSlop={6}>
-            <RiderAvatar name={profile!.full_name} photoPath={profile!.photo_path} size={40} round />
-          </Pressable>
-          <View style={{ flex: 1 }}>
-            <Txt style={styles.barName} numberOfLines={1}>{profile!.full_name}</Txt>
-            <Txt variant="muted" style={{ fontSize: 13 }} numberOfLines={1}>
-              {[code, application!.plate].filter(Boolean).join(' · ')}
+    <AdminScreen
+      header={
+        <TopBar
+          title={profile!.full_name}
+          subtitle={[code, application?.plate].filter(Boolean).join(' · ')}
+          leading={<RiderAvatar name={profile!.full_name} photoPath={profile!.photo_path} size={38} round />}
+          showProfile={false}
+        />
+      }>
+      {/* Availability first: it's what riders check on the road. */}
+      <Panel>
+        <View style={[styles.status, { backgroundColor: look.bg }]} accessibilityLiveRegion="polite">
+          <View style={[styles.dot, { backgroundColor: look.dot }]} />
+          <View style={{ flex: 1, gap: 2 }}>
+            <Txt style={[styles.statusTitle, { color: look.fg }]}>{look.title}</Txt>
+            <Txt variant="muted" style={styles.small}>
+              {look.body}
             </Txt>
           </View>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={t('common.language')}
-            onPress={nextLanguage}
-            hitSlop={6}
-            style={[styles.lang, { borderColor: theme.border }]}>
-            <Txt style={[styles.langCode, { color: theme.brand }]}>{language === 'ar' ? 'ع' : language.toUpperCase()}</Txt>
-          </Pressable>
-        </Row>
-      </View>
+        </View>
 
-      <ScrollView contentContainerStyle={{ paddingBottom: Spacing.five }} keyboardShouldPersistTaps="handled">
-        {/* Online switch first: it's what drivers check on the road */}
-        <Section>
-          <View style={[styles.status, { backgroundColor: status.bg }]}>
-            <View style={{ flex: 1, gap: 2 }}>
-              <Txt style={[styles.statusTitle, { color: status.fg }]}>
-                {t(busy ? 'rider.busyTitle' : online ? 'rider.onlineTitle' : 'rider.offlineTitle')}
-              </Txt>
-              <Txt variant="muted" style={styles.statusBody}>
-                {busy
-                  ? t('rider.busyBody', { time: new Date(busyUntil!).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) })
-                  : online
-                    ? t('rider.onlineBody', { phone: formatPhone(profile!.phone) })
-                    : t('rider.offlineBody')}
-              </Txt>
-              {statusNote ? (
-                <Txt
-                  accessibilityLiveRegion="polite"
-                  style={[styles.statusBody, { fontWeight: '700', color: statusNote.warn ? theme.warning : status.fg }]}>
-                  {t(statusNote.key)}
-                </Txt>
-              ) : null}
-            </View>
-            {/* The switch shows what is saved; while a change is being saved it waits. */}
-            <Switch
-              value={online}
-              onValueChange={toggleOnline}
-              disabled={pending != null}
-              accessibilityLabel={t('rider.online')}
-              accessibilityState={{ checked: online, busy: pending != null, disabled: pending != null }}
-              trackColor={{ false: theme.border, true: theme.success }}
-              thumbColor="#FFFFFF"
-            />
-          </View>
-          {online ? (
-            busy ? (
-              <Button title={t('rider.goFree')} onPress={() => setBusy(false)} loading={pending === 'free'} disabled={pending != null} />
-            ) : (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityState={{ disabled: pending != null, busy: pending === 'busy' }}
-                disabled={pending != null}
-                onPress={() => setBusy(true)}
-                style={({ pressed }) => [styles.busyBtn, { borderColor: theme.gold, opacity: pressed || pending != null ? 0.6 : 1 }]}>
-                <Txt style={[styles.busyText, { color: theme.gold }]}>{t('rider.goBusy')}</Txt>
-              </Pressable>
-            )
-          ) : null}
-          {shownError ? (
-            <Txt color="danger" accessibilityRole="alert">
-              {shownError}
-            </Txt>
-          ) : null}
-        </Section>
+        {state === 'offline' ? (
+          <AdminButton title={t('rx.goOnline')} icon="power" onPress={() => controller.goOnline()} loading={pending === 'online'} disabled={pending != null} />
+        ) : state === 'available' ? (
+          <>
+            <AdminButton title={t('rider.goBusy')} icon="delivery" onPress={() => controller.setBusy(true)} loading={pending === 'busy'} disabled={pending != null} />
+            <AdminButton title={t('rx.goOffline')} kind="outline" onPress={() => controller.goOffline()} loading={pending === 'offline'} disabled={pending != null} />
+          </>
+        ) : (
+          <>
+            <AdminButton title={t('rider.goFree')} onPress={() => controller.setBusy(false)} loading={pending === 'free'} disabled={pending != null} />
+            <AdminButton title={t('rx.goOffline')} kind="outline" onPress={() => controller.goOffline()} loading={pending === 'offline'} disabled={pending != null} />
+          </>
+        )}
+        {saving ? (
+          <Txt variant="muted" style={styles.small} accessibilityLiveRegion="polite">
+            {saving}
+          </Txt>
+        ) : null}
+      </Panel>
 
-        {/* Your week: the last 7 days, filled where you got calls */}
-        <Section>
-          <View>
-            <Txt variant="heading">{t('rider.weekTitle')}</Txt>
-            <Txt variant="muted" style={{ fontSize: 13 }}>{t('rider.weekHint')}</Txt>
-          </View>
-          <Row gap={Spacing.two}>
-            <View style={styles.streak}>
-              <Icon source={Icons.flame} size={26} color={theme.brand} />
-              <Txt style={[styles.streakText, { color: theme.brand }]}>{t('rider.weekDays', { n: activeDays })}</Txt>
-            </View>
-            <Row gap={0} style={styles.days}>
-              {stats.days.map((d, i) => {
-                const on = stats.active[i];
-                const isToday = i === 6;
-                return (
-                  <View key={d.toISOString()} style={styles.day}>
-                    <Txt variant="muted" style={styles.dayLetter}>{letters[d.getDay()]}</Txt>
-                    <View
-                      style={[
-                        styles.dayDot,
-                        on
-                          ? { backgroundColor: theme.text, borderColor: theme.text }
-                          : { borderColor: isToday ? theme.brand : theme.border },
-                      ]}>
-                      {on ? (
-                        <Icon source={Icons.motorbike} size={18} color={theme.background} />
-                      ) : (
-                        <Txt style={[styles.dayNum, { color: isToday ? theme.brand : theme.text }]}>{d.getDate()}</Txt>
-                      )}
-                    </View>
-                  </View>
-                );
-              })}
-            </Row>
-          </Row>
-        </Section>
+      {error ? <Notice icon="attention" tone="danger" title={t(ERRORS[error])} /> : null}
+      {online && connected === false ? <Notice icon="offline" title={t('rider.connectionLost')} body={t('rx.connectionBody')} /> : null}
+      {online && connected !== false && locationFresh === false ? <Notice icon="locationOff" title={t('rider.locationStale')} body={t('rx.locationBody')} /> : null}
+      {online && coords && !inCity(coords) ? (
+        <Notice icon="pin" title={t('area.outsideRider', { city: t(`city.${ACTIVE_CITY.id}` as TKey) })} />
+      ) : null}
+      {online ? <Notice icon="info" tone="info" title={t('rx.keepOpenTitle')} body={t('rx.keepOpenBody')} /> : null}
+      {!profile!.photo_path ? (
+        <Notice icon="camera" tone="info" title={t('rider.addPhotoTitle')} body={t('rider.addPhotoBody')} action={{ label: t('rider.addPhoto'), onPress: () => router.navigate('/rider/account') }} />
+      ) : null}
 
-        {/* Today's figures and a tip */}
-        <Section>
-          <Txt variant="title">{t('rider.today')}</Txt>
-          <Stats
-            items={[
-              { label: t('rider.statCallsShort'), value: String(stats.today) },
-              { label: t('rider.statWeek'), value: String(stats.week) },
-              { label: t('rider.statRating'), value: rating ? `★ ${rating}` : t('rating.new') },
-            ]}
-          />
-          <Callout icon={Icons.award} body={t('rider.tips')} />
-        </Section>
+      <SectionTitle title={t('rx.callTaps')} />
+      <Panel>
+        <View style={styles.stats}>
+          <Stat label={t('rx.today')} value={stats ? String(stats.today) : statsFailed ? '–' : '…'} />
+          <Stat label={t('rx.thisWeek')} value={stats ? String(stats.week) : statsFailed ? '–' : '…'} />
+          <Stat label={t('rider.statRating')} value={rating === undefined ? (statsFailed ? '–' : '…') : rating ? `★ ${rating}` : t('rating.new')} />
+        </View>
+        <Txt variant="muted" style={styles.small}>
+          {t('rx.tapsNote')}
+        </Txt>
+      </Panel>
+    </AdminScreen>
+  );
+}
 
-        <Section band={false}>
-          {profile!.photo_path ? null : (
-            <Card>
-              <Txt variant="heading">{t('rider.addPhotoTitle')}</Txt>
-              <Txt variant="muted">{t('rider.addPhotoBody')}</Txt>
-              <Button title={t('rider.addPhoto')} kind="ghost" onPress={changePhoto} loading={savingPhoto} />
-            </Card>
-          )}
-
-          {online && coords && !inCity(coords) ? (
-            <Card tone="soft">
-              <Txt>{t('area.outsideRider', { city: t(`city.${ACTIVE_CITY.id}` as TKey) })}</Txt>
-            </Card>
-          ) : null}
-
-          {online && coords && inCity(coords) ? <LiveMap data={mapData} height={220} /> : null}
-
-          <Choices label={t('rider.currentArea')} options={AREA_OPTIONS} value={area} onChange={changeArea} columns={2} />
-
-          {profile!.photo_path ? <LinkButton title={savingPhoto ? t('common.saving') : t('rider.changePhoto')} onPress={changePhoto} /> : null}
-
-          <LinkButton title={t('common.signOut')} onPress={signOut} />
-          <DeleteAccount />
-        </Section>
-      </ScrollView>
-    </SafeAreaView>
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.stat} accessible accessibilityLabel={`${label}: ${value}`}>
+      <Txt style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>
+        {value}
+      </Txt>
+      <Txt variant="muted" style={styles.small} numberOfLines={2}>
+        {label}
+      </Txt>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  bar: { borderBottomWidth: StyleSheet.hairlineWidth },
-  barInner: { width: '100%', maxWidth: MaxContentWidth, alignSelf: 'center', paddingHorizontal: Spacing.three, paddingVertical: Spacing.two + 2 },
-  barName: { fontSize: 16, fontWeight: '700' },
-  lang: { width: 36, height: 36, borderRadius: 18, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  langCode: { fontSize: 14, fontWeight: '800' },
-  status: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three, borderRadius: Radius.large - 4, padding: Spacing.three },
-  statusTitle: { fontSize: 22, lineHeight: 28, fontWeight: '800' },
-  statusBody: { fontSize: 13, lineHeight: 18 },
-  busyBtn: { minHeight: 50, borderRadius: Radius.medium, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
-  busyText: { fontSize: 16, fontWeight: '700' },
-  streak: { alignItems: 'center', minWidth: 52, gap: 2 },
-  streakText: { fontSize: 12, fontWeight: '700' },
-  days: { flex: 1, justifyContent: 'space-between' },
-  day: { alignItems: 'center', gap: 4 },
-  dayLetter: { fontSize: 12 },
-  dayDot: { width: 32, height: 32, borderRadius: 16, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
-  dayNum: { fontSize: 13, fontWeight: '600' },
+  status: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three - 4, borderRadius: 12, padding: Spacing.three - 2 },
+  dot: { width: 12, height: 12, borderRadius: 6 },
+  statusTitle: { fontSize: 18, lineHeight: 24, fontWeight: '500' },
+  small: { fontSize: 13, lineHeight: 18 },
+  stats: { flexDirection: 'row', gap: Spacing.two },
+  stat: { flex: 1, gap: 2 },
+  statValue: { fontSize: 22, lineHeight: 28, fontWeight: '500', fontVariant: ['tabular-nums'] },
 });
