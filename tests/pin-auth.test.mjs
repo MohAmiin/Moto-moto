@@ -46,6 +46,12 @@ test('requests are validated: sign-in takes 4 or 6 digits, new PINs need 6', () 
   assert.equal(parseRequest({ action: 'sign-in', phone: '+252634740002', pin: '1234' }), null, 'digits only');
   assert.equal(parseRequest({ action: 'sign-in', phone: '254712345678', pin: '1234' }), null, '+252 numbers only');
   assert.equal(parseRequest({ action: 'delete', phone: '252634740002', pin: '123456' }), null);
+  // New accounts need the full 9 digits after 252; signing in and resets still accept older, shorter or longer numbers.
+  assert.equal(parseRequest({ action: 'sign-up', phone: '25263442178', pin: '123456' }), null, 'a digit short');
+  assert.equal(parseRequest({ action: 'sign-up', phone: '2526340000002', pin: '123456' }), null, 'a digit too many');
+  assert.equal(parseRequest({ action: 'sign-up', phone: '252634421785', pin: '123456' })?.action, 'sign-up');
+  assert.equal(parseRequest({ action: 'sign-in', phone: '25263442178', pin: '123456' })?.action, 'sign-in', 'older accounts can sign in');
+  assert.equal(parseRequest({ action: 'reset', phone: '2526340000002', pin: '123456' })?.action, 'reset', 'older accounts can reset');
   assert.equal(parseRequest(null), null);
 });
 

@@ -29,8 +29,10 @@ export type PinAuthDeps = {
 };
 
 const PIN_DOMAIN = 'pin.jareeye.app';
-// Somali numbers: 252 and 6 to 10 more digits (the app adds the 63 prefix to 7-digit numbers).
+// Somali numbers: 252 and 6 to 10 more digits (the app adds the 63 prefix to 7-digit numbers). Signing in
+// and resets accept that range so older accounts keep working; new accounts need a full 9-digit mobile number.
 const PHONE = /^252\d{6,10}$/;
+const PHONE_NEW = /^252\d{9}$/;
 const PIN_SIGN_IN = /^(\d{4}|\d{6})$/;
 const PIN_NEW = /^\d{6}$/;
 
@@ -41,7 +43,8 @@ export function parseRequest(body: unknown): PinAuthRequest | null {
   const { action, phone, pin } = body as Record<string, unknown>;
   if (typeof phone !== 'string' || typeof pin !== 'string' || !PHONE.test(phone)) return null;
   if (action === 'sign-in' && PIN_SIGN_IN.test(pin)) return { action, phone, pin };
-  if ((action === 'sign-up' || action === 'reset') && PIN_NEW.test(pin)) return { action, phone, pin };
+  if (action === 'sign-up' && PIN_NEW.test(pin) && PHONE_NEW.test(phone)) return { action, phone, pin };
+  if (action === 'reset' && PIN_NEW.test(pin)) return { action, phone, pin };
   return null;
 }
 

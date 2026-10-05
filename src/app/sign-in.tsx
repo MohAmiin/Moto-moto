@@ -6,7 +6,7 @@ import { StyleSheet, View } from 'react-native';
 import { Button, Card, Field, LanguageSwitcher, LinkButton, PhoneField, Screen, Stack, Txt } from '@/components/ui';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { formatPhone, isValidLocalPhone, normalizeLocalPhone, toE164 } from '@/lib/format';
+import { formatPhone, isValidLocalPhone, isValidNewLocalPhone, normalizeLocalPhone, toE164 } from '@/lib/format';
 import { useI18n, type TKey } from '@/lib/i18n';
 import { isValidNewPin, isValidSignInPin, pinAuth, type PinAuthError } from '@/lib/pin';
 import { errorKey, supabase } from '@/lib/supabase';
@@ -48,8 +48,8 @@ export default function SignIn() {
   /** Checks the form and returns the local phone digits, or null after showing what's wrong. */
   function validate(needsConfirm: boolean) {
     const local = normalizeLocalPhone(phone);
-    if (!isValidLocalPhone(local)) {
-      setError(t('signin.invalidPhone'));
+    if (mode === 'create' ? !isValidNewLocalPhone(local) : !isValidLocalPhone(local)) {
+      setError(t(mode === 'create' ? 'signin.phoneFull' : 'signin.invalidPhone'));
       return null;
     }
     if (mode === 'signIn' ? !isValidSignInPin(pin) : !isValidNewPin(pin)) {
@@ -155,6 +155,11 @@ export default function SignIn() {
           {mode === 'reset' ? <Txt variant="title">{t('signin.resetTitle')}</Txt> : null}
 
           <PhoneField value={phone} onChangeText={setPhone} />
+          {mode === 'create' && isValidNewLocalPhone(normalizeLocalPhone(phone)) ? (
+            <Txt variant="muted" accessibilityLiveRegion="polite">
+              {t('signin.phoneCheck', { phone: formatPhone(normalizeLocalPhone(phone)) })}
+            </Txt>
+          ) : null}
           <Field
             label={t(mode === 'reset' ? 'signin.pinNew' : 'signin.pin')}
             value={pin}

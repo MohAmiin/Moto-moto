@@ -48,10 +48,19 @@ export function normalizeLocalPhone(input: string) {
   return digits;
 }
 
-// Any number that can receive the SMS code is allowed. Hargeisa numbers usually start with 3, 4, 6 or 9
-// (for example 63 474 0002), but we only check the length; the SMS itself proves the number works.
+// Signing in (and PIN resets) accept 6 to 10 digits, so accounts made before the stricter rule below
+// can still sign in.
 export function isValidLocalPhone(digits: string) {
   return /^\d{6,10}$/.test(digits);
+}
+
+/**
+ * New accounts need a full mobile number: 9 digits after +252 (for example 63 474 0002). Nothing else
+ * proves the number when signing up with a PIN, so a digit too few or too many would leave customers
+ * calling the wrong person. Use after normalizeLocalPhone, which accepts +252, 0 and 7-digit forms.
+ */
+export function isValidNewLocalPhone(digits: string) {
+  return /^\d{9}$/.test(digits);
 }
 
 export function toE164(digits: string) {
