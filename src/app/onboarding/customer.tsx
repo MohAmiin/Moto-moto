@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
-import { Button, Choices, Field, Header, Screen, Txt } from '@/components/ui';
+import { AdminButton, AdminScreen, DetailBar, FilterChips, Panel, TextField } from '@/components/kit';
+import { Txt } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 import { AREA_OPTIONS, DEFAULT_AREA } from '@/lib/format';
 import { useI18n } from '@/lib/i18n';
@@ -34,12 +35,21 @@ export default function CustomerOnboarding() {
   }
 
   return (
-    <Screen>
-      <Header title={t('onb.detailsTitle')} subtitle={t('onb.detailsSub')} />
-      <Field label={t('onb.yourName')} value={name} onChangeText={setName} autoComplete="name" placeholder={t('onb.namePh')} error={error} />
-      <Choices label={t('onb.yourDistrict')} options={AREA_OPTIONS} value={district} onChange={setDistrict} columns={2} />
-      <Txt variant="muted">{t('onb.changeLater')}</Txt>
-      <Button title={t('onb.start')} onPress={save} loading={saving} />
-    </Screen>
+    <AdminScreen edges={['top', 'bottom']} header={<DetailBar title={t('onb.detailsTitle')} />}>
+      <Txt variant="muted" style={{ fontSize: 14, lineHeight: 20 }}>
+        {t('onb.detailsSub')}
+      </Txt>
+      <Panel>
+        <TextField label={t('onb.yourName')} value={name} onChangeText={setName} autoComplete="name" placeholder={t('onb.namePh')} error={error} />
+        <Txt variant="muted" style={{ fontSize: 12, lineHeight: 16 }}>
+          {t('onb.yourDistrict')}
+        </Txt>
+        <FilterChips options={AREA_OPTIONS} value={district} onChange={setDistrict} />
+        <Txt variant="muted" style={{ fontSize: 13, lineHeight: 18 }}>
+          {t('onb.changeLater')}
+        </Txt>
+        <AdminButton title={t('onb.start')} onPress={save} loading={saving} />
+      </Panel>
+    </AdminScreen>
   );
 }

@@ -3,8 +3,9 @@ import { Image } from 'expo-image';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Switch, View } from 'react-native';
 
-import { Button, Choices, Field, Stack, Txt } from '@/components/ui';
-import { Radius, Spacing } from '@/constants/theme';
+import { AdminButton, AdminIcon, FilterChips, TextField } from '@/components/kit';
+import { Txt } from '@/components/ui';
+import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth';
 import { AREA_OPTIONS, toDistrict } from '@/lib/format';
@@ -94,14 +95,20 @@ export function RiderApplicationForm({ createProfile }: { createProfile: boolean
     }
   }
 
+  const theme = useTheme();
   return (
-    <Stack>
+    <View style={{ gap: Spacing.three }}>
       {createProfile ? (
-        <Field label={t('rf.fullName')} value={name} onChangeText={setName} autoComplete="name" placeholder={t('rf.fullNamePh')} />
+        <TextField label={t('rf.fullName')} value={name} onChangeText={setName} autoComplete="name" placeholder={t('rf.fullNamePh')} />
       ) : null}
-      <Field label={t('rf.idNumber')} value={idNumber} onChangeText={setIdNumber} placeholder={t('rf.idPh')} />
-      <Field label={t('rf.plate')} value={plate} onChangeText={setPlate} autoCapitalize="characters" placeholder={t('rf.platePh')} />
-      <Choices label={t('rf.workDistrict')} options={AREA_OPTIONS} value={district} onChange={setDistrict} columns={2} />
+      <TextField label={t('rf.idNumber')} value={idNumber} onChangeText={setIdNumber} placeholder={t('rf.idPh')} />
+      <TextField label={t('rf.plate')} value={plate} onChangeText={setPlate} autoCapitalize="characters" placeholder={t('rf.platePh')} />
+      <View style={{ gap: 4 }}>
+        <Txt variant="muted" style={styles.label}>
+          {t('rf.workDistrict')}
+        </Txt>
+        <FilterChips options={AREA_OPTIONS} value={district} onChange={setDistrict} />
+      </View>
 
       <PhotoPicker
         label={t('rf.facePhoto')}
@@ -120,13 +127,23 @@ export function RiderApplicationForm({ createProfile }: { createProfile: boolean
       />
 
       <View style={styles.agree}>
-        <Switch value={agree} onValueChange={setAgree} accessibilityLabel={t('rf.agree')} />
-        <Txt style={{ flex: 1 }}>{t('rf.agree')}</Txt>
+        <Switch
+          value={agree}
+          onValueChange={setAgree}
+          accessibilityLabel={t('rf.agree')}
+          trackColor={{ false: theme.hairline, true: theme.primary }}
+          thumbColor="#FFFFFF"
+        />
+        <Txt style={styles.agreeText}>{t('rf.agree')}</Txt>
       </View>
 
-      {error ? <Txt color="danger">{error}</Txt> : null}
-      <Button title={t('rf.submit')} onPress={submit} loading={saving} />
-    </Stack>
+      {error ? (
+        <Txt color="danger" style={styles.small} accessibilityRole="alert">
+          {error}
+        </Txt>
+      ) : null}
+      <AdminButton title={t('rf.submit')} onPress={submit} loading={saving} />
+    </View>
   );
 }
 
@@ -145,22 +162,27 @@ function PhotoPicker({
 }) {
   const theme = useTheme();
   return (
-    <View style={{ gap: Spacing.two }}>
-      <Txt variant="label">{label}</Txt>
+    <View style={{ gap: 4 }}>
+      <Txt variant="muted" style={styles.label}>
+        {label}
+      </Txt>
       <Pressable
         accessibilityRole="button"
+        accessibilityLabel={`${label}: ${title}`}
         onPress={onPress}
-        style={[styles.upload, { borderColor: theme.border, backgroundColor: theme.backgroundElement }]}>
+        style={({ pressed }) => [styles.upload, { borderColor: theme.hairline, backgroundColor: theme.surfaceMuted, opacity: pressed ? 0.8 : 1 }]}>
         {asset ? (
           <Image source={{ uri: asset.uri }} style={styles.preview} contentFit="cover" />
         ) : (
-          <View style={[styles.preview, styles.placeholder, { backgroundColor: theme.border }]}>
-            <Txt variant="heading" color="textSecondary">+</Txt>
+          <View style={[styles.preview, styles.placeholder, { backgroundColor: theme.surface, borderColor: theme.hairline }]}>
+            <AdminIcon name="camera" size={20} color={theme.textSecondary} />
           </View>
         )}
-        <View style={{ flex: 1 }}>
-          <Txt style={{ fontWeight: '700' }}>{title}</Txt>
-          <Txt variant="muted">{hint}</Txt>
+        <View style={{ flex: 1, gap: 2 }}>
+          <Txt style={styles.pickTitle}>{title}</Txt>
+          <Txt variant="muted" style={styles.small}>
+            {hint}
+          </Txt>
         </View>
       </Pressable>
     </View>
@@ -168,8 +190,12 @@ function PhotoPicker({
 }
 
 const styles = StyleSheet.create({
-  upload: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three, borderWidth: 1.5, borderStyle: 'dashed', borderRadius: Radius.small + 2, padding: Spacing.three },
-  preview: { width: 56, height: 56, borderRadius: Radius.small },
-  placeholder: { alignItems: 'center', justifyContent: 'center' },
-  agree: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
+  label: { fontSize: 12, lineHeight: 16 },
+  small: { fontSize: 13, lineHeight: 18 },
+  upload: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three - 4, borderWidth: 1, borderStyle: 'dashed', borderRadius: 12, padding: Spacing.two + 4, minHeight: 72 },
+  preview: { width: 52, height: 52, borderRadius: 10 },
+  placeholder: { alignItems: 'center', justifyContent: 'center', borderWidth: StyleSheet.hairlineWidth },
+  pickTitle: { fontSize: 15, lineHeight: 20, fontWeight: '500' },
+  agree: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three - 4 },
+  agreeText: { flex: 1, fontSize: 14, lineHeight: 20 },
 });

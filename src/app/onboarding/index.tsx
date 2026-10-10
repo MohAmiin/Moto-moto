@@ -1,60 +1,57 @@
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { LanguageSwitcher, LinkButton, Screen, Stack, Txt } from '@/components/ui';
-import { Radius, Spacing } from '@/constants/theme';
+import { AdminIcon, AdminScreen, FilterChips, TopBar, type AdminIconName } from '@/components/kit';
+import { LinkButton, Txt } from '@/components/ui';
+import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth';
-import { useI18n } from '@/lib/i18n';
+import { LANGUAGES, useI18n } from '@/lib/i18n';
 
 export default function ChooseRole() {
   const theme = useTheme();
-  const { t } = useI18n();
+  const { t, language, setLanguage } = useI18n();
   const { signOut } = useAuth();
 
-  const options = [
-    {
-      href: '/onboarding/customer' as const,
-      title: t('onb.customerTitle'),
-      body: t('onb.customerBody'),
-      bg: theme.brand,
-      fg: theme.onBrand,
-    },
-    {
-      href: '/onboarding/rider' as const,
-      title: t('onb.riderTitle'),
-      body: t('onb.riderBody'),
-      bg: theme.text,
-      fg: theme.background,
-    },
+  const options: { href: '/onboarding/customer' | '/onboarding/rider'; icon: AdminIconName; title: string; body: string; accent: boolean }[] = [
+    { href: '/onboarding/customer', icon: 'customers', title: t('onb.customerTitle'), body: t('onb.customerBody'), accent: false },
+    { href: '/onboarding/rider', icon: 'riders', title: t('onb.riderTitle'), body: t('onb.riderBody'), accent: true },
   ];
 
   return (
-    <Screen>
-      <LanguageSwitcher />
-      <Stack gap={Spacing.one}>
-        <Txt variant="title">{t('onb.welcome')}</Txt>
-        <Txt variant="muted">{t('onb.how')}</Txt>
-      </Stack>
+    <AdminScreen edges={['top', 'bottom']} header={<TopBar title={t('onb.welcome')} showProfile={false} />}>
+      <FilterChips options={LANGUAGES.map((l) => ({ id: l.id, label: l.label }))} value={language} onChange={setLanguage} />
+      <Txt variant="muted" style={styles.lead}>
+        {t('onb.how')}
+      </Txt>
       {options.map((o) => (
         <Pressable
           key={o.href}
           accessibilityRole="button"
+          accessibilityLabel={`${o.title}. ${o.body}`}
           onPress={() => router.push(o.href)}
-          style={({ pressed }) => [styles.option, { backgroundColor: o.bg, opacity: pressed ? 0.9 : 1 }]}>
-          <Txt variant="heading" style={{ color: o.fg }}>{o.title}</Txt>
-          <Txt style={{ color: o.fg, opacity: 0.85 }}>{o.body}</Txt>
-          <View style={[styles.choose, { borderColor: o.fg }]}>
-            <Txt style={{ color: o.fg, fontWeight: '800' }}>{t('onb.choose')}</Txt>
+          style={({ pressed }) => [styles.option, { backgroundColor: theme.surface, borderColor: theme.hairline, opacity: pressed ? 0.85 : 1 }]}>
+          <View style={[styles.icon, { backgroundColor: o.accent ? theme.accentSoft : theme.primarySoft }]}>
+            <AdminIcon name={o.icon} size={22} color={o.accent ? theme.accentText : theme.primaryText} />
           </View>
+          <View style={{ flex: 1, gap: 2 }}>
+            <Txt style={styles.title}>{o.title}</Txt>
+            <Txt variant="muted" style={styles.body}>
+              {o.body}
+            </Txt>
+          </View>
+          <AdminIcon name="forward" size={16} color={theme.textSecondary} />
         </Pressable>
       ))}
       <LinkButton title={t('common.signOut')} onPress={signOut} />
-    </Screen>
+    </AdminScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  option: { borderRadius: Radius.large, padding: Spacing.four, gap: Spacing.two },
-  choose: { alignSelf: 'flex-start', borderWidth: 1.5, borderRadius: Radius.pill, paddingHorizontal: 14, paddingVertical: 4, marginTop: Spacing.one },
+  lead: { fontSize: 14, lineHeight: 20 },
+  option: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three - 4, borderWidth: StyleSheet.hairlineWidth, borderRadius: 14, padding: Spacing.three, minHeight: 72 },
+  icon: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  title: { fontSize: 16, lineHeight: 22, fontWeight: '500' },
+  body: { fontSize: 13, lineHeight: 18 },
 });

@@ -3,11 +3,11 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Button, Card, Field, LanguageSwitcher, LinkButton, PhoneField, Screen, Stack, Txt } from '@/components/ui';
-import { Radius, Spacing } from '@/constants/theme';
+import { AdminButton, AdminScreen, Badge, FilterChips, Panel, PhoneTextField, PinField } from '@/components/kit';
+import { LinkButton, Txt } from '@/components/ui';
 import { useTheme } from '@/hooks/use-theme';
 import { formatPhone, isValidLocalPhone, isValidNewLocalPhone, normalizeLocalPhone, toE164 } from '@/lib/format';
-import { useI18n, type TKey } from '@/lib/i18n';
+import { LANGUAGES, useI18n, type TKey } from '@/lib/i18n';
 import { isValidNewPin, isValidSignInPin, pinAuth, type PinAuthError } from '@/lib/pin';
 import { errorKey, supabase } from '@/lib/supabase';
 
@@ -29,7 +29,7 @@ const PIN_ERRORS: Record<Exclude<PinAuthError, 'locked'>, TKey> = {
  */
 export default function SignIn() {
   const theme = useTheme();
-  const { t, locale } = useI18n();
+  const { t, locale, language, setLanguage } = useI18n();
   const [mode, setMode] = useState<Mode>('signIn');
   const [phone, setPhone] = useState('');
   const [pin, setPin] = useState('');
@@ -106,102 +106,125 @@ export default function SignIn() {
     router.push({ pathname: '/verify', params: { phone: local } });
   }
 
-  const pinProps = { keyboardType: 'number-pad' as const, secureTextEntry: true, maxLength: 6, style: styles.pin, placeholder: '••••••' };
-
   return (
-    <Screen>
-      <LanguageSwitcher />
-      <View style={styles.logoPanel}>
-        <Image
-          source={require('@/assets/images/logo-full.png')}
-          style={styles.logo}
-          contentFit="contain"
-          accessibilityLabel="Jareeye Moto Delivery"
-          accessibilityIgnoresInvertColors
-        />
+    <AdminScreen edges={['top', 'bottom']}>
+      <View style={styles.langs}>
+        <FilterChips options={LANGUAGES.map((l) => ({ id: l.id, label: l.label }))} value={language} onChange={setLanguage} />
       </View>
 
       {mode === 'signIn' ? (
-        <View style={[styles.hero, { backgroundColor: '#0046B5' }]}>
-          <Txt variant="title" style={{ color: '#FFFFFF' }}>{t('signin.headline')}</Txt>
-          <Txt style={{ color: '#FFFFFF', opacity: 0.85 }}>{t('signin.sub')}</Txt>
-          <View style={[styles.badge, { backgroundColor: theme.gold }]}>
-            <Txt style={[styles.badgeText, { color: theme.onGold }]}>{t('signin.badge')}</Txt>
-          </View>
-        </View>
+        <Panel style={{ alignItems: 'center' }}>
+          <Image
+            source={require('@/assets/images/logo-full.png')}
+            style={styles.logo}
+            contentFit="contain"
+            accessibilityLabel="Jareeye Moto Delivery"
+            accessibilityIgnoresInvertColors
+          />
+          <Txt style={styles.headline} accessibilityRole="header">
+            {t('signin.headline')}
+          </Txt>
+          <Txt variant="muted" style={styles.center}>
+            {t('signin.sub')}
+          </Txt>
+          <Badge tone="accent" label={t('signin.badge')} />
+        </Panel>
       ) : null}
 
       {mode === 'resetSent' && reset ? (
-        <Card tone="soft">
-          <Txt variant="heading">{t('signin.resetTitle')}</Txt>
-          <Txt variant="muted">{t('signin.resetCode')}</Txt>
-          <Txt
-            accessibilityLabel={reset.code.split('').join(' ')}
-            selectable
-            style={[styles.code, { color: theme.brand }]}>
-            {`${reset.code.slice(0, 3)} ${reset.code.slice(3)}`}
+        <Panel>
+          <Txt style={styles.title} accessibilityRole="header">
+            {t('signin.resetTitle')}
           </Txt>
-          <Txt variant="muted">
-            {t('signin.resetExpires', {
-              time: new Date(reset.expiresAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }),
-            })}
+          <Txt variant="muted" style={styles.small}>
+            {t('signin.resetCode')}
           </Txt>
-          <Txt>{t('signin.resetSent', { phone: formatPhone(reset.phone) })}</Txt>
+          <View style={[styles.codeBox, { backgroundColor: theme.surfaceMuted, borderColor: theme.hairline }]}>
+            <Txt accessibilityLabel={reset.code.split('').join(' ')} selectable style={[styles.code, { color: theme.primaryText }]}>
+              {`${reset.code.slice(0, 3)} ${reset.code.slice(3)}`}
+            </Txt>
+            <Txt variant="muted" style={styles.small}>
+              {t('signin.resetExpires', {
+                time: new Date(reset.expiresAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }),
+              })}
+            </Txt>
+          </View>
+          <Txt style={styles.body}>{t('signin.resetSent', { phone: formatPhone(reset.phone) })}</Txt>
           <LinkButton title={t('signin.back')} onPress={() => switchMode('signIn')} />
-        </Card>
+        </Panel>
       ) : (
-        <Stack>
-          {mode === 'create' ? <Txt variant="title">{t('signin.create')}</Txt> : null}
-          {mode === 'reset' ? <Txt variant="title">{t('signin.resetTitle')}</Txt> : null}
-
-          <PhoneField value={phone} onChangeText={setPhone} />
-          {mode === 'create' && isValidNewLocalPhone(normalizeLocalPhone(phone)) ? (
-            <Txt variant="muted" accessibilityLiveRegion="polite">
-              {t('signin.phoneCheck', { phone: formatPhone(normalizeLocalPhone(phone)) })}
+        <Panel>
+          {mode === 'create' ? (
+            <Txt style={styles.title} accessibilityRole="header">
+              {t('signin.create')}
             </Txt>
           ) : null}
-          <Field
-            label={t(mode === 'reset' ? 'signin.pinNew' : 'signin.pin')}
-            value={pin}
-            onChangeText={(v) => setPin(v.replace(/\D/g, ''))}
-            {...pinProps}
-          />
-          {mode !== 'signIn' ? (
-            <Field label={t('signin.pinConfirm')} value={pin2} onChangeText={(v) => setPin2(v.replace(/\D/g, ''))} {...pinProps} />
+          {mode === 'reset' ? (
+            <Txt style={styles.title} accessibilityRole="header">
+              {t('signin.resetTitle')}
+            </Txt>
           ) : null}
 
-          {mode === 'create' ? <Txt variant="muted">{t('signin.createNote')}</Txt> : null}
-          {mode === 'reset' ? <Txt variant="muted">{t('signin.resetNote')}</Txt> : null}
-          {error ? <Txt color="danger">{error}</Txt> : null}
+          <PhoneTextField
+            label={t('common.phone')}
+            value={phone}
+            onChangeText={setPhone}
+            help={
+              mode === 'create' && isValidNewLocalPhone(normalizeLocalPhone(phone))
+                ? t('signin.phoneCheck', { phone: formatPhone(normalizeLocalPhone(phone)) })
+                : undefined
+            }
+          />
+          <PinField label={t(mode === 'reset' ? 'signin.pinNew' : 'signin.pin')} value={pin} onChangeText={setPin} />
+          {mode !== 'signIn' ? <PinField label={t('signin.pinConfirm')} value={pin2} onChangeText={setPin2} /> : null}
 
-          <Button
+          {mode === 'create' ? (
+            <Txt variant="muted" style={styles.small}>
+              {t('signin.createNote')}
+            </Txt>
+          ) : null}
+          {mode === 'reset' ? (
+            <Txt variant="muted" style={styles.small}>
+              {t('signin.resetNote')}
+            </Txt>
+          ) : null}
+          {error ? (
+            <Txt color="danger" style={styles.small} accessibilityRole="alert">
+              {error}
+            </Txt>
+          ) : null}
+
+          <AdminButton
             title={t(mode === 'signIn' ? 'signin.signIn' : mode === 'create' ? 'signin.create' : 'signin.resetSend')}
             onPress={submit}
             loading={busy}
           />
-
-          {mode === 'signIn' ? (
-            <>
-              <LinkButton title={t('signin.toCreate')} onPress={() => switchMode('create')} />
-              <LinkButton title={t('signin.forgot')} onPress={() => switchMode('reset')} />
-              <Txt variant="muted" style={{ textAlign: 'center' }}>{t('signin.both')}</Txt>
-              <LinkButton title={t('signin.useSms')} onPress={useSmsCode} />
-            </>
-          ) : (
-            <LinkButton title={t('signin.back')} onPress={() => switchMode('signIn')} />
-          )}
-        </Stack>
+          {mode !== 'signIn' ? <LinkButton title={t('signin.back')} onPress={() => switchMode('signIn')} /> : null}
+        </Panel>
       )}
-    </Screen>
+
+      {mode === 'signIn' ? (
+        <Panel>
+          <LinkButton title={t('signin.toCreate')} onPress={() => switchMode('create')} />
+          <LinkButton title={t('signin.forgot')} onPress={() => switchMode('reset')} />
+          <Txt variant="muted" style={styles.small}>
+            {t('signin.both')}
+          </Txt>
+          <LinkButton title={t('signin.useSms')} onPress={useSmsCode} />
+        </Panel>
+      ) : null}
+    </AdminScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  hero: { borderRadius: Radius.large + 2, padding: Spacing.four, gap: Spacing.three },
-  logoPanel: { backgroundColor: '#FFFFFF', borderRadius: Radius.large + 2, padding: Spacing.three, alignItems: 'center' },
-  logo: { width: '100%', height: 190 },
-  badge: { alignSelf: 'flex-start', borderRadius: Radius.pill, paddingHorizontal: 12, paddingVertical: 5 },
-  badgeText: { fontWeight: '900', fontSize: 13 },
-  pin: { fontSize: 24, letterSpacing: 10, textAlign: 'center', writingDirection: 'ltr' },
-  code: { fontSize: 40, lineHeight: 48, fontWeight: '800', letterSpacing: 4, textAlign: 'center', writingDirection: 'ltr' },
+  langs: { alignItems: 'flex-start' },
+  logo: { width: '100%', height: 120 },
+  headline: { fontSize: 20, lineHeight: 26, fontWeight: '500', textAlign: 'center' },
+  center: { textAlign: 'center', fontSize: 14, lineHeight: 20 },
+  title: { fontSize: 18, lineHeight: 24, fontWeight: '500' },
+  body: { fontSize: 14, lineHeight: 20 },
+  small: { fontSize: 13, lineHeight: 18 },
+  codeBox: { borderWidth: StyleSheet.hairlineWidth, borderRadius: 12, alignItems: 'center', paddingVertical: 12, gap: 2 },
+  code: { fontSize: 34, lineHeight: 42, fontWeight: '500', letterSpacing: 4, writingDirection: 'ltr' },
 });

@@ -1,7 +1,8 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 
-import { Button, Field, Header, LinkButton, Screen, Stack, Txt } from '@/components/ui';
+import { AdminButton, AdminScreen, DetailBar, Panel, TextField } from '@/components/kit';
+import { LinkButton, Txt } from '@/components/ui';
 import { formatPhone, toE164 } from '@/lib/format';
 import { useI18n } from '@/lib/i18n';
 import { errorKey, supabase } from '@/lib/supabase';
@@ -34,10 +35,12 @@ export default function Verify() {
   }
 
   return (
-    <Screen>
-      <Header title={t('verify.title')} subtitle={t('verify.sentTo', { phone: formatPhone(phone) })} />
-      <Stack>
-        <Field
+    <AdminScreen edges={['top', 'bottom']} header={<DetailBar title={t('verify.title')} />}>
+      <Panel>
+        <Txt variant="muted" style={{ fontSize: 14, lineHeight: 20 }}>
+          {t('verify.sentTo', { phone: formatPhone(phone) })}
+        </Txt>
+        <TextField
           label={t('verify.label')}
           value={code}
           onChangeText={(v) => setCode(v.replace(/\D/g, ''))}
@@ -47,13 +50,19 @@ export default function Verify() {
           maxLength={6}
           placeholder="••••••"
           error={error}
-          style={{ fontSize: 24, letterSpacing: 8, textAlign: 'center', fontWeight: '800' }}
+          style={{ fontSize: 22, letterSpacing: 8, textAlign: 'center', writingDirection: 'ltr' }}
           autoFocus
         />
-        <Button title={t('verify.confirm')} onPress={verify} loading={checking} />
-        {resent ? <Txt variant="muted">{t('verify.resent')}</Txt> : <LinkButton title={t('verify.resend')} onPress={resend} />}
+        <AdminButton title={t('verify.confirm')} onPress={verify} loading={checking} />
+        {resent ? (
+          <Txt variant="muted" style={{ fontSize: 13 }}>
+            {t('verify.resent')}
+          </Txt>
+        ) : (
+          <LinkButton title={t('verify.resend')} onPress={resend} />
+        )}
         <LinkButton title={t('verify.changeNumber')} onPress={() => router.back()} />
-      </Stack>
-    </Screen>
+      </Panel>
+    </AdminScreen>
   );
 }

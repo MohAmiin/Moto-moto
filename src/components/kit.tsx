@@ -4,6 +4,7 @@ import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import type { ReactNode } from 'react';
 import {
   ActivityIndicator,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -525,6 +526,70 @@ export function TextField({
   );
 }
 
+/** A +252 phone number field in the kit's style. Numbers always read left to right. */
+export function PhoneTextField({
+  label,
+  value,
+  onChangeText,
+  help,
+  error,
+}: {
+  label: string;
+  value: string;
+  onChangeText: (v: string) => void;
+  help?: string;
+  error?: string;
+}) {
+  const theme = useTheme();
+  return (
+    <View style={{ gap: 4 }}>
+      <Txt variant="muted" style={styles.fieldLabel}>
+        {label}
+      </Txt>
+      <View style={[styles.phoneRow, ltr, { backgroundColor: theme.surfaceMuted, borderColor: error ? theme.danger : theme.hairline }]}>
+        <Txt style={[styles.phonePrefix, { borderColor: theme.hairline }]}>+252</Txt>
+        <TextInput
+          value={value}
+          onChangeText={onChangeText}
+          keyboardType="phone-pad"
+          autoComplete="tel"
+          textContentType="telephoneNumber"
+          placeholder="63 123 4567"
+          placeholderTextColor={theme.textSecondary}
+          maxLength={16}
+          accessibilityLabel={label}
+          style={[withFont({ fontWeight: '400' }), styles.phoneInput, { color: theme.text }]}
+        />
+      </View>
+      {error ? (
+        <Txt color="danger" style={styles.fieldHelp} accessibilityRole="alert">
+          {error}
+        </Txt>
+      ) : help ? (
+        <Txt variant="muted" style={styles.fieldHelp} accessibilityLiveRegion="polite">
+          {help}
+        </Txt>
+      ) : null}
+    </View>
+  );
+}
+
+/** A masked PIN field: digits only, spaced out, left to right in every language. */
+export function PinField({ label, value, onChangeText }: { label: string; value: string; onChangeText: (v: string) => void }) {
+  return (
+    <TextField
+      label={label}
+      value={value}
+      onChangeText={(v) => onChangeText(v.replace(/\D/g, ''))}
+      keyboardType="number-pad"
+      secureTextEntry
+      maxLength={6}
+      placeholder="••••••"
+      style={styles.pin}
+    />
+  );
+}
+
 /** A labelled value on a detail screen. */
 export function InfoLine({ label, value, last = false }: { label: string; value: string | null | undefined; last?: boolean }) {
   const theme = useTheme();
@@ -582,6 +647,9 @@ export function AdminButton({
     </Pressable>
   );
 }
+
+// Phone numbers read left to right in every language (native only; web ignores `direction`).
+const ltr = Platform.OS === 'web' ? {} : ({ direction: 'ltr' } as const);
 
 const styles = StyleSheet.create({
   content: { width: '100%', maxWidth: MaxContentWidth, alignSelf: 'center', padding: Spacing.three, gap: Spacing.three, flexGrow: 1 },
@@ -644,6 +712,10 @@ const styles = StyleSheet.create({
   fieldLabel: { fontSize: 12, lineHeight: 16 },
   field: { borderWidth: 1, borderRadius: 12, minHeight: 46, paddingHorizontal: Spacing.three - 4, paddingVertical: Spacing.two + 2, fontSize: 15 },
   fieldHelp: { fontSize: 12, lineHeight: 16 },
+  phoneRow: { flexDirection: 'row', borderWidth: 1, borderRadius: 12, overflow: 'hidden', minHeight: 46 },
+  phonePrefix: { paddingHorizontal: Spacing.three - 4, alignSelf: 'center', fontSize: 15, borderRightWidth: StyleSheet.hairlineWidth, writingDirection: 'ltr' },
+  phoneInput: { flex: 1, paddingHorizontal: Spacing.three - 4, fontSize: 15, fontVariant: ['tabular-nums'], textAlign: 'left', writingDirection: 'ltr' },
+  pin: { fontSize: 22, letterSpacing: 8, textAlign: 'center', writingDirection: 'ltr' },
   infoLabel: { fontSize: 12, lineHeight: 16 },
   infoValue: { fontSize: 15, lineHeight: 21 },
   button: { minHeight: 48, borderRadius: 12, borderWidth: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Spacing.two, paddingHorizontal: Spacing.three },
