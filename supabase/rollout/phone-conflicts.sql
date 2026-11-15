@@ -1,12 +1,14 @@
 -- Read-only: accounts that share a phone number in any form, before applying
 -- 20261011000000_one_account_per_phone.sql (which stops if any exist). Changes nothing.
+-- Written for a database WITHOUT the 2026-10 migrations (live before the rollout): it doesn't read
+-- pin_credentials, which migration 20261007 creates. Once the migrations are in, use
+-- `select * from public.phone_conflicts();` instead, which also checks PIN credentials.
 -- Resolve each by hand (for example correct one account's number, or delete a test account);
 -- the migration never merges or deletes accounts.
 with numbers as (
   select u.id, 'login' as src, split_part(u.email, '@', 1) as raw from auth.users u where u.email like '%@pin.jareeye.app'
   union all select u.id, 'sms', u.phone from auth.users u where coalesce(u.phone, '') <> ''
   union all select p.id, 'profile', p.phone from public.profiles p where p.phone is not null
-  union all select c.user_id, 'pin', c.phone from public.pin_credentials c
 ), canonical as (
   select id, src, raw, '252' || case when length(d) = 7 then '63' || d else d end as phone
   from (select id, src, raw, regexp_replace(regexp_replace(regexp_replace(raw, '\D', '', 'g'), '^(00)?252', ''), '^0', '') as d from numbers) x

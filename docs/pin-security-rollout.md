@@ -57,7 +57,7 @@ npx supabase db dump --linked --data-only -f ~/jareeye-data-$(date +%Y%m%d-%H%M)
 Check both files are non-empty and contain `CREATE TABLE` / `COPY` lines.
 
 ### 2. Read-only checks (change nothing)
-In **SQL Editor**, run and save the output of:
+In **SQL Editor**, run and save the output of (all three work on a database without the new migrations; tested on a local copy at live's migration level, 2026-11-15):
 1. `supabase/rollout/phone-conflicts.sql`: accounts sharing a number. **Must be empty**, otherwise migration 5 stops. Resolve each pair by hand with the owners (correct one number, or delete a test account). Never merge accounts.
 2. `supabase/rollout/invalid-phone-numbers.sql`: numbers that aren't 9 digits after +252. These still sign in; after the rollout, an admin corrects them with the owner's confirmation.
 3. Counts to compare later:
@@ -92,7 +92,7 @@ select count(*) from auth.users where email like '%@pin.jareeye.app';   -- A
 select count(*) from public.pin_credentials;                               -- should equal A
 select required, price_usd, first_enabled_at from public.membership_settings;  -- false, 1.00, null
 ```
-Run `supabase/rollout/phone-conflicts.sql` again (empty). Compare the counts from step 2.3: nothing should have gone down.
+Run `select * from public.phone_conflicts();` (empty). Don't re-run `supabase/rollout/phone-conflicts.sql` here: it is the pre-migration version and skips PIN credentials. Compare the counts from step 2.3: nothing should have gone down.
 
 ### 5. Deploy `pin-auth` (only after step 3 succeeded)
 The function needs `pin_phone_available()`, created by migration 5. Deploying it first would break sign-up.
