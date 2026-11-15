@@ -4,10 +4,11 @@ import { Platform } from 'react-native';
 
 export type Language = 'so' | 'en' | 'ar';
 
+// Arabic is hidden for the pilot until a native speaker has reviewed it (docs/translation-review.md).
+// Its strings stay below; add it back here to offer it again.
 export const LANGUAGES: { id: Language; label: string }[] = [
   { id: 'so', label: 'Soomaali' },
   { id: 'en', label: 'English' },
-  { id: 'ar', label: 'العربية' },
 ];
 
 // Somali lists every key; English (the default) and Arabic must match it exactly.
@@ -1484,7 +1485,8 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     AsyncStorage.getItem(STORAGE_KEY)
       .then((saved) => {
-        if (saved === 'so' || saved === 'en' || saved === 'ar') setLanguageState(saved);
+        // Only offered languages: someone who chose Arabic before it was hidden gets the default (English).
+        if (LANGUAGES.some((l) => l.id === saved)) setLanguageState(saved as Language);
       })
       .catch(() => {})
       .finally(() => setReady(true));

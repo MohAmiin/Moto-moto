@@ -10,7 +10,7 @@ This covers five database migrations, the `pin-auth` Edge Function, and the app 
 | 4 | `20261010000000_rider_membership.sql` | Rider memberships and manual payments. **The switch is OFF** (price $1 per 30 days stored, not enforced) |
 | 5 | `20261011000000_one_account_per_phone.sql` | One account per phone number in any form; admin phone corrections with an audit. **Stops by itself** if accounts already share a number |
 
-Nothing here has been applied to the live project (`rxeijbsstxflpwnnbaya`). All of it has been applied and tested on **jareeye-staging** (`espnowmofsejtshoqcuo`). See `docs/production-release-checklist.md` for the whole release, including the app update and the go/no-go list.
+The original live project (`rxeijbsstxflpwnnbaya`) is in an account that can no longer be reached, so on 2026-11-15 it was replaced by a new, empty project **jareeye-live** (`zbrfxsropeiacagwpgsc`, eu-west-1, jareeye org). All 14 migrations and `pin-auth` were applied to it fresh, so steps 2–4 and 8 below (checks, upgrade and cut-over of existing accounts) don't apply to it: it has no old accounts. It was compared with **jareeye-staging** (`espnowmofsejtshoqcuo`) and matches. See `docs/production-release-checklist.md` for the whole release.
 
 ## What changes for people
 
@@ -30,7 +30,7 @@ Riders approved before the change stay approved. Existing ratings are carried ov
 
 ## Staging first
 
-Everything is tried on **jareeye-staging** (`espnowmofsejtshoqcuo`) before the live one. Check the ref in every command: the live project is `rxeijbsstxflpwnnbaya`.
+Everything is tried on **jareeye-staging** (`espnowmofsejtshoqcuo`) before the live one. Check the ref in every command: the live project is `zbrfxsropeiacagwpgsc`.
 
 - Database: `npx supabase link --project-ref espnowmofsejtshoqcuo`, then `npx supabase db push --linked` (dry run first with `--dry-run`).
 - Function: `npx supabase functions deploy pin-auth --no-verify-jwt --project-ref espnowmofsejtshoqcuo`.
@@ -40,8 +40,8 @@ Everything is tried on **jareeye-staging** (`espnowmofsejtshoqcuo`) before the l
 
 ## Before you start
 
-- **Who can reach live.** The Supabase CLI on the Mac is signed in to an account that cannot see the live project. Sign in with the account that owns `rxeijbsstxflpwnnbaya` (`npx supabase login`), then check: `npx supabase projects list` must show it.
-- **Link explicitly** and check the ref before every command: `npx supabase link --project-ref rxeijbsstxflpwnnbaya`, then `cat supabase/.temp/project-ref`.
+- **Who can reach live.** jareeye-live and jareeye-staging are both in the jareeye organisation, which the Supabase CLI on the Mac is signed in to. Check with `npx supabase projects list`.
+- **Link explicitly** and check the ref before every command: `npx supabase link --project-ref zbrfxsropeiacagwpgsc`, then `cat supabase/.temp/project-ref`.
 - **Approval.** Each step below that changes live needs the owner's go-ahead.
 
 ## Order of steps
@@ -97,14 +97,14 @@ Run `select * from public.phone_conflicts();` (empty). Don't re-run `supabase/ro
 ### 5. Deploy `pin-auth` (only after step 3 succeeded)
 The function needs `pin_phone_available()`, created by migration 5. Deploying it first would break sign-up.
 ```
-npx supabase functions deploy pin-auth --no-verify-jwt --project-ref rxeijbsstxflpwnnbaya
+npx supabase functions deploy pin-auth --no-verify-jwt --project-ref zbrfxsropeiacagwpgsc
 ```
 `--no-verify-jwt` is needed because people calling it are signed out; the function does its own checks.
 
 Check it with a number that has no account. The reply should be `{"ok":false,"error":"wrong"}`:
 ```
-curl -s -X POST https://rxeijbsstxflpwnnbaya.supabase.co/functions/v1/pin-auth \
-  -H "apikey: sb_publishable_OncHuAtgmjlzBQcP7ZcnPQ_uEykrby1" -H "Content-Type: application/json" \
+curl -s -X POST https://zbrfxsropeiacagwpgsc.supabase.co/functions/v1/pin-auth \
+  -H "apikey: sb_publishable_GdpZRXnNC8ZcfEwcyv2FCQ_L3c0y0wf" -H "Content-Type: application/json" \
   -d '{"action":"sign-in","phone":"252634999999","pin":"123456"}'
 ```
 Then in **Edge Functions → pin-auth → Logs** confirm there are no errors, and run `select key from auth_rate_limits where bucket = 'signin-fail-ip';` to check the address recorded is your real one.
@@ -133,7 +133,7 @@ Migration 4 stores the price ($1 per 30 days) but leaves the switch off, so noth
 Roll back in this order: **app first, then function, then database.** The new app signs in through `pin-auth`, so removing the function while the new app is live would stop sign-in.
 
 - **App update misbehaves (before step 8):** `npx eas-cli@latest update:rollback` (or republish the previous update group with `eas update:republish`) on the channel you published to. Old sign-in still works.
-- **`pin-auth` misbehaves:** after rolling the app back, redeploy the previous version from git, or remove it with `npx supabase functions delete pin-auth --project-ref rxeijbsstxflpwnnbaya`. The old app doesn't use it.
+- **`pin-auth` misbehaves:** after rolling the app back, redeploy the previous version from git, or remove it with `npx supabase functions delete pin-auth --project-ref zbrfxsropeiacagwpgsc`. The old app doesn't use it.
 - **Migrations (before step 8):** they only add tables, columns, rules and functions. Existing rows aren't removed, except that old, unverifiable PIN reset requests are closed and self-ratings are dropped. To undo data changes, restore from step 1. With the membership switch off (the default), customer discovery behaves as before.
 - **After step 8:** old app versions can't sign in, and rolling the app back would lock people out. Fix forward, or restore the passwords from the step 1 backup.
 

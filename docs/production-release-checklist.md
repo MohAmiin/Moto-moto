@@ -1,6 +1,6 @@
 # Production release checklist: Jareeye public pilot
 
-For the release that brings the PIN, phone-check, rating, one-account-per-number and (switched-off) membership changes to the live project `rxeijbsstxflpwnnbaya`. Database steps are in `docs/pin-security-rollout.md`; this list covers the whole release around them.
+For the release that brings the PIN, phone-check, rating, one-account-per-number and (switched-off) membership changes to the live project `zbrfxsropeiacagwpgsc`. Database steps are in `docs/pin-security-rollout.md`; this list covers the whole release around them.
 
 Every step that changes live needs the owner's explicit go-ahead. Membership enforcement stays **OFF**.
 
@@ -19,7 +19,7 @@ All must be true before starting:
 
 ## 2. Access and safety
 
-- [ ] Supabase CLI signed in with the account that owns the live project (`npx supabase projects list` shows `rxeijbsstxflpwnnbaya`).
+- [ ] Supabase CLI signed in with the account that owns the live project (`npx supabase projects list` shows `zbrfxsropeiacagwpgsc`).
 - [ ] Before every remote command: `cat supabase/.temp/project-ref` shows the intended project.
 - [ ] Expo account `mo-jay` signed in (`npx eas-cli@latest whoami`). Check the plan's build quota before any build.
 - [ ] Publish updates only from `pilot/rider-availability` (or `main` once merged), never from `staging/pin-security`: that branch carries the staging profile and staging start script.
@@ -45,7 +45,7 @@ The app uses `runtimeVersion: { policy: "fingerprint" }`: an update reaches only
    npx eas-cli@latest fingerprint:compare --build-id <newest installed build id>
    ```
    It must say the fingerprints match. Older preview builds (`6af6e5e…`, `a98ed9e…`) won't receive the update; reinstall those phones from the newest APK.
-3. **Check the bundle points at live.** `eas update` uses the local `.env` (live URL and key). Before publishing, confirm with `cat .env` that it holds `rxeijbsstxflpwnnbaya`, and that you are not on the staging branch.
+3. **Check the bundle points at live.** `eas update` uses the local `.env` (live URL and key). Before publishing, confirm with `cat .env` that it holds `zbrfxsropeiacagwpgsc`, and that you are not on the staging branch.
 4. **Publish to preview first**, after the database steps and `pin-auth` are live (rollout steps 1–5):
    ```
    npx eas-cli@latest update --channel preview --message "PIN security, phone checks, ratings, admin redesign"
@@ -88,7 +88,7 @@ Order: **app, then function, then database** (the new app signs in through `pin-
 | Problem | Action |
 |---|---|
 | App update misbehaves | `npx eas-cli@latest update:rollback` on the channel, or `eas update:republish` the previous group. Old sign-in still works until the cut-over |
-| `pin-auth` misbehaves | After rolling the app back: redeploy the previous version from git, or `npx supabase functions delete pin-auth --project-ref rxeijbsstxflpwnnbaya` |
+| `pin-auth` misbehaves | After rolling the app back: redeploy the previous version from git, or `npx supabase functions delete pin-auth --project-ref zbrfxsropeiacagwpgsc` |
 | Database problem | The migrations only add things (old reset requests closed, self-ratings dropped). Restore data from the section 3 backup if needed; keep membership OFF |
 | After the cut-over | Don't roll the app back (old versions can't sign in). Fix forward, or restore passwords from the backup |
 
