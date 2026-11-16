@@ -12,11 +12,14 @@ export function LiveMap({
   height = 300,
   rounded = true,
   onSelect,
+  onPick,
 }: {
   data: LiveMapData;
   height?: number;
   rounded?: boolean;
   onSelect?: (id: string) => void;
+  /** Called with the tapped spot while `data.picking` is set. */
+  onPick?: (point: { lat: number; lng: number }) => void;
 }) {
   const ref = useRef<HTMLIFrameElement>(null);
   const [ready, setReady] = useState(false);
@@ -26,10 +29,14 @@ export function LiveMap({
       if (e.source !== ref.current?.contentWindow || typeof e.data !== 'string') return;
       if (e.data === 'jareeye-map-ready') setReady(true);
       else if (e.data.startsWith('jareeye-map-select:')) onSelect?.(e.data.slice('jareeye-map-select:'.length));
+      else if (e.data.startsWith('jareeye-map-pick:')) {
+        const [lat, lng] = e.data.slice('jareeye-map-pick:'.length).split(',').map(Number);
+        if (Number.isFinite(lat) && Number.isFinite(lng)) onPick?.({ lat, lng });
+      }
     };
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
-  }, [onSelect]);
+  }, [onSelect, onPick]);
 
   useEffect(() => {
     if (ready) ref.current?.contentWindow?.postMessage(JSON.stringify(data), '*');

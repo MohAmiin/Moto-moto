@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { AdminButton, AdminScreen, Notice, Panel, SectionTitle, TopBar } from '@/components/kit';
+import { ActiveJob } from '@/components/rider/active-job';
 import { RiderAvatar } from '@/components/rider-avatar';
 import { RiderMembershipCard } from '@/components/rider-membership-card';
 import { Txt } from '@/components/ui';
@@ -14,6 +15,7 @@ import { useI18n, type TKey } from '@/lib/i18n';
 import { needsPayment, useMyMembership } from '@/lib/membership';
 import { ratingLabel, riderCode } from '@/lib/rider';
 import { useAvailability } from '@/lib/rider-availability-context';
+import { useRiderRequests } from '@/lib/rider-requests-context';
 import { ACTIVE_CITY, inCity } from '@/lib/service-area';
 import { supabase } from '@/lib/supabase';
 
@@ -56,6 +58,8 @@ export default function RiderHome() {
   const { t, locale } = useI18n();
   const { profile, application } = useAuth();
   const { online, busy, busyUntil, pending, coords, locationFresh, connected, error, controller } = useAvailability();
+  // A job from "Request a moto" comes first, and makes the rider busy until delivered.
+  const { jobId } = useRiderRequests();
   const [calls, setCalls] = useState<CallRow[]>();
   const [rating, setRating] = useState<string | null | undefined>();
   const [statsFailed, setStatsFailed] = useState(false);
@@ -88,13 +92,14 @@ export default function RiderHome() {
     };
   }, [loadStats]);
 
-  const state: 'offline' | 'available' | 'busy' = busy ? 'busy' : online ? 'available' : 'offline';
+  const state: 'offline' | 'available' | 'busy' | 'job' = jobId ? 'job' : busy ? 'busy' : online ? 'available' : 'offline';
   const minutesLeft = busy && busyUntil ? Math.max(1, Math.ceil((new Date(busyUntil).getTime() - now) / 60_000)) : 0;
   const untilTime = busyUntil ? new Date(busyUntil).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) : '';
   const look = {
     offline: { dot: theme.textSecondary, bg: theme.surfaceMuted, fg: theme.text, title: t('rider.offlineTitle'), body: t('rx.offlineBody') },
     available: { dot: theme.success, bg: theme.successSoft, fg: theme.success, title: t('rx.available'), body: t('rx.availableBody', { phone: formatPhone(profile!.phone) }) },
     busy: { dot: theme.primaryText, bg: theme.primarySoft, fg: theme.primaryText, title: t('rx.busyLeft', { n: minutesLeft }), body: t('rx.busyBody', { time: untilTime }) },
+    job: { dot: theme.primaryText, bg: theme.primarySoft, fg: theme.primaryText, title: t('rq.onJob'), body: t('rq.onJobBody') },
   }[state];
   const saving = pending === 'online' ? t('rider.goingOnline') : pending ? t('common.saving') : null;
   const code = riderCode(application?.rider_number);
@@ -109,6 +114,8 @@ export default function RiderHome() {
           showProfile={false}
         />
       }>
+      {jobId ? <ActiveJob jobId={jobId} /> : null}
+
       {/* Availability first: it's what riders check on the road. */}
       <Panel>
         <View style={[styles.status, { backgroundColor: look.bg }]} accessibilityLiveRegion="polite">
@@ -130,7 +137,7 @@ export default function RiderHome() {
             loading={pending === 'online'}
             disabled={pending != null || blocked}
           />
-        ) : state === 'available' ? (
+        ) : state === 'job' ? null : state === 'available' ? (
           <>
             <AdminButton title={t('rider.goBusy')} icon="delivery" onPress={() => controller.setBusy(true)} loading={pending === 'busy'} disabled={pending != null} />
             <AdminButton title={t('rx.goOffline')} kind="outline" onPress={() => controller.goOffline()} loading={pending === 'offline'} disabled={pending != null} />

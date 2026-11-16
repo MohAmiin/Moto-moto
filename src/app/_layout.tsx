@@ -13,6 +13,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { loadAppearance } from '@/lib/appearance';
 import { AuthProvider, useAuth } from '@/lib/auth';
 import { LanguageProvider, useI18n } from '@/lib/i18n';
+import { usePushNotifications } from '@/lib/push';
 
 SplashScreen.preventAutoHideAsync();
 loadAppearance();
@@ -34,10 +35,12 @@ export default function RootLayout() {
 
 function RootNavigator() {
   const { loading, session, profile } = useAuth();
-  const { ready, isRTL } = useI18n();
+  const { ready, isRTL, language } = useI18n();
   const [fontsLoaded, fontError] = useFonts({ Rubik_400Regular, Rubik_500Medium, Rubik_700Bold, Rubik_800ExtraBold });
   // If the fonts fail to load the app still opens, in the system font.
   const busy = loading || !ready || (!fontsLoaded && !fontError);
+  // Push notifications for whoever is signed in with a profile; taps open the right screen.
+  usePushNotifications(profile?.id, language, !busy);
 
   useEffect(() => {
     if (!busy) SplashScreen.hideAsync();

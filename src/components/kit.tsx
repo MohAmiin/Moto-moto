@@ -285,7 +285,7 @@ export function SectionTitle({ title, action }: { title: string; action?: { labe
 // ---------------------------------------------------------------------------
 
 /** A figure that may still be loading (undefined) or have failed to load (null). Never shown as 0 then. */
-export type Metric = number | null | undefined;
+export type Metric = number | string | null | undefined;
 
 type Tone = 'primary' | 'accent' | 'success' | 'neutral';
 

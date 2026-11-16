@@ -1,6 +1,7 @@
 import type { Session } from '@supabase/supabase-js';
 import { createContext, use, useCallback, useEffect, useState, type ReactNode } from 'react';
 
+import { unregisterPush } from '@/lib/push';
 import { supabase } from '@/lib/supabase';
 import type { Profile, RiderApplication } from '@/lib/types';
 
@@ -75,6 +76,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refresh = useCallback(() => loadAccount(session?.user.id), [loadAccount, session?.user.id]);
   const signOut = useCallback(async () => {
+    // While still signed in: this phone stops getting this person's notifications.
+    await unregisterPush();
     await supabase.auth.signOut();
   }, []);
 

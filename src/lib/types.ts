@@ -102,3 +102,99 @@ export type MembershipPayment = {
   period_start: string;
   period_end: string;
 };
+
+/** Request a moto (20261012000000_moto_requests.sql). */
+export type RequestStatus = 'searching' | 'accepted' | 'picked_up' | 'delivered' | 'cancelled' | 'expired';
+
+/** One request as moto_request_detail() shows it to the customer, the assigned rider or an admin. */
+export type MotoRequestDetail = {
+  id: string;
+  status: RequestStatus;
+  wave: number;
+  pickup_lat: number;
+  pickup_lng: number;
+  pickup_label: string | null;
+  dropoff_lat: number;
+  dropoff_lng: number;
+  dropoff_label: string | null;
+  note: string | null;
+  created_at: string;
+  accepted_at: string | null;
+  picked_up_at: string | null;
+  delivered_at: string | null;
+  cancelled_at: string | null;
+  expired_at: string | null;
+  expires_at: string;
+  rated_at: string | null;
+  offered_count: number;
+  wave1_count: number;
+  wave2_count: number;
+  rider_id: string | null;
+  rider_name: string | null;
+  rider_phone: string | null;
+  rider_photo_path: string | null;
+  rider_number: number | null;
+  rider_plate: string | null;
+  rider_rating: number | null;
+  rider_rating_count: number | null;
+  rider_lat: number | null;
+  rider_lng: number | null;
+  rider_seen_at: string | null;
+  /** Only for the rider and admins; the number only once accepted. */
+  customer_name: string | null;
+  customer_phone: string | null;
+  can_rate: boolean;
+};
+
+/** A request offered to the signed-in rider (my_request_offers). No customer details before accepting. */
+export type RequestOffer = {
+  request_id: string;
+  wave: number;
+  distance_km: number;
+  trip_km: number;
+  pickup_label: string | null;
+  dropoff_label: string | null;
+  note: string | null;
+  offered_at: string;
+  expires_at: string;
+  closed_at: string | null;
+  outcome: 'won' | 'taken' | 'expired' | 'cancelled' | null;
+};
+
+export type AdminRequestRow = {
+  id: string;
+  status: RequestStatus;
+  wave: number;
+  created_at: string;
+  accepted_at: string | null;
+  picked_up_at: string | null;
+  delivered_at: string | null;
+  cancelled_at: string | null;
+  expired_at: string | null;
+  customer_id: string;
+  customer_name: string;
+  rider_id: string | null;
+  rider_name: string | null;
+  rider_number: number | null;
+  pickup_label: string | null;
+  dropoff_label: string | null;
+  offered_count: number;
+};
+
+export type RequestStats = {
+  sent: number;
+  accepted: number;
+  delivered: number;
+  expired: number;
+  cancelled: number;
+  open: number;
+  avg_accept_seconds: number | null;
+};
+
+export type RequestSettings = {
+  first_radius_km: number;
+  second_radius_km: number;
+  riders_per_wave: number;
+  wave_seconds: number;
+  expire_seconds: number;
+};

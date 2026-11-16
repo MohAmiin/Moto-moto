@@ -15,12 +15,15 @@ export function LiveMap({
   height = 300,
   rounded = true,
   onSelect,
+  onPick,
 }: {
   data: LiveMapData;
   height?: number;
   rounded?: boolean;
   /** Called with a rider's id when their pin is tapped. */
   onSelect?: (id: string) => void;
+  /** Called with the tapped spot while `data.picking` is set. */
+  onPick?: (point: { lat: number; lng: number }) => void;
 }) {
   const ref = useRef<WebView>(null);
   const [ready, setReady] = useState(false);
@@ -40,6 +43,10 @@ export function LiveMap({
           const msg = e.nativeEvent.data;
           if (msg === 'ready') setReady(true);
           else if (msg.startsWith('select:')) onSelect?.(msg.slice('select:'.length));
+          else if (msg.startsWith('pick:')) {
+            const [lat, lng] = msg.slice('pick:'.length).split(',').map(Number);
+            if (Number.isFinite(lat) && Number.isFinite(lng)) onPick?.({ lat, lng });
+          }
         }}
         scrollEnabled={false}
         style={styles.web}

@@ -16,6 +16,7 @@ import { callRider } from '@/lib/call';
 import { minutesAway } from '@/lib/format';
 import { useI18n, type TKey } from '@/lib/i18n';
 import { currentLocation, type Coords, type LocationResult } from '@/lib/location';
+import { useMyMotoRequest } from '@/lib/requests';
 import { ratingLabel, riderCode } from '@/lib/rider';
 import { ACTIVE_CITY, inCity } from '@/lib/service-area';
 import { supabase } from '@/lib/supabase';
@@ -57,6 +58,8 @@ export default function FindRider() {
   const [howSeen, setHowSeen] = useState(true);
   const coordsRef = useRef<Coords | null>(null);
   const area = profile?.district ?? null;
+  // An open request (or a delivered one to rate) is one tap away.
+  const myRequest = useMyMotoRequest();
 
   const load = useCallback(async () => {
     // Outside the city your position isn't useful for distances, so motos are sorted by district.
@@ -143,6 +146,17 @@ export default function FindRider() {
           </Txt>
         ) : null}
       </View>
+
+      {myRequest.id && myRequest.status ? (
+        <Notice
+          icon={myRequest.status === 'delivered' ? 'star' : 'delivery'}
+          tone="info"
+          title={t(myRequest.status === 'searching' ? 'rq.openSearching' : myRequest.status === 'delivered' ? 'rq.openRate' : 'rq.openComing')}
+          action={{ label: t('rq.view'), onPress: () => router.push({ pathname: '/request/[id]', params: { id: myRequest.id! } }) }}
+        />
+      ) : (
+        <AdminButton title={t('rq.title')} kind="accent" icon="delivery" onPress={() => router.push('/request/new')} style={styles.request} />
+      )}
 
       {loadFailed ? (
         <Notice
@@ -321,6 +335,7 @@ const styles = StyleSheet.create({
   fact: { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
   factText: { fontSize: 13, lineHeight: 17 },
   call: { minHeight: 52, marginTop: Spacing.one },
+  request: { minHeight: 52 },
   other: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, paddingEnd: Spacing.three },
   otherMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: Spacing.three - 4, minHeight: 60, paddingVertical: Spacing.two, paddingStart: Spacing.three },
   otherName: { fontSize: 15, lineHeight: 20, fontWeight: '500' },

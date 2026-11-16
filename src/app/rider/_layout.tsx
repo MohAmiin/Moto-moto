@@ -2,11 +2,13 @@ import { Tabs } from 'expo-router/tabs';
 
 import { AdminIcon } from '@/components/kit';
 import { RiderApplicationScreen } from '@/components/rider-application-screen';
+import { IncomingRequest } from '@/components/rider/incoming-request';
 import { Fonts } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuth } from '@/lib/auth';
 import { useI18n } from '@/lib/i18n';
 import { RiderAvailabilityProvider } from '@/lib/rider-availability-context';
+import { RiderRequestsProvider } from '@/lib/rider-requests-context';
 
 /**
  * Riders without an approved application see their application status (or the form). Approved riders
@@ -21,6 +23,7 @@ export default function RiderLayout() {
 
   return (
     <RiderAvailabilityProvider riderId={profile.id}>
+      <RiderRequestsProvider riderId={profile.id}>
       <Tabs
         screenOptions={{
           headerShown: false,
@@ -43,6 +46,9 @@ export default function RiderLayout() {
           options={{ title: t('tab.account'), tabBarIcon: ({ color }) => <AdminIcon name="account" size={22} color={color as string} /> }}
         />
       </Tabs>
+      {/* A request offered to this rider shows over any tab. */}
+      <IncomingRequest />
+      </RiderRequestsProvider>
     </RiderAvailabilityProvider>
   );
 }

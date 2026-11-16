@@ -242,6 +242,17 @@ export default function Overview() {
         )}
       </Panel>
 
+      <SectionTitle title={t('rq.admTitle')} />
+      <Panel padded={false}>
+        <ListRow
+          leading={<AdminIcon name="delivery" size={20} color={theme.primaryText} />}
+          title={t('rq.admOpen')}
+          subtitle={t('rq.admOpenSub')}
+          onPress={() => router.push('/admin/requests')}
+          last
+        />
+      </Panel>
+
       <SectionTitle title={t('adm.ridersOnMap')} action={{ label: t('adm.openMap'), onPress: () => router.push('/admin/map') }} />
       <Panel padded={false}>
         {online === undefined ? (

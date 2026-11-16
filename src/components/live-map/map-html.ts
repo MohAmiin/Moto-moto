@@ -14,6 +14,11 @@ export type LiveMapData = {
   recenter?: number;
   /** The rider picked in the list or on the map; their pin is outlined in orange. */
   selected?: string | null;
+  /** A request's pickup (blue) and drop-off (orange), joined by a dashed line. */
+  pickup?: { lat: number; lng: number } | null;
+  dropoff?: { lat: number; lng: number } | null;
+  /** While set, tapping the map reports the spot (LiveMap's onPick) so that point can be placed there. */
+  picking?: 'pickup' | 'dropoff' | null;
 };
 
 const B = ACTIVE_CITY.bounds;
@@ -32,6 +37,10 @@ export const MAP_HTML = `<!doctype html>
   .leaflet-popup-content { margin: 10px 12px; font-size: 14px; color: #0046B5; }
   .leaflet-control-attribution { font-size: 9px; line-height: 13px; padding: 0 4px; background: rgba(255,255,255,.75) !important; color: #444; }
   .leaflet-popup-content b { display: block; font-size: 15px; }
+  .stop { width: 22px; height: 22px; border-radius: 50%; border: 4px solid #fff; box-shadow: 0 1px 5px rgba(0,0,0,.4); box-sizing: border-box; }
+  .stop.pickup { background: #0046B5; }
+  .stop.dropoff { background: #FF6B0A; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); }
+  #map.picking { cursor: crosshair; }
 </style>
 </head><body>
 <div id="map"></div>
@@ -54,13 +63,34 @@ export const MAP_HTML = `<!doctype html>
     if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage(msg);
     else if (window.parent) window.parent.postMessage('jareeye-map-' + msg, '*');
   }
-  var me = null, riders = {}, fitted = false, lastRecenter = 0;
+  var me = null, riders = {}, fitted = false, lastRecenter = 0, picking = null, stops = {}, route = null;
+  var stopIcons = {
+    pickup: L.divIcon({ className: '', html: '<div class="stop pickup"></div>', iconSize: [22, 22], iconAnchor: [11, 11] }),
+    dropoff: L.divIcon({ className: '', html: '<div class="stop dropoff"></div>', iconSize: [22, 22], iconAnchor: [11, 22] })
+  };
+  map.on('click', function (e) {
+    if (picking) post('pick:' + e.latlng.lat.toFixed(6) + ',' + e.latlng.lng.toFixed(6));
+  });
+  function placeStop(kind, p) {
+    if (!p) { if (stops[kind]) { map.removeLayer(stops[kind]); delete stops[kind]; } return; }
+    if (stops[kind]) stops[kind].setLatLng([p.lat, p.lng]);
+    else stops[kind] = L.marker([p.lat, p.lng], { icon: stopIcons[kind], zIndexOffset: 800 }).addTo(map);
+  }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function update(d) {
     if (d.me) {
       if (!me) me = L.marker([d.me.lat, d.me.lng], { icon: meIcon, zIndexOffset: 1000 }).addTo(map).bindTooltip(esc(d.me.label));
       else me.setLatLng([d.me.lat, d.me.lng]);
     }
+    picking = d.picking || null;
+    document.getElementById('map').classList.toggle('picking', !!picking);
+    placeStop('pickup', d.pickup);
+    placeStop('dropoff', d.dropoff);
+    if (d.pickup && d.dropoff) {
+      var line = [[d.pickup.lat, d.pickup.lng], [d.dropoff.lat, d.dropoff.lng]];
+      if (route) route.setLatLngs(line);
+      else route = L.polyline(line, { color: '#0046B5', weight: 3, dashArray: '6 8', opacity: 0.8 }).addTo(map);
+    } else if (route) { map.removeLayer(route); route = null; }
     var seen = {};
     (d.riders || []).forEach(function (r) {
       seen[r.id] = true;
@@ -74,6 +104,7 @@ export const MAP_HTML = `<!doctype html>
       lastRecenter = d.recenter || lastRecenter;
       var pts = Object.keys(riders).map(function (id) { return riders[id].getLatLng(); });
       if (me) pts.push(me.getLatLng());
+      Object.keys(stops).forEach(function (k) { pts.push(stops[k].getLatLng()); });
       if (pts.length === 1) { map.setView(pts[0], 15); fitted = true; }
       else if (pts.length > 1) { map.fitBounds(L.latLngBounds(pts).pad(0.25), { maxZoom: 16 }); fitted = true; }
     }
