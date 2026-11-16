@@ -44,3 +44,9 @@ example
 
 # env files
 .env
+
+# Firebase (push notifications). The repo is public, so neither file is committed:
+# google-services.json reaches EAS builds as a file environment variable instead,
+# and the service-account private key never belongs in the project.
+google-services.json
+*-firebase-adminsdk-*.json
