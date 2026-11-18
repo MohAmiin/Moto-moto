@@ -1,0 +1,8 @@
+{
+  "name": "kodaro-design",
+  "version": "1.2.0-kodaro.1",
+  "description": "Kodaro's design workflows: critique, design systems (Kodaro web + Jareeye), UX copy in Kodaro's voice, accessibility to Kodaro's 7:1 house bar, research synthesis and developer handoff for HTML/CSS and Expo stacks. Customised from Anthropic's Design plugin for Kodaro, Hargeisa.",
+  "author": {
+    "name": "Kodaro"
+  }
+}
